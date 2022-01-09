@@ -1,13 +1,164 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-
-// Remember to rename these classes and interfaces!
+import { App, Plugin, request } from "obsidian";
+import { exec } from "child_process";
 
 interface MyPluginSettings {
 	mySetting: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	mySetting: "default",
+};
+
+// function preformRequest(opts: Record<string, any>): Promise<string> {
+// 	return new Promise((res, rej) => {
+// 		const electron = require("electron");
+// 		const net = electron.remote.net;
+// 		let data = "";
+
+// 		const request = net.request({
+// 			method: opts.method,
+// 			url: opts.url,
+// 		});
+
+// 		request.on("response", (response: any) => {
+// 			console.log(`STATUS: ${response.statusCode} ${response.statusMessage}`);
+
+// 			response.on("error", (error: any) => {
+// 				rej(error);
+// 			});
+
+// 			response.on("end", () => {
+// 				console.log("end", data);
+// 				res(data);
+// 			});
+
+// 			response.on("data", (buf: Buffer) => {
+// 				console.log("data", buf.toString());
+// 				data += buf.toString();
+// 			});
+// 		});
+
+// 		request.on("abort", () => {
+// 			rej(new Error("Request aborted"));
+// 		});
+
+// 		request.on("close", () => {
+// 			console.log("close", data);
+// 		});
+
+// 		if (opts.body) {
+// 			console.log("writing body", opts.url, opts.body);
+// 			request.write(opts.body, "utf-8");
+// 		}
+
+// 		request.end();
+// 	});
+// }
+
+async function getCAYTResults() {
+	try {
+		const res = await request({
+			method: "GET",
+			url: "http://127.0.0.1:23119/better-bibtex/cayw?format=json&minimize=true",
+			headers: {
+				"Content-Type": "application/json",
+				Accept: "application/json",
+				"User-Agent": "obsidian/zot",
+				Connection: "keep-alive",
+			},
+		});
+		return JSON.parse(res);
+	} catch (e) {
+		console.error(e);
+		throw new Error("Error executing CAYT");
+	}
+}
+
+async function getPDFPathFromCiteKey(citeKey: string) {
+	let res: string;
+	try {
+		const body = JSON.stringify({
+			jsonrpc: "2.0",
+			method: "item.attachments",
+			params: [citeKey],
+		});
+		res = await request({
+			method: "POST",
+			url: "http://127.0.0.1:23119/better-bibtex/json-rpc",
+			body,
+			headers: {
+				"Content-Type": "application/json",
+				Accept: "application/json",
+				"User-Agent": "obsidian/zot",
+				Connection: "keep-alive",
+			},
+		});
+	} catch (e) {
+		console.error(e);
+		throw new Error("Error retrieving attachments for " + citeKey);
+	}
+
+	try {
+		const json = JSON.parse(res);
+
+		if (json.result && json.result.length) {
+			return (
+				(json.result as any[]).find((r) => {
+					return r.path.endsWith(".pdf");
+				})?.path || null
+			);
+		}
+	} catch (e) {
+		console.error(e);
+		throw new Error("Error parsing attachments for " + citeKey);
+	}
+
+	return null;
+}
+
+function extractAnnotations(app: App, citeKey: string, pdfPath: string) {
+	const outputPath = `${(app.vault.adapter as any).basePath}/Notes/Zotero`;
+	const assetsPath = `${
+		(app.vault.adapter as any).basePath
+	}/Notes/Zotero/Assets`;
+
+	return new Promise<string>((res, rej) => {
+		exec(
+			`echo $NVM_DIR && source $NVM_DIR/nvm.sh && node /Users/matt/Documents/Personal/pdf-tests/index.js "${citeKey}" "${pdfPath}" "${outputPath}" "${assetsPath}"`,
+			{
+				cwd: "/Users/matt/Documents/Personal/pdf-tests/",
+				shell: "/bin/zsh",
+			},
+			(err, stout, sterr) => {
+				if (err) {
+					return rej(err);
+				}
+
+				if (sterr) return rej(sterr);
+
+				res(stout);
+			}
+		);
+	});
+}
+
+async function getAnnotations(app: App) {
+	try {
+		const res = await getCAYTResults();
+
+		if (!res || !res.length) return;
+
+		const citeKey = res[0].citekey;
+		const pdfPath = await getPDFPathFromCiteKey(citeKey);
+
+		if (!pdfPath) {
+			throw new Error("PDF not found");
+		}
+
+		await extractAnnotations(app, citeKey, pdfPath);
+	} catch (e) {
+		console.error(e);
+	}
 }
 
 export default class MyPlugin extends Plugin {
@@ -16,122 +167,26 @@ export default class MyPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
+			id: "extract-annotations",
+			name: "Extract Annotations",
 			callback: () => {
-				new SampleModal(this.app).open();
-			}
+				getAnnotations(this.app).catch((e) => console.error(e));
+			},
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
-	onunload() {
-
-	}
+	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
 	}
 }
