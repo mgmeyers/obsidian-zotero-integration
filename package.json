@@ -4,8 +4,8 @@
 	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"scripts": {
-		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production"
+		"dev": "cross-env BUILD=dev obsidian-plugin dev src/main.ts -e esbuild.config.js",
+		"build": "cross-env BUILD=production obsidian-plugin build src/main.ts -e esbuild.config.js"
 	},
 	"keywords": [],
 	"author": "",
@@ -15,10 +15,17 @@
 		"@typescript-eslint/eslint-plugin": "^5.2.0",
 		"@typescript-eslint/parser": "^5.2.0",
 		"builtin-modules": "^3.2.0",
+		"cross-env": "^7.0.3",
 		"esbuild": "0.13.12",
-		"obsidian": "^0.12.17",
+		"obsidian": "^0.13.30",
+		"obsidian-plugin-cli": "^0.8.1",
 		"tslib": "2.3.1",
 		"typescript": "4.4.4"
 	},
-	"dependencies": {}
+	"dependencies": {
+		"@types/react-dom": "^17.0.13",
+		"preact": "^10.6.6",
+		"react": "npm:@preact/compat",
+		"react-dom": "npm:@preact/compat"
+	}
 }

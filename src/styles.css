@@ -1,0 +1,25 @@
+.zt-format {
+    border-bottom: 1px solid var(--background-modifier-border);
+    padding: 1rem 0 0;
+}
+
+.zt-format__form {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.zt-format__label {
+    text-align: right;
+    width: 10rem;
+    padding-right: 1rem;
+}
+
+.zt-format__delete-btn {
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 7px 9px;
+}
