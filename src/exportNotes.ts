@@ -19,6 +19,11 @@ export async function noteExportPrompt(database: Database) {
 
 	if (!notes) return;
 
+	if (!notes.length) {
+		new Notice("No notes found for selected items", 7000);
+		return;
+	}
+
 	const notesMarkdown: Record<string, string> = {};
 
 	Object.keys(notes).forEach((key) => {
