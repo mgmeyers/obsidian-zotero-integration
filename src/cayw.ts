@@ -39,7 +39,7 @@ function getQueryParams(format: CitationFormat) {
 		case "formatted-citation":
 			return "format=formatted-citation";
 		case "pandoc":
-			return `format=pandoc&brackets=${!!format.brackets}`;
+			return `format=pandoc${format.brackets ? '&brackets=true' : ''}`;
 		case "latex":
 			return `format=latex&command=${format.command || "cite"}`;
 		case "biblatex":
