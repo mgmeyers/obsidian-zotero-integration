@@ -82,7 +82,7 @@ function loadTemplate(
 		new Notice(`Error: ${name} template not found ${path}`);
 		return null;
 	}
-
+	
 	return app.vault.cachedRead(headerTemplateFile as TFile);
 }
 
@@ -108,6 +108,34 @@ async function getTemplates(app: App, params: ExportToMarkdownParams) {
 	};
 }
 
+function processNote(note: any) {
+	if (note.note) {
+		note.note = htmlToMarkdown(note.note);
+	}
+	if (note.dateAdded) {
+		note.dateAdded = moment(new Date(note.dateAdded));
+	}
+
+	if (note.dateModified) {
+		note.dateModified = moment(new Date(note.dateModified));
+	}
+}
+
+function processAttachment(attachment: any) {
+	if (attachment.dateAdded) {
+		attachment.dateAdded = moment(new Date(attachment.dateAdded));
+	}
+
+	if (attachment.dateModified) {
+		attachment.dateModified = moment(new Date(attachment.dateModified));
+	}
+
+	if (attachment.uri) {
+		attachment.itemKey = attachment.uri.split("/").pop();
+		attachment.desktopURI = `zotero://select/library/items/${attachment.itemKey}`;
+	}
+}
+
 async function processItem(
 	item: any,
 	exportDate: moment.Moment,
@@ -117,7 +145,7 @@ async function processItem(
 	item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
 
 	if (item.accessDate) {
-		item.accessDate = moment(item.accessDate);
+		item.accessDate = moment(new Date(item.accessDate));
 	}
 
 	if (item.dateAdded) {
@@ -142,33 +170,8 @@ async function processItem(
 		return false;
 	}
 
-	item.notes?.forEach((note: any) => {
-		if (note.note) {
-			note.note = htmlToMarkdown(note.note);
-		}
-		if (note.dateAdded) {
-			note.dateAdded = moment(new Date(note.dateAdded));
-		}
-
-		if (note.dateModified) {
-			note.dateModified = moment(new Date(note.dateModified));
-		}
-	});
-
-	item.attachments.forEach((a: any) => {
-		if (a.dateAdded) {
-			a.dateAdded = moment(new Date(a.dateAdded));
-		}
-
-		if (a.dateModified) {
-			a.dateModified = moment(new Date(a.dateModified));
-		}
-
-		if (a.uri) {
-			a.itemKey = a.uri.split("/").pop();
-			a.desktopURI = `zotero://select/library/items/${a.itemKey}`;
-		}
-	});
+	item.notes?.forEach(processNote);
+	item.attachments?.forEach(processAttachment);
 }
 
 export async function exportToMarkdown(
