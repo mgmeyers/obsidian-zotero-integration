@@ -15,5 +15,5 @@
 		"skipLibCheck": true,
 	    "target": "es2018"
 	},
-	"include": ["**/*.ts"]
+	"include": ["./src/**/*.ts", "./src/**/*.tsx"]
 }

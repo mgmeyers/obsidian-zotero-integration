@@ -17,16 +17,21 @@ export async function noteExportPrompt(database: Database) {
 
 	const notes = await getNotesFromCiteKeys(citeKeys, database);
 
-	if (!notes) return;
+	if (!notes) {
+		new Notice("No notes found for selected items", 7000);
+		return;
+	}
 
-	if (!notes.length) {
+	const keys = Object.keys(notes);
+
+	if (!keys.length) {
 		new Notice("No notes found for selected items", 7000);
 		return;
 	}
 
 	const notesMarkdown: Record<string, string> = {};
 
-	Object.keys(notes).forEach((key) => {
+	keys.forEach((key) => {
 		notesMarkdown[key] = notes[key]
 			.map((n: string) => htmlToMarkdown(n))
 			.join("\n\n");

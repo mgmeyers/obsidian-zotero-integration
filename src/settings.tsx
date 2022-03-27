@@ -2,234 +2,98 @@ import { App, PluginSettingTab } from "obsidian";
 import React from "react";
 import ReactDOM from "react-dom";
 import ZoteroConnector from "./main";
-import { CitationFormat, Format, ZoteroConnectorSettings } from "./types";
-
-import { setIcon } from "obsidian";
-
-interface IconProps {
-	name: string;
-	className?: string;
-}
-
-function Icon({ name, className }: IconProps) {
-	return (
-		<span
-			data-icon={name}
-			className={className}
-			ref={(c) => {
-				if (c) {
-					setIcon(c, name);
-				}
-			}}
-		/>
-	);
-}
-
-interface ItemInfo {
-	name?: string;
-	description?: string;
-}
-
-function SettingItemInfo({ name, description }: ItemInfo) {
-	return (
-		<div className="setting-item-info">
-			<div className="setting-item-name">{name}</div>
-			<div className="setting-item-description">{description}</div>
-		</div>
-	);
-}
-
-function SettingItem({
-	name,
-	description,
-	children,
-}: React.PropsWithChildren<ItemInfo>) {
-	return (
-		<div className="setting-item">
-			<SettingItemInfo name={name} description={description} />
-			<div className="setting-item-control">{children}</div>
-		</div>
-	);
-}
-
-interface FormatSettingsProps {
-	format: CitationFormat;
-	index: number;
-	removeFormat: (index: number) => void;
-	updateFormat: (index: number, format: CitationFormat) => void;
-}
-
-function FormatSettings({
-	format,
-	index,
-	updateFormat,
-	removeFormat,
-}: FormatSettingsProps) {
-	const onChangeName = React.useCallback(
-		(e) => {
-			updateFormat(index, {
-				...format,
-				name: e.target.value,
-			});
-		},
-		[updateFormat, index, format]
-	);
-
-	const onChangeFormat = React.useCallback(
-		(e) => {
-			const newFormat = {
-				...format,
-				format: e.target.value as Format,
-			};
-
-			if (e.target.value === "latex") {
-				newFormat.command = "cite";
-			} else if (e.target.value === "biblatex") {
-				newFormat.command = "autocite";
-			} else if (newFormat.command) {
-				delete newFormat.command;
-			}
-
-			if (newFormat.format !== "pandoc" && newFormat.brackets) {
-				delete newFormat.brackets;
-			}
-
-			updateFormat(index, newFormat);
-		},
-		[updateFormat, index, format]
-	);
-
-	const onChangeCommand = React.useCallback(
-		(e) => {
-			updateFormat(index, {
-				...format,
-				command: e.target.value,
-			});
-		},
-		[updateFormat, index, format]
-	);
-
-	const onChangeBrackets = React.useCallback(() => {
-		updateFormat(index, {
-			...format,
-			brackets: !format.brackets,
-		});
-	}, [updateFormat, index, format]);
-
-	const onRemove = React.useCallback(() => {
-		removeFormat(index);
-	}, [removeFormat, index]);
-
-	return (
-		<div className="zt-format">
-			<div className="zt-format__form">
-				<div className="zt-format__label">Name</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeName}
-						type="text"
-						value={format.name}
-					/>
-				</div>
-				<div className="zt-format__delete">
-					<button
-						className="zt-format__delete-btn"
-						onClick={onRemove}
-					>
-						<Icon name="trash" />
-					</button>
-				</div>
-			</div>
-
-			<div className="zt-format__form">
-				<div className="zt-format__label">Output Format</div>
-				<div className="zt-format__input-wrapper">
-					<select
-						className="dropdown"
-						defaultValue={format.format}
-						onChange={onChangeFormat}
-					>
-						<option value="latex">LaTeX</option>
-						<option value="biblatex">BibLaTeX</option>
-						<option value="pandoc">Pandoc</option>
-						<option value="formatted-citation">
-							Quick Copy Citation
-						</option>
-						<option value="formatted-bibliography">
-							Quick Copy Bibliography
-						</option>
-					</select>
-				</div>
-			</div>
-
-			{["latex", "biblatex"].contains(format.format) && (
-				<div className="zt-format__form">
-					<div className="zt-format__label">Citation Command</div>
-					<div className="zt-format__input-wrapper">
-						<input
-							type="text"
-							value={format.command}
-							onChange={onChangeCommand}
-						/>
-					</div>
-				</div>
-			)}
-
-			{format.format === "pandoc" && (
-				<div className="zt-format__form">
-					<div className="zt-format__label">Include Brackets</div>
-					<div className="zt-format__input-wrapper">
-						<div
-							onClick={onChangeBrackets}
-							className={`checkbox-container${
-								format.brackets ? " is-enabled" : ""
-							}`}
-						/>
-					</div>
-				</div>
-			)}
-		</div>
-	);
-}
+import { CiteFormatSettings } from "./settings/CiteFormatSettings";
+import { ExportFormatSettings } from "./settings/ExportFormatSettings";
+import { SettingItem } from "./settings/SettingItem";
+import {
+	CitationFormat,
+	ExportFormat,
+	GroupingOptions,
+	SortingOptions,
+	ZoteroConnectorSettings,
+} from "./types";
 
 interface SettingsComponentProps {
 	settings: ZoteroConnectorSettings;
-	addFormat: (format: CitationFormat) => CitationFormat[];
-	updateFormat: (index: number, format: CitationFormat) => CitationFormat[];
-	removeFormat: (index: number) => CitationFormat[];
+	addCiteFormat: (format: CitationFormat) => CitationFormat[];
+	updateCiteFormat: (
+		index: number,
+		format: CitationFormat
+	) => CitationFormat[];
+	removeCiteFormat: (index: number) => CitationFormat[];
+	addExportFormat: (format: ExportFormat) => ExportFormat[];
+	updateExportFormat: (index: number, format: ExportFormat) => ExportFormat[];
+	removeExportFormat: (index: number) => ExportFormat[];
 	updateSetting: (key: keyof ZoteroConnectorSettings, value: any) => void;
 }
 
 function SettingsComponent({
 	settings,
-	addFormat,
-	updateFormat,
-	removeFormat,
+	addCiteFormat,
+	updateCiteFormat,
+	removeCiteFormat,
+	addExportFormat,
+	updateExportFormat,
+	removeExportFormat,
 	updateSetting,
 }: SettingsComponentProps) {
-	const [formatState, setFormatState] = React.useState(settings.formats);
-
-	const update = React.useCallback(
-		(index: number, format: CitationFormat) => {
-			setFormatState(updateFormat(index, format));
-		},
-		[updateFormat]
+	const [citeFormatState, setCiteFormatState] = React.useState(
+		settings.citeFormats
+	);
+	const [exportFormatState, setExportFormatState] = React.useState(
+		settings.exportFormats
 	);
 
-	const add = React.useCallback(() => {
-		setFormatState(
-			addFormat({
-				name: `Format #${formatState.length}`,
+	const updateCite = React.useCallback(
+		(index: number, format: CitationFormat) => {
+			setCiteFormatState(updateCiteFormat(index, format));
+		},
+		[updateCiteFormat]
+	);
+
+	const addCite = React.useCallback(() => {
+		setCiteFormatState(
+			addCiteFormat({
+				name: `Format #${citeFormatState.length}`,
 				format: "formatted-citation",
 			})
 		);
-	}, [addFormat, formatState]);
+	}, [addCiteFormat, citeFormatState]);
 
-	const remove = React.useCallback(
+	const removeCite = React.useCallback(
 		(index: number) => {
-			setFormatState(removeFormat(index));
+			setCiteFormatState(removeCiteFormat(index));
 		},
-		[removeFormat]
+		[removeCiteFormat]
+	);
+
+	const updateExport = React.useCallback(
+		(index: number, format: ExportFormat) => {
+			setExportFormatState(updateExportFormat(index, format));
+		},
+		[updateExportFormat]
+	);
+
+	const addExport = React.useCallback(() => {
+		setExportFormatState(
+			addExportFormat({
+				name: `Export #${exportFormatState.length}`,
+				outputPathTemplate: "{{citekey}}.md",
+				assetOutputPathTemplate: "{{citekey}}/",
+				assetBaseNameTemplate: "{{citekey}}",
+				zoteroItemTypes: [],
+				isDefault: false,
+				groupBy: GroupingOptions.ExportDate,
+				sortBy: SortingOptions.Location,
+			})
+		);
+	}, [addExportFormat, citeFormatState]);
+
+	const removeExport = React.useCallback(
+		(index: number) => {
+			setExportFormatState(removeExportFormat(index));
+		},
+		[removeExportFormat]
 	);
 
 	return (
@@ -262,18 +126,35 @@ function SettingsComponent({
 				/>
 			</SettingItem>
 			<SettingItem name="Citation Formats">
-				<button onClick={add} className="mod-cta">
+				<button onClick={addCite} className="mod-cta">
 					Add Citation Format
 				</button>
 			</SettingItem>
-			{formatState.map((f, i) => {
+			{citeFormatState.map((f, i) => {
 				return (
-					<FormatSettings
+					<CiteFormatSettings
 						key={i}
 						format={f}
 						index={i}
-						updateFormat={update}
-						removeFormat={remove}
+						updateFormat={updateCite}
+						removeFormat={removeCite}
+					/>
+				);
+			})}
+
+			<SettingItem name="Export Formats">
+				<button onClick={addExport} className="mod-cta">
+					Add Export Format
+				</button>
+			</SettingItem>
+			{exportFormatState.map((f, i) => {
+				return (
+					<ExportFormatSettings
+						key={i}
+						format={f}
+						index={i}
+						updateFormat={updateExport}
+						removeFormat={removeExport}
 					/>
 				);
 			})}
@@ -284,6 +165,8 @@ function SettingsComponent({
 export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 	plugin: ZoteroConnector;
 	dbTimer: number;
+	citeDBTimer: number;
+	exportDBTimer: number;
 
 	constructor(app: App, plugin: ZoteroConnector) {
 		super(app, plugin);
@@ -294,41 +177,102 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 		ReactDOM.render(
 			<SettingsComponent
 				settings={this.plugin.settings}
-				addFormat={this.addFormat}
-				updateFormat={this.updateFormat}
-				removeFormat={this.removeFormat}
+				addCiteFormat={this.addCiteFormat}
+				updateCiteFormat={this.updateCiteFormat}
+				removeCiteFormat={this.removeCiteFormat}
+				addExportFormat={this.addExportFormat}
+				updateExportFormat={this.updateExportFormat}
+				removeExportFormat={this.removeExportFormat}
 				updateSetting={this.updateSetting}
 			/>,
 			this.containerEl
 		);
 	}
 
-	addFormat = (format: CitationFormat) => {
-		this.plugin.addFormatCommand(format);
-		this.plugin.settings.formats.push(format);
+	citeDebounce(fn: () => void) {
+		clearTimeout(this.citeDBTimer);
+		this.citeDBTimer = window.setTimeout(fn, 200);
+	}
+
+	exportDebounce(fn: () => void) {
+		clearTimeout(this.citeDBTimer);
+		this.citeDBTimer = window.setTimeout(fn, 200);
+	}
+
+	addCiteFormat = (format: CitationFormat) => {
+		this.citeDebounce(() => {
+			this.plugin.addFormatCommand(format);
+		});
+		this.plugin.settings.citeFormats.push(format);
 		this.debouncedSave();
 
-		return this.plugin.settings.formats.slice();
+		return this.plugin.settings.citeFormats.slice();
 	};
 
-	updateFormat = (index: number, format: CitationFormat) => {
-		this.plugin.removeFormatCommand(this.plugin.settings.formats[index]);
-		this.plugin.addFormatCommand(format);
-		this.plugin.settings.formats[index] = format;
+	updateCiteFormat = (index: number, format: CitationFormat) => {
+		this.citeDebounce(() => {
+			this.plugin.removeFormatCommand(
+				this.plugin.settings.citeFormats[index]
+			);
+			this.plugin.addFormatCommand(format);
+		});
+		this.plugin.settings.citeFormats[index] = format;
 		this.debouncedSave();
 
-		return this.plugin.settings.formats.slice();
+		return this.plugin.settings.citeFormats.slice();
 	};
 
-	removeFormat = (index: number) => {
-		this.plugin.removeFormatCommand(this.plugin.settings.formats[index]);
-		this.plugin.settings.formats.splice(index, 1);
+	removeCiteFormat = (index: number) => {
+		this.citeDebounce(() => {
+			this.plugin.removeFormatCommand(
+				this.plugin.settings.citeFormats[index]
+			);
+		});
+		this.plugin.settings.citeFormats.splice(index, 1);
 		this.debouncedSave();
 
-		return this.plugin.settings.formats.slice();
+		return this.plugin.settings.citeFormats.slice();
 	};
 
-	updateSetting = (key: keyof ZoteroConnectorSettings, value: any) => {
+	addExportFormat = (format: ExportFormat) => {
+		this.exportDebounce(() => {
+			this.plugin.addExportCommand(format);
+		});
+		this.plugin.settings.exportFormats.push(format);
+		this.debouncedSave();
+
+		return this.plugin.settings.exportFormats.slice();
+	};
+
+	updateExportFormat = (index: number, format: ExportFormat) => {
+		this.exportDebounce(() => {
+			this.plugin.removeExportCommand(
+				this.plugin.settings.exportFormats[index]
+			);
+			this.plugin.addExportCommand(format);
+		});
+		this.plugin.settings.exportFormats[index] = format;
+		this.debouncedSave();
+
+		return this.plugin.settings.exportFormats.slice();
+	};
+
+	removeExportFormat = (index: number) => {
+		this.exportDebounce(() => {
+			this.plugin.removeExportCommand(
+				this.plugin.settings.exportFormats[index]
+			);
+		});
+		this.plugin.settings.exportFormats.splice(index, 1);
+		this.debouncedSave();
+
+		return this.plugin.settings.exportFormats.slice();
+	};
+
+	updateSetting = <T extends keyof ZoteroConnectorSettings>(
+		key: T,
+		value: ZoteroConnectorSettings[T]
+	) => {
 		this.plugin.settings[key] = value;
 		this.debouncedSave();
 	};

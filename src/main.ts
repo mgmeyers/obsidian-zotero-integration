@@ -1,6 +1,6 @@
 import { Plugin } from "obsidian";
 import { getCAYW } from "./cayw";
-import { CitationFormat, ZoteroConnectorSettings } from "./types";
+import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from "./types";
 import { ZoteroConnectorSettingsTab } from "./settings";
 
 import "./styles.css";
@@ -9,12 +9,20 @@ import {
 	insertNotesIntoCurrentDoc,
 	noteExportPrompt,
 } from "./exportNotes";
+import { DebugView, viewType } from "./DebugView";
+import { exportToMarkdown } from "./annotations";
+import "./helpers.handlebars";
 
 const citationCommandIDPrefix = "zdc-";
+const exportCommandIDPrefix = "zdc-exp-";
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
-	database: 'Zotero',
+	database: "Zotero",
 	noteImportFolder: "",
-	formats: [],
+	pdfExportImageDPI: 120,
+	pdfExportImageFormat: "jpg",
+	pdfExportImageQuality: 90,
+	citeFormats: [],
+	exportFormats: [],
 };
 
 export default class ZoteroConnector extends Plugin {
@@ -22,9 +30,16 @@ export default class ZoteroConnector extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+
 		this.addSettingTab(new ZoteroConnectorSettingsTab(this.app, this));
-		this.settings.formats.forEach((f) => {
+		this.registerView(viewType, (leaf) => new DebugView(this, leaf));
+
+		this.settings.citeFormats.forEach((f) => {
 			this.addFormatCommand(f);
+		});
+
+		this.settings.exportFormats.forEach((f) => {
+			this.addExportCommand(f);
 		});
 
 		this.addCommand({
@@ -54,12 +69,26 @@ export default class ZoteroConnector extends Plugin {
 				});
 			},
 		});
+
+		this.addCommand({
+			id: "show-zotero-debug-view",
+			name: "Show Zotero Connector Debug",
+			callback: () => {
+				this.activateView();
+			},
+		});
 	}
 
 	onunload() {
-		this.settings.formats.forEach((f) => {
+		this.settings.citeFormats.forEach((f) => {
 			this.removeFormatCommand(f);
 		});
+
+		this.settings.exportFormats.forEach((f) => {
+			this.removeExportCommand(f);
+		});
+
+		this.app.workspace.detachLeavesOfType(viewType);
 	}
 
 	addFormatCommand(format: CitationFormat) {
@@ -82,6 +111,26 @@ export default class ZoteroConnector extends Plugin {
 		);
 	}
 
+	addExportCommand(format: ExportFormat) {
+		this.addCommand({
+			id: `${exportCommandIDPrefix}${format.name}`,
+			name: format.name,
+			callback: () => {
+				exportToMarkdown(this.app, {
+					settings: this.settings,
+					database: this.settings.database,
+					exportFormat: format,
+				});
+			},
+		});
+	}
+
+	removeExportCommand(format: ExportFormat) {
+		(this.app as any).commands.removeCommand(
+			`zotero-desktop-connector:${exportCommandIDPrefix}${format.name}`
+		);
+	}
+
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
@@ -92,5 +141,21 @@ export default class ZoteroConnector extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	deactivateView() {
+		this.app.workspace.detachLeavesOfType(viewType);
+	}
+
+	async activateView() {
+		this.deactivateView();
+		const leaf = this.app.workspace.createLeafBySplit(
+			this.app.workspace.activeLeaf,
+			"vertical"
+		);
+
+		await leaf.setViewState({
+			type: viewType,
+		});
 	}
 }

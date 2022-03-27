@@ -23,3 +23,19 @@
     line-height: 1;
     padding: 7px 9px;
 }
+
+.zt-json-viewer {
+    font-size: 13px;
+}
+
+.zt-json-viewer .react-json-view {
+    padding: 1em;
+    border-radius: 10px;
+    margin-top: 1em;
+    overflow: auto;
+    font-family: var(--font-monospace) !important;
+}
+
+.zt-multiselect {
+    width: 300px;
+}
