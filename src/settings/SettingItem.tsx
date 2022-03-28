@@ -3,6 +3,7 @@ import React from "react";
 interface ItemInfo {
 	name?: string;
 	description?: string | React.ReactNode;
+	isHeading?: boolean;
 }
 
 export function SettingItemInfo({ name, description }: ItemInfo) {
@@ -18,9 +19,14 @@ export function SettingItem({
 	name,
 	description,
 	children,
+	isHeading,
 }: React.PropsWithChildren<ItemInfo>) {
 	return (
-		<div className="setting-item">
+		<div
+			className={`setting-item${
+				isHeading ? " setting-item-heading" : ""
+			}`}
+		>
 			<SettingItemInfo name={name} description={description} />
 			<div className="setting-item-control">{children}</div>
 		</div>

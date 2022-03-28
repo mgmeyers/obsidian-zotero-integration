@@ -1,6 +1,7 @@
 import { App, Editor, htmlToMarkdown, Notice } from "obsidian";
-import { getCiteKeys, getNotesFromCiteKeys } from "./cayw";
 import { Database } from "../types";
+import { getCiteKeys } from "./cayw";
+import { getNotesFromCiteKeys } from "./jsonRPC";
 
 export async function noteExportPrompt(database: Database) {
 	const citeKeys = await getCiteKeys(database);

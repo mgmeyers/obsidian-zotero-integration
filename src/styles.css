@@ -1,6 +1,9 @@
 .zt-format {
-    border-bottom: 1px solid var(--background-modifier-border);
-    padding: 1rem 0 0;
+    border: 1px solid var(--background-modifier-border);
+    padding: 1rem;
+    background-color: var(--background-primary);
+    border-radius: 10px;
+    margin-bottom: 10px;
 }
 
 .zt-format__form {
@@ -9,6 +12,10 @@
     align-items: stretch;
     margin-bottom: 1rem;
     max-width: 600px;
+}
+
+.zt-format__form:last-child {
+    margin-bottom: 0;
 }
 
 .zt-format__label {

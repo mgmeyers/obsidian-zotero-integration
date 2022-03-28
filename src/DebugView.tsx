@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { moment, ItemView, WorkspaceLeaf } from "obsidian";
-import { pdfDebugPrompt } from "./bbt/annotations";
+import { pdfDebugPrompt } from "./bbt/export";
 import ZoteroConnector from "./main";
 import { JSONTree } from "react-json-tree";
 
@@ -114,25 +114,6 @@ export class DebugView extends ItemView {
 			/>,
 			this.wrapper
 		);
-		// ReactDOM.render(
-		// 	<ReactJson
-		// 		collapseStringsAfterLength={120}
-		// 		displayDataTypes={false}
-		// 		displayObjectSize={false}
-		// 		enableClipboard={false}
-		// 		name={null}
-		// 		quotesOnKeys={false}
-		// 		sortKeys={true}
-		// 		src={json}
-		// 		iconStyle="square"
-		// 		theme={
-		// 			document.body.hasClass("theme-dark")
-		// 				? "tomorrow"
-		// 				: undefined
-		// 		}
-		// 	/>,
-		// 	this.wrapper
-		// );
 	}
 
 	unmountJsonViewer() {

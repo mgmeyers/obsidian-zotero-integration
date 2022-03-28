@@ -10,7 +10,7 @@ import {
 	noteExportPrompt,
 } from "./bbt/exportNotes";
 import { DebugView, viewType } from "./DebugView";
-import { exportToMarkdown } from "./bbt/annotations";
+import { exportToMarkdown } from "./bbt/export";
 import './bbt/template.helpers'
 
 const citationCommandIDPrefix = "zdc-";

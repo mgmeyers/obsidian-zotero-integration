@@ -46,6 +46,12 @@ export interface ExportFormat {
 	cslStyle?: string;
 }
 
+export interface ExportToMarkdownParams {
+	settings: ZoteroConnectorSettings;
+	database: Database;
+	exportFormat: ExportFormat;
+}
+
 export interface ZoteroConnectorSettings {
 	database: Database;
 	noteImportFolder: string;

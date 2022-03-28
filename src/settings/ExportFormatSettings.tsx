@@ -171,8 +171,8 @@ export function ExportFormatSettings({
 				</div>
 				<div className="zt-format__input-note">
 					The base file name of exported images. Eg. <pre>image</pre>{" "}
-					will result in <pre>image-1-x123-y456.jpg</pre> where 1 is
-					the page number and x123 and y456 are the x and y
+					will result in <pre>image-1-x123-y456.jpg</pre> where <pre>1</pre> is
+					the page number and <pre>x123</pre> and <pre>y456</pre> are the x and y
 					coordinates of rectangle annotation on the page. Supports
 					templating. Templates have access to data from the Zotero
 					item and the current attachment.

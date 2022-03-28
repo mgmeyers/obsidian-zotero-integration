@@ -103,7 +103,11 @@ function SettingsComponent({
 
 	return (
 		<>
-			<AssetDownloader exeVersion={settings.exeVersion} updateSetting={updateSetting} />
+			<SettingItem name="General Settings" isHeading />
+			<AssetDownloader
+				exeVersion={settings.exeVersion}
+				updateSetting={updateSetting}
+			/>
 			<SettingItem
 				name="Database"
 				description="Supports Zotero and Juris-M"
@@ -131,41 +135,8 @@ function SettingsComponent({
 					defaultValue={settings.noteImportFolder}
 				/>
 			</SettingItem>
-			<SettingItem
-				name="PDF Annotations: Image Format"
-			>
-				<select
-					className="dropdown"
-					defaultValue={settings.pdfExportImageFormat}
-					onChange={(e) => updateSetting("pdfExportImageFormat", e.target.value)}
-				>
-					<option value="jpg">jpg</option>
-					<option value="png">png</option>
-				</select>
-			</SettingItem>
-			<SettingItem
-				name="PDF Annotations: Image Quality (jpg only)"
-			>
-				<input
-					onChange={(e) =>
-						updateSetting("pdfExportImageQuality", Number(e.target.value))
-					}
-					type="number"
-					defaultValue={settings.pdfExportImageQuality}
-				/>
-			</SettingItem>
-			<SettingItem
-				name="PDF Annotations: Image DPI"
-			>
-				<input
-					onChange={(e) =>
-						updateSetting("pdfExportImageDPI", Number(e.target.value))
-					}
-					type="number"
-					defaultValue={settings.pdfExportImageDPI}
-				/>
-			</SettingItem>
-			<SettingItem name="Citation Formats">
+			<SettingItem name="Citation Formats" isHeading />
+			<SettingItem>
 				<button onClick={addCite} className="mod-cta">
 					Add Citation Format
 				</button>
@@ -182,7 +153,49 @@ function SettingsComponent({
 				);
 			})}
 
-			<SettingItem name="Export Formats">
+			<SettingItem name="Export Settings" isHeading />
+			<SettingItem name="Image Export Format">
+				<select
+					className="dropdown"
+					defaultValue={settings.pdfExportImageFormat}
+					onChange={(e) =>
+						updateSetting("pdfExportImageFormat", e.target.value)
+					}
+				>
+					<option value="jpg">jpg</option>
+					<option value="png">png</option>
+				</select>
+			</SettingItem>
+			<SettingItem name="Image Export Quality (jpg only)">
+				<input
+					min="0"
+					max="100"
+					onChange={(e) =>
+						updateSetting(
+							"pdfExportImageQuality",
+							Number(e.target.value)
+						)
+					}
+					type="number"
+					defaultValue={settings.pdfExportImageQuality}
+				/>
+			</SettingItem>
+			<SettingItem name="Image Export DPI">
+				<input
+					min="0"
+					onChange={(e) =>
+						updateSetting(
+							"pdfExportImageDPI",
+							Number(e.target.value)
+						)
+					}
+					type="number"
+					defaultValue={settings.pdfExportImageDPI}
+				/>
+			</SettingItem>
+			
+			<SettingItem name="Export Formats" isHeading />
+			<SettingItem>
 				<button onClick={addExport} className="mod-cta">
 					Add Export Format
 				</button>
