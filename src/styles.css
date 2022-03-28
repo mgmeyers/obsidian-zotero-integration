@@ -5,23 +5,36 @@
 
 .zt-format__form {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     margin-bottom: 1rem;
+    max-width: 600px;
 }
 
 .zt-format__label {
-    text-align: right;
-    width: 10rem;
-    padding-right: 1rem;
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.zt-format__input-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.zt-format__input-wrapper > * {
+    width: 100% !important;
 }
 
 .zt-format__delete-btn {
-    margin-left: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
     padding: 7px 9px;
+    margin-left: 10px;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
 .zt-json-viewer {
@@ -38,4 +51,39 @@
 
 .zt-multiselect {
     width: 300px;
+}
+
+.zt-format__input-note {
+    font-style: italic;
+    font-size: 0.9em;
+    padding-top: 10px;
+    margin-bottom: 10px;
+}
+
+.zt-format__input-note pre {
+    display: inline-block;
+    margin: 0;
+    padding: 0 6px;
+    background-color: var(--background-secondary-alt);
+    border-radius: 4px;
+}
+
+.zt-asset-success {
+    text-align: left;
+    display: flex;
+}
+
+.zt-asset-success__icon {
+    color: var(--interactive-success);
+    font-size: 24px;
+    margin-right: 5px;
+}
+
+.zt-asset-success__icon svg {
+    width: 1em !important;
+    height: 1em !important;
+}
+
+.zt-asset-success__message {
+    font-size: 0.9em;
 }

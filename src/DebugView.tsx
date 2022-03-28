@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { moment, ItemView, WorkspaceLeaf } from "obsidian";
-import { pdfDebugPrompt } from "./annotations";
+import { pdfDebugPrompt } from "./bbt/annotations";
 import ZoteroConnector from "./main";
 import { JSONTree } from "react-json-tree";
 
@@ -62,7 +62,7 @@ export class DebugView extends ItemView {
 			{ text: "Prompt For Selection" },
 			(btn) => {
 				btn.onClickEvent((e) => {
-					pdfDebugPrompt(this.plugin.settings.database).then(
+					pdfDebugPrompt(this.plugin.settings).then(
 						(res) => {
 							if (!res || res.length === 0) {
 								this.wrapper.innerText = "No data retrieved";
@@ -88,7 +88,7 @@ export class DebugView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "Zotero Connector";
+		return "Zotero Data Explorer";
 	}
 
 	mountJsonViewer(json: any) {

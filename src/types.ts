@@ -10,6 +10,7 @@ export interface CitationFormat {
 	format: Format;
 	command?: string;
 	brackets?: boolean;
+	cslStyle?: string;
 }
 
 export type Database = "Zotero" | "Juris-M";
@@ -35,18 +36,14 @@ export enum SortingOptions {
 export interface ExportFormat {
 	name: string;
 	outputPathTemplate: string;
-	assetOutputPathTemplate: string;
-	assetBaseNameTemplate: string;
+	imageOutputPathTemplate: string;
+	imageBaseNameTemplate: string;
 
 	headerTemplatePath?: string;
 	annotationTemplatePath?: string;
 	footerTemplatePath?: string;
 
-	zoteroItemTypes: string[];
-	isDefault: boolean;
-
-	groupBy: GroupingOptions;
-	sortBy: SortingOptions;
+	cslStyle?: string;
 }
 
 export interface ZoteroConnectorSettings {
@@ -57,8 +54,5 @@ export interface ZoteroConnectorSettings {
 	pdfExportImageDPI?: number;
 	pdfExportImageQuality?: number;
 	pdfExportImageFormat?: string;
-	pdfExportDateFormat?: string;
-	pdfExportDateTimeFormat?: string;
-	pdfExportCalloutPrefixes?: CalloutDef[];
-	pdfExportConcatenationPrefix?: string;
+	exeVersion?: string;
 }

@@ -1,17 +1,17 @@
 import { Plugin } from "obsidian";
-import { getCAYW } from "./cayw";
+import { getCAYW } from "./bbt/cayw";
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from "./types";
-import { ZoteroConnectorSettingsTab } from "./settings";
+import { ZoteroConnectorSettingsTab } from "./settings/settings";
 
 import "./styles.css";
 import {
 	filesFromNotes,
 	insertNotesIntoCurrentDoc,
 	noteExportPrompt,
-} from "./exportNotes";
+} from "./bbt/exportNotes";
 import { DebugView, viewType } from "./DebugView";
-import { exportToMarkdown } from "./annotations";
-import "./helpers.handlebars";
+import { exportToMarkdown } from "./bbt/annotations";
+import './bbt/template.helpers'
 
 const citationCommandIDPrefix = "zdc-";
 const exportCommandIDPrefix = "zdc-exp-";
@@ -72,7 +72,7 @@ export default class ZoteroConnector extends Plugin {
 
 		this.addCommand({
 			id: "show-zotero-debug-view",
-			name: "Show Zotero Connector Debug",
+			name: "Data explorer",
 			callback: () => {
 				this.activateView();
 			},
@@ -107,7 +107,7 @@ export default class ZoteroConnector extends Plugin {
 
 	removeFormatCommand(format: CitationFormat) {
 		(this.app as any).commands.removeCommand(
-			`zotero-desktop-connector:${citationCommandIDPrefix}${format.name}`
+			`obsidian-zotero-desktop-connector:${citationCommandIDPrefix}${format.name}`
 		);
 	}
 

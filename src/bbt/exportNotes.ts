@@ -1,17 +1,9 @@
 import { App, Editor, htmlToMarkdown, Notice } from "obsidian";
-import { getCAYWJSON, getNotesFromCiteKeys } from "./cayw";
-import { Database } from "./types";
+import { getCiteKeys, getNotesFromCiteKeys } from "./cayw";
+import { Database } from "../types";
 
 export async function noteExportPrompt(database: Database) {
-	const json = await getCAYWJSON(database);
-
-	if (!json) return;
-
-	const citeKeys = json
-		.map((e: any) => {
-			return e.citekey;
-		})
-		.filter((e: any) => !!e);
+	const citeKeys = await getCiteKeys(database);
 
 	if (!citeKeys.length) return;
 

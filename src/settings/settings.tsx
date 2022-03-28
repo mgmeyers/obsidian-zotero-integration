@@ -1,17 +1,18 @@
-import { App, PluginSettingTab } from "obsidian";
+import { App, debounce, PluginSettingTab } from "obsidian";
 import React from "react";
 import ReactDOM from "react-dom";
-import ZoteroConnector from "./main";
-import { CiteFormatSettings } from "./settings/CiteFormatSettings";
-import { ExportFormatSettings } from "./settings/ExportFormatSettings";
-import { SettingItem } from "./settings/SettingItem";
+import ZoteroConnector from "../main";
+import { CiteFormatSettings } from "./CiteFormatSettings";
+import { ExportFormatSettings } from "./ExportFormatSettings";
+import { SettingItem } from "./SettingItem";
 import {
 	CitationFormat,
 	ExportFormat,
 	GroupingOptions,
 	SortingOptions,
 	ZoteroConnectorSettings,
-} from "./types";
+} from "../types";
+import { AssetDownloader } from "./AssetDownloader";
 
 interface SettingsComponentProps {
 	settings: ZoteroConnectorSettings;
@@ -45,16 +46,20 @@ function SettingsComponent({
 	);
 
 	const updateCite = React.useCallback(
-		(index: number, format: CitationFormat) => {
-			setCiteFormatState(updateCiteFormat(index, format));
-		},
+		debounce(
+			(index: number, format: CitationFormat) => {
+				setCiteFormatState(updateCiteFormat(index, format));
+			},
+			200,
+			true
+		),
 		[updateCiteFormat]
 	);
 
 	const addCite = React.useCallback(() => {
 		setCiteFormatState(
 			addCiteFormat({
-				name: `Format #${citeFormatState.length}`,
+				name: `Format #${citeFormatState.length + 1}`,
 				format: "formatted-citation",
 			})
 		);
@@ -68,23 +73,23 @@ function SettingsComponent({
 	);
 
 	const updateExport = React.useCallback(
-		(index: number, format: ExportFormat) => {
-			setExportFormatState(updateExportFormat(index, format));
-		},
+		debounce(
+			(index: number, format: ExportFormat) => {
+				setExportFormatState(updateExportFormat(index, format));
+			},
+			200,
+			true
+		),
 		[updateExportFormat]
 	);
 
 	const addExport = React.useCallback(() => {
 		setExportFormatState(
 			addExportFormat({
-				name: `Export #${exportFormatState.length}`,
+				name: `Export #${exportFormatState.length + 1}`,
 				outputPathTemplate: "{{citekey}}.md",
-				assetOutputPathTemplate: "{{citekey}}/",
-				assetBaseNameTemplate: "{{citekey}}",
-				zoteroItemTypes: [],
-				isDefault: false,
-				groupBy: GroupingOptions.ExportDate,
-				sortBy: SortingOptions.Location,
+				imageOutputPathTemplate: "{{citekey}}/",
+				imageBaseNameTemplate: "image",
 			})
 		);
 	}, [addExportFormat, citeFormatState]);
@@ -98,6 +103,7 @@ function SettingsComponent({
 
 	return (
 		<>
+			<AssetDownloader exeVersion={settings.exeVersion} updateSetting={updateSetting} />
 			<SettingItem
 				name="Database"
 				description="Supports Zotero and Juris-M"
@@ -123,6 +129,40 @@ function SettingsComponent({
 					spellCheck="false"
 					placeholder="Example: folder 1/folder 2"
 					defaultValue={settings.noteImportFolder}
+				/>
+			</SettingItem>
+			<SettingItem
+				name="PDF Annotations: Image Format"
+			>
+				<select
+					className="dropdown"
+					defaultValue={settings.pdfExportImageFormat}
+					onChange={(e) => updateSetting("pdfExportImageFormat", e.target.value)}
+				>
+					<option value="jpg">jpg</option>
+					<option value="png">png</option>
+				</select>
+			</SettingItem>
+			<SettingItem
+				name="PDF Annotations: Image Quality (jpg only)"
+			>
+				<input
+					onChange={(e) =>
+						updateSetting("pdfExportImageQuality", Number(e.target.value))
+					}
+					type="number"
+					defaultValue={settings.pdfExportImageQuality}
+				/>
+			</SettingItem>
+			<SettingItem
+				name="PDF Annotations: Image DPI"
+			>
+				<input
+					onChange={(e) =>
+						updateSetting("pdfExportImageDPI", Number(e.target.value))
+					}
+					type="number"
+					defaultValue={settings.pdfExportImageDPI}
 				/>
 			</SettingItem>
 			<SettingItem name="Citation Formats">
@@ -165,8 +205,6 @@ function SettingsComponent({
 export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 	plugin: ZoteroConnector;
 	dbTimer: number;
-	citeDBTimer: number;
-	exportDBTimer: number;
 
 	constructor(app: App, plugin: ZoteroConnector) {
 		super(app, plugin);
@@ -189,20 +227,8 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 		);
 	}
 
-	citeDebounce(fn: () => void) {
-		clearTimeout(this.citeDBTimer);
-		this.citeDBTimer = window.setTimeout(fn, 200);
-	}
-
-	exportDebounce(fn: () => void) {
-		clearTimeout(this.citeDBTimer);
-		this.citeDBTimer = window.setTimeout(fn, 200);
-	}
-
 	addCiteFormat = (format: CitationFormat) => {
-		this.citeDebounce(() => {
-			this.plugin.addFormatCommand(format);
-		});
+		this.plugin.addFormatCommand(format);
 		this.plugin.settings.citeFormats.push(format);
 		this.debouncedSave();
 
@@ -210,12 +236,10 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 	};
 
 	updateCiteFormat = (index: number, format: CitationFormat) => {
-		this.citeDebounce(() => {
-			this.plugin.removeFormatCommand(
-				this.plugin.settings.citeFormats[index]
-			);
-			this.plugin.addFormatCommand(format);
-		});
+		this.plugin.removeFormatCommand(
+			this.plugin.settings.citeFormats[index]
+		);
+		this.plugin.addFormatCommand(format);
 		this.plugin.settings.citeFormats[index] = format;
 		this.debouncedSave();
 
@@ -223,11 +247,9 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 	};
 
 	removeCiteFormat = (index: number) => {
-		this.citeDebounce(() => {
-			this.plugin.removeFormatCommand(
-				this.plugin.settings.citeFormats[index]
-			);
-		});
+		this.plugin.removeFormatCommand(
+			this.plugin.settings.citeFormats[index]
+		);
 		this.plugin.settings.citeFormats.splice(index, 1);
 		this.debouncedSave();
 
@@ -235,9 +257,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 	};
 
 	addExportFormat = (format: ExportFormat) => {
-		this.exportDebounce(() => {
-			this.plugin.addExportCommand(format);
-		});
+		this.plugin.addExportCommand(format);
 		this.plugin.settings.exportFormats.push(format);
 		this.debouncedSave();
 
@@ -245,12 +265,10 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 	};
 
 	updateExportFormat = (index: number, format: ExportFormat) => {
-		this.exportDebounce(() => {
-			this.plugin.removeExportCommand(
-				this.plugin.settings.exportFormats[index]
-			);
-			this.plugin.addExportCommand(format);
-		});
+		this.plugin.removeExportCommand(
+			this.plugin.settings.exportFormats[index]
+		);
+		this.plugin.addExportCommand(format);
 		this.plugin.settings.exportFormats[index] = format;
 		this.debouncedSave();
 
@@ -258,11 +276,9 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 	};
 
 	removeExportFormat = (index: number) => {
-		this.exportDebounce(() => {
-			this.plugin.removeExportCommand(
-				this.plugin.settings.exportFormats[index]
-			);
-		});
+		this.plugin.removeExportCommand(
+			this.plugin.settings.exportFormats[index]
+		);
 		this.plugin.settings.exportFormats.splice(index, 1);
 		this.debouncedSave();
 

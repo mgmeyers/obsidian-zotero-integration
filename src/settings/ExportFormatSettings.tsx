@@ -1,7 +1,15 @@
 import React from "react";
-import Select, { MultiValue, StylesConfig } from "react-select";
+import { MultiValue, SingleValue } from "react-select";
+import AsyncSelect from "react-select/async";
+
 import { ExportFormat } from "../types";
+import { cslListRaw } from "./cslList";
 import { Icon } from "./Icon";
+import {
+	customSelectStyles,
+	loadCSLOptions,
+	NoOptionMessage,
+} from "./select.helpers";
 
 interface FormatSettingsProps {
 	format: ExportFormat;
@@ -10,72 +18,53 @@ interface FormatSettingsProps {
 	updateFormat: (index: number, format: ExportFormat) => void;
 }
 
-const typeOptions = [
-	{ value: "annotation", label: "Annotation" },
-	{ value: "artwork", label: "Artwork" },
-	{ value: "attachment", label: "Attachment" },
-	{ value: "audioRecording", label: "Audio Recording" },
-	{ value: "bill", label: "Bill" },
-	{ value: "blogPost", label: "Blog Post" },
-	{ value: "book", label: "Book" },
-	{ value: "bookSection", label: "Book Section" },
-	{ value: "case", label: "Case" },
-	{ value: "classic", label: "Classic" },
-	{ value: "computerProgram", label: "Software" },
-	{ value: "conferencePaper", label: "Conference Paper" },
-	{ value: "dictionaryEntry", label: "Dictionary Entry" },
-	{ value: "document", label: "Document" },
-	{ value: "email", label: "E-mail" },
-	{ value: "encyclopediaArticle", label: "Encyclopedia Article" },
-	{ value: "film", label: "Film" },
-	{ value: "forumPost", label: "Forum Post" },
-	{ value: "gazette", label: "Gazette" },
-	{ value: "hearing", label: "Hearing" },
-	{ value: "instantMessage", label: "Instant Message" },
-	{ value: "interview", label: "Interview" },
-	{ value: "journalArticle", label: "Journal Article" },
-	{ value: "legalCommentary", label: "Legal Commentary" },
-	{ value: "letter", label: "Letter" },
-	{ value: "magazineArticle", label: "Magazine Article" },
-	{ value: "manuscript", label: "Manuscript" },
-	{ value: "map", label: "Map" },
-	{ value: "newspaperArticle", label: "Newspaper Article" },
-	{ value: "note", label: "Note" },
-	{ value: "patent", label: "Patent" },
-	{ value: "periodical", label: "Periodical" },
-	{ value: "podcast", label: "Podcast" },
-	{ value: "preprint", label: "Preprint" },
-	{ value: "presentation", label: "Presentation" },
-	{ value: "radioBroadcast", label: "Radio Broadcast" },
-	{ value: "regulation", label: "Regulation" },
-	{ value: "report", label: "Report" },
-	{ value: "standard", label: "Standard" },
-	{ value: "statute", label: "Statute" },
-	{ value: "thesis", label: "Thesis" },
-	{ value: "treaty", label: "Treaty" },
-	{ value: "tvBroadcast", label: "TV Broadcast" },
-	{ value: "videoRecording", label: "Video Recording" },
-	{ value: "webpage", label: "Web Page" },
-];
-
-const customStyles: StylesConfig = {
-	control: (provided, state) => {
-		return {
-			...provided,
-			borderColor: state.isFocused
-				? "var(--interactive-accent)"
-				: "var(--background-modifier-border)",
-			boxShadow: state.isFocused
-				? "0 0 0 1px var(--interactive-accent)"
-				: "none",
-			":hover": {
-				borderColor: state.isFocused
-					? "var(--interactive-accent)"
-					: "var(--background-modifier-border)",
-			},
-		};
-	},
-};
+// const typeOptions = [
+// 	{ value: "annotation", label: "Annotation" },
+// 	{ value: "artwork", label: "Artwork" },
+// 	{ value: "attachment", label: "Attachment" },
+// 	{ value: "audioRecording", label: "Audio Recording" },
+// 	{ value: "bill", label: "Bill" },
+// 	{ value: "blogPost", label: "Blog Post" },
+// 	{ value: "book", label: "Book" },
+// 	{ value: "bookSection", label: "Book Section" },
+// 	{ value: "case", label: "Case" },
+// 	{ value: "classic", label: "Classic" },
+// 	{ value: "computerProgram", label: "Software" },
+// 	{ value: "conferencePaper", label: "Conference Paper" },
+// 	{ value: "dictionaryEntry", label: "Dictionary Entry" },
+// 	{ value: "document", label: "Document" },
+// 	{ value: "email", label: "E-mail" },
+// 	{ value: "encyclopediaArticle", label: "Encyclopedia Article" },
+// 	{ value: "film", label: "Film" },
+// 	{ value: "forumPost", label: "Forum Post" },
+// 	{ value: "gazette", label: "Gazette" },
+// 	{ value: "hearing", label: "Hearing" },
+// 	{ value: "instantMessage", label: "Instant Message" },
+// 	{ value: "interview", label: "Interview" },
+// 	{ value: "journalArticle", label: "Journal Article" },
+// 	{ value: "legalCommentary", label: "Legal Commentary" },
+// 	{ value: "letter", label: "Letter" },
+// 	{ value: "magazineArticle", label: "Magazine Article" },
+// 	{ value: "manuscript", label: "Manuscript" },
+// 	{ value: "map", label: "Map" },
+// 	{ value: "newspaperArticle", label: "Newspaper Article" },
+// 	{ value: "note", label: "Note" },
+// 	{ value: "patent", label: "Patent" },
+// 	{ value: "periodical", label: "Periodical" },
+// 	{ value: "podcast", label: "Podcast" },
+// 	{ value: "preprint", label: "Preprint" },
+// 	{ value: "presentation", label: "Presentation" },
+// 	{ value: "radioBroadcast", label: "Radio Broadcast" },
+// 	{ value: "regulation", label: "Regulation" },
+// 	{ value: "report", label: "Report" },
+// 	{ value: "standard", label: "Standard" },
+// 	{ value: "statute", label: "Statute" },
+// 	{ value: "thesis", label: "Thesis" },
+// 	{ value: "treaty", label: "Treaty" },
+// 	{ value: "tvBroadcast", label: "TV Broadcast" },
+// 	{ value: "videoRecording", label: "Video Recording" },
+// 	{ value: "webpage", label: "Web Page" },
+// ];
 
 export function ExportFormatSettings({
 	format,
@@ -83,6 +72,10 @@ export function ExportFormatSettings({
 	updateFormat,
 	removeFormat,
 }: FormatSettingsProps) {
+	const defaultStyle = React.useMemo(() => {
+		return cslListRaw.find((item) => item.value === format.cslStyle);
+	}, [format.cslStyle]);
+
 	const onChangeStr = React.useCallback(
 		(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
 			const key = e.target.dataset.key as keyof ExportFormat;
@@ -94,18 +87,11 @@ export function ExportFormatSettings({
 		[updateFormat, index, format]
 	);
 
-	const onChangeDefault = React.useCallback(() => {
-		updateFormat(index, {
-			...format,
-			isDefault: !format.isDefault,
-		});
-	}, [updateFormat, index, format]);
-
-	const onChangeTypes = React.useCallback(
-		(e: MultiValue<{ value: string; label: string }>) => {
+	const onChangeCSLStyle = React.useCallback(
+		(e: SingleValue<{ value: string; label: string }>) => {
 			updateFormat(index, {
 				...format,
-				zoteroItemTypes: e.map((v) => v.value),
+				cslStyle: e?.value,
 			});
 		},
 		[updateFormat, index, format]
@@ -126,44 +112,14 @@ export function ExportFormatSettings({
 						data-key="name"
 						value={format.name}
 					/>
-				</div>
-				<div className="zt-format__delete">
-					<button
-						className="zt-format__delete-btn"
-						onClick={onRemove}
-					>
-						<Icon name="trash" />
-					</button>
-				</div>
-			</div>
-
-			<div className="zt-format__form">
-				<div className="zt-format__label">Use as Default Template</div>
-				<div className="zt-format__input-wrapper">
-					<div
-						onClick={onChangeDefault}
-						className={`checkbox-container${
-							format.isDefault ? " is-enabled" : ""
-						}`}
-					/>
-				</div>
-			</div>
-
-			<div className="zt-format__form">
-				<div className="zt-format__label">Zotero Item Type</div>
-				<div className="zt-format__input-wrapper">
-					<Select
-						defaultValue={typeOptions.filter((o) =>
-							format.zoteroItemTypes.includes(o.value)
-						)}
-						className="zt-multiselect"
-						options={typeOptions}
-						isClearable
-						isMulti
-						isSearchable
-						onChange={onChangeTypes}
-						styles={customStyles}
-					/>
+					<div className="zt-format__delete">
+						<button
+							className="zt-format__delete-btn"
+							onClick={onRemove}
+						>
+							<Icon name="trash" />
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -177,22 +133,54 @@ export function ExportFormatSettings({
 						value={format.outputPathTemplate}
 					/>
 				</div>
-			</div>
-
-			<div className="zt-format__form">
-				<div className="zt-format__label">Asset Output Path</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="assetOutputPathTemplate"
-						value={format.assetOutputPathTemplate}
-					/>
+				<div className="zt-format__input-note">
+					The file path of the exported markdown. Supports templating,
+					eg <pre>My Folder/{"{{citekey}}"}.md</pre>. Templates have
+					access to data from the Zotero item and the current
+					attachment.
 				</div>
 			</div>
 
 			<div className="zt-format__form">
-				<div className="zt-format__label">Header Template</div>
+				<div className="zt-format__label">Image Output Path</div>
+				<div className="zt-format__input-wrapper">
+					<input
+						onChange={onChangeStr}
+						type="text"
+						data-key="imageOutputPathTemplate"
+						value={format.imageOutputPathTemplate}
+					/>
+				</div>
+				<div className="zt-format__input-note">
+					The folder in which images should be saved. Supports
+					templating, eg <pre>Assets/{"{{citekey}}"}/</pre>. Templates
+					have access to data from the Zotero item and the current
+					attachment.
+				</div>
+			</div>
+
+			<div className="zt-format__form">
+				<div className="zt-format__label">Image Base Name</div>
+				<div className="zt-format__input-wrapper">
+					<input
+						onChange={onChangeStr}
+						type="text"
+						data-key="imageBaseNameTemplate"
+						value={format.imageBaseNameTemplate}
+					/>
+				</div>
+				<div className="zt-format__input-note">
+					The base file name of exported images. Eg. <pre>image</pre>{" "}
+					will result in <pre>image-1-x123-y456.jpg</pre> where 1 is
+					the page number and x123 and y456 are the x and y
+					coordinates of rectangle annotation on the page. Supports
+					templating. Templates have access to data from the Zotero
+					item and the current attachment.
+				</div>
+			</div>
+
+			<div className="zt-format__form">
+				<div className="zt-format__label">Header Template File</div>
 				<div className="zt-format__input-wrapper">
 					<input
 						onChange={onChangeStr}
@@ -201,10 +189,21 @@ export function ExportFormatSettings({
 						value={format.headerTemplatePath}
 					/>
 				</div>
+				<div className="zt-format__input-note">
+					Open the data explorer from the command pallet to see
+					available template data. Templates are written using{" "}
+					<a
+						href="https://mozilla.github.io/nunjucks/templating.html#variables"
+						target="_blank"
+					>
+						Nunjucks
+					</a>
+					.
+				</div>
 			</div>
 
 			<div className="zt-format__form">
-				<div className="zt-format__label">Annotation Template</div>
+				<div className="zt-format__label">Annotation Template File</div>
 				<div className="zt-format__input-wrapper">
 					<input
 						onChange={onChangeStr}
@@ -213,10 +212,21 @@ export function ExportFormatSettings({
 						value={format.annotationTemplatePath}
 					/>
 				</div>
+				<div className="zt-format__input-note">
+					Open the data explorer from the command pallet to see
+					available template data. Templates are written using{" "}
+					<a
+						href="https://mozilla.github.io/nunjucks/templating.html#variables"
+						target="_blank"
+					>
+						Nunjucks
+					</a>
+					.
+				</div>
 			</div>
 
 			<div className="zt-format__form">
-				<div className="zt-format__label">Footer Template</div>
+				<div className="zt-format__label">Footer Template File</div>
 				<div className="zt-format__input-wrapper">
 					<input
 						onChange={onChangeStr}
@@ -225,38 +235,42 @@ export function ExportFormatSettings({
 						value={format.footerTemplatePath}
 					/>
 				</div>
-			</div>
-
-			<div className="zt-format__form">
-				<div className="zt-format__label">Group By</div>
-				<div className="zt-format__input-wrapper">
-					<select
-						className="dropdown"
-						data-key="groupBy"
-						defaultValue={format.groupBy}
-						onChange={onChangeStr}
+				<div className="zt-format__input-note">
+					Open the data explorer from the command pallet to see
+					available template data. Templates are written using{" "}
+					<a
+						href="https://mozilla.github.io/nunjucks/templating.html#variables"
+						target="_blank"
 					>
-						<option value="export-date">Default</option>
-						<option value="annotation-date">Annotation Date</option>
-						<option value="tag">Tag</option>
-						<option value="color">Color</option>
-					</select>
+						Nunjucks
+					</a>
+					.
 				</div>
 			</div>
 
 			<div className="zt-format__form">
-				<div className="zt-format__label">Sort By</div>
+				<div className="zt-format__label">Bilbiography Style</div>
 				<div className="zt-format__input-wrapper">
-					<select
-						className="dropdown"
-						data-key="groupBy"
-						defaultValue={format.groupBy}
-						onChange={onChangeStr}
+					<AsyncSelect
+						noOptionsMessage={NoOptionMessage}
+						placeholder="Search..."
+						cacheOptions
+						defaultValue={defaultStyle}
+						className="zt-multiselect"
+						loadOptions={loadCSLOptions}
+						isClearable
+						onChange={onChangeCSLStyle}
+						styles={customSelectStyles}
+					/>
+				</div>
+				<div className="zt-format__input-note">
+					Note, the chosen style must be installed in Zotero. See{" "}
+					<a
+						target="_blank"
+						href="https://www.zotero.org/support/styles"
 					>
-						<option value="location">Default</option>
-						<option value="date">Date</option>
-						<option value="color">Color</option>
-					</select>
+						Zotero: Citation Styles
+					</a>
 				</div>
 			</div>
 		</div>

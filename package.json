@@ -11,6 +11,7 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/download": "^8.0.1",
 		"@types/node": "16.11.6",
 		"@types/nunjucks": "^3.2.1",
 		"@typescript-eslint/eslint-plugin": "5.2.0",
@@ -21,11 +22,14 @@
 		"obsidian": "0.13.30",
 		"obsidian-plugin-cli": "0.8.1",
 		"tslib": "2.3.1",
-		"typescript": "4.4.4"
+		"typescript": "4.4.4",
+		"xml-js": "^1.6.11"
 	},
 	"dependencies": {
 		"@types/react-dom": "17.0.13",
+		"download": "^8.0.0",
 		"escape-path-with-spaces": "1.0.0",
+		"fuse.js": "^6.5.3",
 		"nunjucks": "3.2.3",
 		"preact": "10.6.6",
 		"react": "npm:@preact/compat",

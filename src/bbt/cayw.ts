@@ -1,7 +1,7 @@
-import { Notice, request, moment } from "obsidian";
-import { bringAppToFront, padNumber } from "./helpers";
+import { Notice, request, moment, htmlToMarkdown } from "obsidian";
+import { bringAppToFront, padNumber } from "../helpers";
 import { LoadingModal } from "./LoadingModal";
-import { CitationFormat, Database } from "./types";
+import { CitationFormat, Database } from "../types";
 
 const defaultHeaders = {
 	"Content-Type": "application/json",
@@ -46,7 +46,9 @@ function getQueryParams(format: CitationFormat) {
 		case "formatted-bibliography":
 			return "format=formatted-bibliography";
 		case "formatted-citation":
-			return "format=formatted-citation";
+			return `format=formatted-citation${
+				format.cslStyle ? `&style=${format.cslStyle}` : ""
+			}`;
 		case "pandoc":
 			return `format=pandoc${format.brackets ? "&brackets=true" : ""}`;
 		case "latex":
@@ -66,7 +68,18 @@ export async function getCAYW(format: CitationFormat, database: Database) {
 		"Awaiting item selection from Zotero..."
 	);
 	modal.open();
+
 	try {
+		if (format.format === "formatted-bibliography") {
+			modal.close();
+			const citeKeys = await getCiteKeys(database);
+			return await getBibFromCiteKeys(
+				citeKeys,
+				database,
+				format.cslStyle
+			);
+		}
+
 		const res = await request({
 			method: "GET",
 			url: `http://127.0.0.1:${getPort(
@@ -84,6 +97,28 @@ export async function getCAYW(format: CitationFormat, database: Database) {
 		modal.close();
 		new Notice(`Error processing citation: ${e.message}`, 10000);
 		return null;
+	}
+}
+
+export async function getCiteKeys(database: Database): Promise<string[]> {
+	try {
+		const json = await getCAYWJSON(database);
+
+		if (!json) return [];
+
+		const citeKeys = json
+			.map((e: any) => {
+				return e.citekey;
+			})
+			.filter((e: any) => !!e);
+
+		if (!citeKeys.length) {
+			return [];
+		}
+
+		return citeKeys;
+	} catch (e) {
+		return [];
 	}
 }
 
@@ -154,32 +189,56 @@ export async function getNotesFromCiteKeys(
 		return null;
 	}
 
+	modal.close();
+
 	try {
-		modal.close();
 		return JSON.parse(res).result;
 	} catch (e) {
 		console.error(e);
-		modal.close();
 		new Notice(`Error retrieving notes: ${e.message}`, 10000);
 		return null;
 	}
 }
 
-export async function getBibFromCiteKey(citeKey: string, database: Database) {
+export function getBibFromCiteKey(
+	citeKey: string,
+	database: Database,
+	cslStyle?: string
+) {
+	return getBibFromCiteKeys([citeKey], database, cslStyle);
+}
+
+export async function getBibFromCiteKeys(
+	citeKeys: string[],
+	database: Database,
+	cslStyle?: string
+) {
+	if (!citeKeys || !citeKeys.length) return null;
+
 	let res: string;
 	const modal = new LoadingModal(
 		(window as any).app,
 		"Fetching data from Zotero..."
 	);
 	modal.open();
+
 	try {
+		const params: Record<string, any> = {
+			quickCopy: true,
+			contentType: "html",
+		};
+
+		if (cslStyle) {
+			params.id = cslStyle;
+		}
+
 		res = await request({
 			method: "POST",
 			url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
 			body: JSON.stringify({
 				jsonrpc: "2.0",
 				method: "item.bibliography",
-				params: [[citeKey], { quickCopy: true, contentType: "html" }],
+				params: [citeKeys, params],
 			}),
 			headers: defaultHeaders,
 		});
@@ -193,11 +252,11 @@ export async function getBibFromCiteKey(citeKey: string, database: Database) {
 		return null;
 	}
 
+	modal.close();
+
 	try {
-		modal.close();
-		return JSON.parse(res).result;
+		return htmlToMarkdown(JSON.parse(res).result);
 	} catch (e) {
-		modal.close();
 		console.error(e);
 		new Notice(
 			`Error retrieving formatted bibliography: ${e.message}`,
@@ -237,12 +296,12 @@ export async function getItemJSONFromCiteKeys(
 		return null;
 	}
 
+	modal.close();
+
 	try {
-		modal.close();
 		return JSON.parse(JSON.parse(res).result[2]).items;
 	} catch (e) {
 		console.error(e);
-		modal.close();
 		new Notice(`Error retrieving item data: ${e.message}`, 10000);
 		return null;
 	}
@@ -278,9 +337,9 @@ export async function getIssueDateFromCiteKey(
 		return null;
 	}
 
-	try {
-		modal.close();
+	modal.close();
 
+	try {
 		const items = JSON.parse(JSON.parse(res).result[2]);
 		const dates = items
 			.map((i: any) => {
@@ -305,7 +364,6 @@ export async function getIssueDateFromCiteKey(
 		return dates[0] ? dates[0] : null;
 	} catch (e) {
 		console.error(e);
-		modal.close();
 		new Notice(`Error retrieving item data: ${e.message}`, 10000);
 		return null;
 	}

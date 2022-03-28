@@ -1,6 +1,14 @@
 import React from "react";
+import { SingleValue } from "react-select";
+import AsyncSelect from "react-select/async";
 import { CitationFormat, Format } from "../types";
 import { Icon } from "./Icon";
+import { cslListRaw } from "./cslList";
+import {
+	customSelectStyles,
+	loadCSLOptions,
+	NoOptionMessage,
+} from "./select.helpers";
 
 interface FormatSettingsProps {
 	format: CitationFormat;
@@ -15,6 +23,10 @@ export function CiteFormatSettings({
 	updateFormat,
 	removeFormat,
 }: FormatSettingsProps) {
+	const defaultStyle = React.useMemo(() => {
+		return cslListRaw.find((item) => item.value === format.cslStyle);
+	}, [format.cslStyle]);
+
 	const onChangeName = React.useCallback(
 		(e) => {
 			updateFormat(index, {
@@ -45,6 +57,16 @@ export function CiteFormatSettings({
 			}
 
 			updateFormat(index, newFormat);
+		},
+		[updateFormat, index, format]
+	);
+
+	const onChangeCSLStyle = React.useCallback(
+		(e: SingleValue<{ value: string; label: string }>) => {
+			updateFormat(index, {
+				...format,
+				cslStyle: e?.value,
+			});
 		},
 		[updateFormat, index, format]
 	);
@@ -80,14 +102,14 @@ export function CiteFormatSettings({
 						type="text"
 						value={format.name}
 					/>
-				</div>
-				<div className="zt-format__delete">
-					<button
-						className="zt-format__delete-btn"
-						onClick={onRemove}
-					>
-						<Icon name="trash" />
-					</button>
+					<div className="zt-format__delete">
+						<button
+							className="zt-format__delete-btn"
+							onClick={onRemove}
+						>
+							<Icon name="trash" />
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -103,14 +125,44 @@ export function CiteFormatSettings({
 						<option value="biblatex">BibLaTeX</option>
 						<option value="pandoc">Pandoc</option>
 						<option value="formatted-citation">
-							Quick Copy Citation
+							Formatted Citation
 						</option>
 						<option value="formatted-bibliography">
-							Quick Copy Bibliography
+							Formatted Bibliography
 						</option>
 					</select>
 				</div>
 			</div>
+
+			{["formatted-citation", "formatted-bibliography"].contains(
+				format.format
+			) && (
+				<div className="zt-format__form">
+					<div className="zt-format__label">Citation Style</div>
+					<div className="zt-format__input-wrapper">
+						<AsyncSelect
+							noOptionsMessage={NoOptionMessage}
+							placeholder="Search..."
+							cacheOptions
+							defaultValue={defaultStyle}
+							className="zt-multiselect"
+							loadOptions={loadCSLOptions}
+							isClearable
+							onChange={onChangeCSLStyle}
+							styles={customSelectStyles}
+						/>
+					</div>
+					<div className="zt-format__input-note">
+						Note, the chosen style must be installed in Zotero. See{" "}
+						<a
+							target="_blank"
+							href="https://www.zotero.org/support/styles"
+						>
+							Zotero: Citation Styles
+						</a>
+					</div>
+				</div>
+			)}
 
 			{["latex", "biblatex"].contains(format.format) && (
 				<div className="zt-format__form">
