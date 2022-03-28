@@ -16,7 +16,7 @@ The base file name of exported images. Eg. `image` will result in `image-1-x123-
 
 ### Header, annotation, and footer templates
 
-See [[Templating]].
+See [Templating](Templating.md).
 
 ### Bibliography style
 
