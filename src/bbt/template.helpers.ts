@@ -4,6 +4,109 @@ import { ExportToMarkdownParams } from "src/types";
 
 export const template = new nunjucks.Environment();
 
+function _prepareAttributeParts(attr: string) {
+	if (!attr) {
+		return [];
+	}
+
+	if (typeof attr === "string") {
+		return attr.split(".");
+	}
+
+	return [attr];
+}
+
+function hasOwnProp(obj: any, k: string) {
+	return Object.prototype.hasOwnProperty.call(obj, k);
+}
+
+function getAttrGetter(attribute: string) {
+	const parts = _prepareAttributeParts(attribute);
+
+	return function attrGetter(item: any) {
+		let _item = item;
+
+		for (let i = 0; i < parts.length; i++) {
+			const part = parts[i];
+
+			// If item is not an object, and we still got parts to handle, it means
+			// that something goes wrong. Just roll out to undefined in that case.
+			if (hasOwnProp(_item, part)) {
+				_item = _item[part];
+			} else {
+				return undefined;
+			}
+		}
+
+		return _item;
+	};
+}
+
+type FilterByCmd =
+	| "startswith"
+	| "endswith"
+	| "contains"
+	| "dateafter"
+	| "dateonorafter"
+	| "datebefore"
+	| "dateonorbefore";
+
+template.addFilter(
+	"filterby",
+	function (arr: any[], prop: string, cmd: FilterByCmd, val: string) {
+		const getter = getAttrGetter(prop);
+
+		return arr.filter((v: any) => {
+			let toTest: string = typeof v === "string" ? v : getter(v);
+
+			if (!toTest) return false;
+
+			if (["startswith", "endswith", "contains"].includes(cmd)) {
+				const testVal = val.toLocaleLowerCase();
+
+				toTest = toTest.toString().toLocaleLowerCase();
+
+				if (cmd === "startswith") {
+					return toTest.startsWith(testVal);
+				}
+
+				if (cmd === "endswith") {
+					return toTest.endsWith(testVal);
+				}
+
+				if (cmd === "contains") {
+					return toTest.contains(testVal);
+				}
+			}
+
+			if (
+				[
+					"dateafter",
+					"dateonorafter",
+					"datebefore",
+					"dateonorbefore",
+				].includes(cmd)
+			) {
+				if (!moment.isMoment(toTest) || !moment.isMoment(val))
+					return false;
+
+				switch (cmd) {
+					case "dateafter":
+						return toTest.isAfter(val);
+					case "dateonorafter":
+						return toTest.isSameOrAfter(val);
+					case "datebefore":
+						return toTest.isBefore(val);
+					case "dateonorbefore":
+						return toTest.isSameOrBefore(val);
+				}
+			}
+
+			return false;
+		});
+	}
+);
+
 template.addFilter("format", function (date: moment.Moment, format: string) {
 	if (date instanceof moment) {
 		return date.format(format);

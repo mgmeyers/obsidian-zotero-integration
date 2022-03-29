@@ -7,7 +7,7 @@ import { SettingItem } from "./SettingItem";
 import { ZoteroConnectorSettings } from "src/types";
 import { Icon } from "./Icon";
 
-const currentVersion = "0.0.10";
+const currentVersion = "0.0.11";
 
 const options: Record<string, Record<string, string>> = {
 	darwin: {
