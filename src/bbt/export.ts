@@ -139,7 +139,7 @@ export async function exportToMarkdown(
 		const attachments = itemData[i].attachments;
 		for (let j = 0, jLen = attachments.length; j < jLen; j++) {
 			const pdfInputPath = attachments[j].path;
-			if (!pdfInputPath.endsWith(".pdf")) continue;
+			if (!pdfInputPath?.endsWith(".pdf")) continue;
 
 			const pathTemplateData = {
 				...itemData[i],
@@ -324,7 +324,7 @@ export async function pdfDebugPrompt(settings: ZoteroConnectorSettings) {
 			const attachments = itemData[i].attachments;
 			for (let j = 0, jLen = attachments.length; j < jLen; j++) {
 				const pdfInputPath = attachments[j].path;
-				if (!pdfInputPath.endsWith(".pdf")) continue;
+				if (!pdfInputPath?.endsWith(".pdf")) continue;
 
 				let annots: any;
 

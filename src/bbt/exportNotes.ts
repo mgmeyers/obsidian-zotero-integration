@@ -60,7 +60,7 @@ export async function newFile(
 	citeKey: string,
 	content: string
 ) {
-	const target = !folder.endsWith("/") ? folder + "/" : folder;
+	const target = folder.replace(/(?:^\/|\/$)/g, "");
 
 	if (!app.vault.getAbstractFileByPath(target)) {
 		try {
@@ -75,7 +75,7 @@ export async function newFile(
 	}
 
 	try {
-		return await app.vault.create(`${target}${citeKey}.md`, content);
+		return await app.vault.create(`${target}/${citeKey}.md`, content);
 	} catch (e) {
 		console.error(e);
 		new Notice(
