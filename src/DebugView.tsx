@@ -62,15 +62,13 @@ export class DebugView extends ItemView {
 			{ text: "Prompt For Selection" },
 			(btn) => {
 				btn.onClickEvent((e) => {
-					pdfDebugPrompt(this.plugin.settings).then(
-						(res) => {
-							if (!res || res.length === 0) {
-								this.wrapper.innerText = "No data retrieved";
-							}
-
+					pdfDebugPrompt(this.plugin.settings).then((res) => {
+						if (!res || res.length === 0) {
+							this.wrapper.innerText = "No data retrieved";
+						} else {
 							this.mountJsonViewer(res[0]);
 						}
-					);
+					});
 				});
 			}
 		);
@@ -97,12 +95,14 @@ export class DebugView extends ItemView {
 			<JSONTree
 				data={json}
 				sortObjectKeys={(a: string, b: string) => a.localeCompare(b)}
-				isCustomNode={v => v instanceof moment}
-				valueRenderer={v => {
+				isCustomNode={(v) => v instanceof moment}
+				valueRenderer={(v) => {
 					if (v instanceof moment) {
-						return `moment(${(v as moment.Moment).toLocaleString()})`
+						return `moment(${(
+							v as moment.Moment
+						).toLocaleString()})`;
 					}
-					return v
+					return v;
 				}}
 				theme={
 					document.body.hasClass("theme-dark")

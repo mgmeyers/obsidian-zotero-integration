@@ -103,6 +103,7 @@ export async function getBibFromCiteKeys(
 		return htmlToMarkdown(JSON.parse(res).result);
 	} catch (e) {
 		console.error(e);
+		console.error(`Response from BBT: ${res}`);
 		new Notice(
 			`Error converting formatted bibliography to markdown: ${e.message}`,
 			10000

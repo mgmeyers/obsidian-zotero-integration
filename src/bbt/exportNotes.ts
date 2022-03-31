@@ -63,7 +63,15 @@ export async function newFile(
 	const target = !folder.endsWith("/") ? folder + "/" : folder;
 
 	if (!app.vault.getAbstractFileByPath(target)) {
-		await app.vault.createFolder(target);
+		try {
+			await app.vault.createFolder(target);
+		} catch (e) {
+			console.error(e);
+			new Notice(
+				`Error creating folder "${target}": ${e.message}`,
+				10000
+			);
+		}
 	}
 
 	try {
@@ -71,7 +79,7 @@ export async function newFile(
 	} catch (e) {
 		console.error(e);
 		new Notice(
-			`Error creating file ${target}${citeKey}.md: ${e.message}`,
+			`Error creating file "${target}${citeKey}.md": ${e.message}`,
 			10000
 		);
 		return null;

@@ -29,21 +29,21 @@ function processNote(note: any) {
 		note.note = htmlToMarkdown(note.note);
 	}
 	if (note.dateAdded) {
-		note.dateAdded = moment(new Date(note.dateAdded));
+		note.dateAdded = moment(note.dateAdded);
 	}
 
 	if (note.dateModified) {
-		note.dateModified = moment(new Date(note.dateModified));
+		note.dateModified = moment(note.dateModified);
 	}
 }
 
 function processAttachment(attachment: any) {
 	if (attachment.dateAdded) {
-		attachment.dateAdded = moment(new Date(attachment.dateAdded));
+		attachment.dateAdded = moment(attachment.dateAdded);
 	}
 
 	if (attachment.dateModified) {
-		attachment.dateModified = moment(new Date(attachment.dateModified));
+		attachment.dateModified = moment(attachment.dateModified);
 	}
 
 	if (attachment.uri) {
@@ -57,7 +57,7 @@ function processAnnotation(
 	attachment: any,
 	imageRelativePath: any
 ) {
-	annotation.date = moment(new Date(annotation.date));
+	annotation.date = moment(annotation.date);
 	annotation.attachment = attachment;
 
 	if (annotation.imagePath) {
@@ -79,27 +79,25 @@ async function processItem(
 	item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
 
 	if (item.accessDate) {
-		item.accessDate = moment(new Date(item.accessDate));
+		item.accessDate = moment(item.accessDate);
 	}
 
 	if (item.dateAdded) {
-		item.dateAdded = moment(new Date(item.dateAdded));
+		item.dateAdded = moment(item.dateAdded);
 	}
 
 	if (item.dateModified) {
-		item.dateModified = moment(new Date(item.dateModified));
+		item.dateModified = moment(item.dateModified);
 	}
 
 	try {
 		item.date = await getIssueDateFromCiteKey(item.citekey, database);
-	} catch (e) {
-		return false;
-	}
+	} catch {}
 
 	try {
 		item.bibliography = await getBibFromCiteKey(item.citekey, database);
-	} catch (e) {
-		return false;
+	} catch {
+		item.bibliography = "Error generating bibliography";
 	}
 
 	item.notes?.forEach(processNote);
@@ -121,8 +119,10 @@ export async function exportToMarkdown(
 	}
 
 	const citeKeys: string[] = await getCiteKeys(database);
-	let itemData: any;
 
+	if (!citeKeys.length) return false;
+
+	let itemData: any;
 	try {
 		itemData = await getItemJSONFromCiteKeys(citeKeys, database);
 	} catch (e) {
@@ -301,8 +301,10 @@ export async function exportToMarkdown(
 
 export async function pdfDebugPrompt(settings: ZoteroConnectorSettings) {
 	const citeKeys: string[] = await getCiteKeys(settings.database);
-	let itemData: any;
 
+	if (!citeKeys.length) return null;
+
+	let itemData: any;
 	try {
 		itemData = await getItemJSONFromCiteKeys(citeKeys, settings.database);
 	} catch (e) {

@@ -56,7 +56,7 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
 
 		modal.close();
 
-		if (result.stderr) {
+		if (result.stderr && !result.stderr.includes("warning")) {
 			new Notice(`Error processing PDF: ${result.stderr}`, 10000);
 			throw new Error(result.stderr);
 		}
@@ -68,8 +68,4 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
 		new Notice(`Error processing PDF: ${e.message}`, 10000);
 		throw e;
 	}
-}
-
-function escapePath(input: string): string {
-	throw new Error("Function not implemented.");
 }

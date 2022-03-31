@@ -1981,10 +1981,10 @@ obsidian-utils@^0.10.0:
     node-fetch "^2.6.1"
     which "^2.0.2"
 
-obsidian@0.13.30:
-  version "0.13.30"
-  resolved "https://registry.yarnpkg.com/obsidian/-/obsidian-0.13.30.tgz#215697376c5c0059d7661df400440d97224d3f95"
-  integrity sha512-uAOrIyeHE9qYzg1Qjfpy/qlyLUFX9oyKWeHYO8NVDoI+pm5VUTMe7XWcsXPwb9iVsVmggVJcdV15Vqm9bljhxQ==
+obsidian@^0.14.4:
+  version "0.14.4"
+  resolved "https://registry.yarnpkg.com/obsidian/-/obsidian-0.14.4.tgz#c4602d5a48482513a29242576074f82dec510cdc"
+  integrity sha512-lWU1w/NlXuswAa35ImAbyElLOOno1C13KCZE19kqtcxSPIquvi5Fzy8zBbQ6ZRZZvkvftUiToCp5lcZFRMGxrQ==
   dependencies:
     "@codemirror/state" "^0.19.6"
     "@codemirror/view" "^0.19.31"
