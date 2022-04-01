@@ -1,41 +1,61 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "0.12.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
-	"main": "main.js",
-	"scripts": {
-		"dev": "cross-env BUILD=dev obsidian-plugin dev src/main.ts -e esbuild.config.js",
-		"build": "cross-env BUILD=production obsidian-plugin build src/main.ts -e esbuild.config.js"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "MIT",
-	"devDependencies": {
-		"@types/download": "^8.0.1",
-		"@types/node": "16.11.6",
-		"@types/nunjucks": "^3.2.1",
-		"@typescript-eslint/eslint-plugin": "5.2.0",
-		"@typescript-eslint/parser": "5.2.0",
-		"builtin-modules": "3.2.0",
-		"cross-env": "7.0.3",
-		"esbuild": "0.13.12",
-		"obsidian": "0.14.4",
-		"obsidian-plugin-cli": "0.8.1",
-		"tslib": "2.3.1",
-		"typescript": "4.4.4",
-		"xml-js": "^1.6.11"
-	},
-	"dependencies": {
-		"@types/react-dom": "17.0.13",
-		"download": "^8.0.0",
-		"escape-path-with-spaces": "1.0.0",
-		"execa": "^6.1.0",
-		"fuse.js": "^6.5.3",
-		"nunjucks": "3.2.3",
-		"preact": "10.6.6",
-		"react": "npm:@preact/compat",
-		"react-dom": "npm:@preact/compat",
-		"react-json-tree": "0.16.1",
-		"react-select": "5.2.2"
-	}
+  "name": "obsidian-sample-plugin",
+  "version": "0.12.0",
+  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "main": "main.js",
+  "scripts": {
+    "dev": "cross-env BUILD=dev obsidian-plugin dev src/main.ts -e esbuild.config.js",
+    "build": "cross-env BUILD=production obsidian-plugin build src/main.ts -e esbuild.config.js",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src/**/* --fix",
+    "sort-imports": "import-sort --write \"./src/**/*.{ts,tsx}\"",
+    "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",
+    "clean": "yarn sort-imports && yarn prettier && yarn lint:fix"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/download": "^8.0.1",
+    "@types/node": "16.11.6",
+    "@types/nunjucks": "^3.2.1",
+    "@typescript-eslint/eslint-plugin": "5.2.0",
+    "@typescript-eslint/parser": "5.2.0",
+    "builtin-modules": "3.2.0",
+    "cross-env": "7.0.3",
+    "esbuild": "0.13.12",
+    "eslint": "^8.12.0",
+    "eslint-plugin-react": "^7.29.4",
+    "import-sort-cli": "^6.0.0",
+    "import-sort-style-module-alias": "^1.1.0",
+    "obsidian": "0.14.4",
+    "obsidian-plugin-cli": "0.8.1",
+    "prettier": "^2.6.1",
+    "tslib": "2.3.1",
+    "typescript": "4.4.4",
+    "xml-js": "^1.6.11"
+  },
+  "dependencies": {
+    "@types/react-dom": "17.0.13",
+    "download": "^8.0.0",
+    "escape-path-with-spaces": "1.0.0",
+    "execa": "^6.1.0",
+    "fuse.js": "^6.5.3",
+    "nunjucks": "3.2.3",
+    "preact": "10.6.6",
+    "react": "npm:@preact/compat",
+    "react-dom": "npm:@preact/compat",
+    "react-json-tree": "0.16.1",
+    "react-select": "5.2.2"
+  },
+  "importSort": {
+    ".js, .ts, .tsx": {
+      "style": "module-alias",
+      "options": {
+        "alias": [
+          "src"
+        ]
+      }
+    }
+  }
 }

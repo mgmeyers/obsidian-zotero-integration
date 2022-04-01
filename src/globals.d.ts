@@ -1,1 +1,1 @@
-declare module "escape-path-with-spaces";
+declare module 'escape-path-with-spaces';

@@ -1,21 +1,21 @@
-import React from "react";
-import { MultiValue, SingleValue } from "react-select";
-import AsyncSelect from "react-select/async";
+import React from 'react';
+import { SingleValue } from 'react-select';
+import AsyncSelect from 'react-select/async';
 
-import { ExportFormat } from "../types";
-import { cslListRaw } from "./cslList";
-import { Icon } from "./Icon";
+import { ExportFormat } from '../types';
+import { cslListRaw } from './cslList';
+import { Icon } from './Icon';
 import {
-	customSelectStyles,
-	loadCSLOptions,
-	NoOptionMessage,
-} from "./select.helpers";
+  NoOptionMessage,
+  customSelectStyles,
+  loadCSLOptions,
+} from './select.helpers';
 
 interface FormatSettingsProps {
-	format: ExportFormat;
-	index: number;
-	removeFormat: (index: number) => void;
-	updateFormat: (index: number, format: ExportFormat) => void;
+  format: ExportFormat;
+  index: number;
+  removeFormat: (index: number) => void;
+  updateFormat: (index: number, format: ExportFormat) => void;
 }
 
 // const typeOptions = [
@@ -67,212 +67,211 @@ interface FormatSettingsProps {
 // ];
 
 export function ExportFormatSettings({
-	format,
-	index,
-	updateFormat,
-	removeFormat,
+  format,
+  index,
+  updateFormat,
+  removeFormat,
 }: FormatSettingsProps) {
-	const defaultStyle = React.useMemo(() => {
-		return cslListRaw.find((item) => item.value === format.cslStyle);
-	}, [format.cslStyle]);
+  const defaultStyle = React.useMemo(() => {
+    return cslListRaw.find((item) => item.value === format.cslStyle);
+  }, [format.cslStyle]);
 
-	const onChangeStr = React.useCallback(
-		(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-			const key = e.target.dataset.key as keyof ExportFormat;
-			updateFormat(index, {
-				...format,
-				[key]: e.target.value,
-			});
-		},
-		[updateFormat, index, format]
-	);
+  const onChangeStr = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const key = e.target.dataset.key as keyof ExportFormat;
+      updateFormat(index, {
+        ...format,
+        [key]: e.target.value,
+      });
+    },
+    [updateFormat, index, format]
+  );
 
-	const onChangeCSLStyle = React.useCallback(
-		(e: SingleValue<{ value: string; label: string }>) => {
-			updateFormat(index, {
-				...format,
-				cslStyle: e?.value,
-			});
-		},
-		[updateFormat, index, format]
-	);
+  const onChangeCSLStyle = React.useCallback(
+    (e: SingleValue<{ value: string; label: string }>) => {
+      updateFormat(index, {
+        ...format,
+        cslStyle: e?.value,
+      });
+    },
+    [updateFormat, index, format]
+  );
 
-	const onRemove = React.useCallback(() => {
-		removeFormat(index);
-	}, [removeFormat, index]);
+  const onRemove = React.useCallback(() => {
+    removeFormat(index);
+  }, [removeFormat, index]);
 
-	return (
-		<div className="zt-format">
-			<div className="zt-format__form">
-				<div className="zt-format__label">Name</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="name"
-						value={format.name}
-					/>
-					<div className="zt-format__delete">
-						<button
-							className="zt-format__delete-btn"
-							onClick={onRemove}
-						>
-							<Icon name="trash" />
-						</button>
-					</div>
-				</div>
-			</div>
+  return (
+    <div className="zt-format">
+      <div className="zt-format__form">
+        <div className="zt-format__label">Name</div>
+        <div className="zt-format__input-wrapper">
+          <input
+            onChange={onChangeStr}
+            type="text"
+            data-key="name"
+            value={format.name}
+          />
+          <div className="zt-format__delete">
+            <button className="zt-format__delete-btn" onClick={onRemove}>
+              <Icon name="trash" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-			<div className="zt-format__form">
-				<div className="zt-format__label">Output Path</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="outputPathTemplate"
-						value={format.outputPathTemplate}
-					/>
-				</div>
-				<div className="zt-format__input-note">
-					The file path of the exported markdown. Supports templating,
-					eg <pre>My Folder/{"{{citekey}}"}.md</pre>. Templates have
-					access to data from the Zotero item and the current
-					attachment.
-				</div>
-			</div>
+      <div className="zt-format__form">
+        <div className="zt-format__label">Output Path</div>
+        <div className="zt-format__input-wrapper">
+          <input
+            onChange={onChangeStr}
+            type="text"
+            data-key="outputPathTemplate"
+            value={format.outputPathTemplate}
+          />
+        </div>
+        <div className="zt-format__input-note">
+          The file path of the exported markdown. Supports templating, eg{' '}
+          <pre>My Folder/{'{{citekey}}'}.md</pre>. Templates have access to data
+          from the Zotero item and the current attachment.
+        </div>
+      </div>
 
-			<div className="zt-format__form">
-				<div className="zt-format__label">Image Output Path</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="imageOutputPathTemplate"
-						value={format.imageOutputPathTemplate}
-					/>
-				</div>
-				<div className="zt-format__input-note">
-					The folder in which images should be saved. Supports
-					templating, eg <pre>Assets/{"{{citekey}}"}/</pre>. Templates
-					have access to data from the Zotero item and the current
-					attachment.
-				</div>
-			</div>
+      <div className="zt-format__form">
+        <div className="zt-format__label">Image Output Path</div>
+        <div className="zt-format__input-wrapper">
+          <input
+            onChange={onChangeStr}
+            type="text"
+            data-key="imageOutputPathTemplate"
+            value={format.imageOutputPathTemplate}
+          />
+        </div>
+        <div className="zt-format__input-note">
+          The folder in which images should be saved. Supports templating, eg{' '}
+          <pre>Assets/{'{{citekey}}'}/</pre>. Templates have access to data from
+          the Zotero item and the current attachment.
+        </div>
+      </div>
 
-			<div className="zt-format__form">
-				<div className="zt-format__label">Image Base Name</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="imageBaseNameTemplate"
-						value={format.imageBaseNameTemplate}
-					/>
-				</div>
-				<div className="zt-format__input-note">
-					The base file name of exported images. Eg. <pre>image</pre>{" "}
-					will result in <pre>image-1-x123-y456.jpg</pre> where <pre>1</pre> is
-					the page number and <pre>x123</pre> and <pre>y456</pre> are the x and y
-					coordinates of rectangle annotation on the page. Supports
-					templating. Templates have access to data from the Zotero
-					item and the current attachment.
-				</div>
-			</div>
+      <div className="zt-format__form">
+        <div className="zt-format__label">Image Base Name</div>
+        <div className="zt-format__input-wrapper">
+          <input
+            onChange={onChangeStr}
+            type="text"
+            data-key="imageBaseNameTemplate"
+            value={format.imageBaseNameTemplate}
+          />
+        </div>
+        <div className="zt-format__input-note">
+          The base file name of exported images. Eg. <pre>image</pre> will
+          result in <pre>image-1-x123-y456.jpg</pre> where <pre>1</pre> is the
+          page number and <pre>x123</pre> and <pre>y456</pre> are the x and y
+          coordinates of rectangle annotation on the page. Supports templating.
+          Templates have access to data from the Zotero item and the current
+          attachment.
+        </div>
+      </div>
 
-			<div className="zt-format__form">
-				<div className="zt-format__label">Header Template File</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="headerTemplatePath"
-						value={format.headerTemplatePath}
-					/>
-				</div>
-				<div className="zt-format__input-note">
-					Open the data explorer from the command pallet to see
-					available template data. Templates are written using{" "}
-					<a
-						href="https://mozilla.github.io/nunjucks/templating.html#variables"
-						target="_blank"
-					>
-						Nunjucks
-					</a>
-					.
-				</div>
-			</div>
+      <div className="zt-format__form">
+        <div className="zt-format__label">Header Template File</div>
+        <div className="zt-format__input-wrapper">
+          <input
+            onChange={onChangeStr}
+            type="text"
+            data-key="headerTemplatePath"
+            value={format.headerTemplatePath}
+          />
+        </div>
+        <div className="zt-format__input-note">
+          Open the data explorer from the command pallet to see available
+          template data. Templates are written using{' '}
+          <a
+            href="https://mozilla.github.io/nunjucks/templating.html#variables"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Nunjucks
+          </a>
+          .
+        </div>
+      </div>
 
-			<div className="zt-format__form">
-				<div className="zt-format__label">Annotation Template File</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="annotationTemplatePath"
-						value={format.annotationTemplatePath}
-					/>
-				</div>
-				<div className="zt-format__input-note">
-					Open the data explorer from the command pallet to see
-					available template data. Templates are written using{" "}
-					<a
-						href="https://mozilla.github.io/nunjucks/templating.html#variables"
-						target="_blank"
-					>
-						Nunjucks
-					</a>
-					.
-				</div>
-			</div>
+      <div className="zt-format__form">
+        <div className="zt-format__label">Annotation Template File</div>
+        <div className="zt-format__input-wrapper">
+          <input
+            onChange={onChangeStr}
+            type="text"
+            data-key="annotationTemplatePath"
+            value={format.annotationTemplatePath}
+          />
+        </div>
+        <div className="zt-format__input-note">
+          Open the data explorer from the command pallet to see available
+          template data. Templates are written using{' '}
+          <a
+            href="https://mozilla.github.io/nunjucks/templating.html#variables"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Nunjucks
+          </a>
+          .
+        </div>
+      </div>
 
-			<div className="zt-format__form">
-				<div className="zt-format__label">Footer Template File</div>
-				<div className="zt-format__input-wrapper">
-					<input
-						onChange={onChangeStr}
-						type="text"
-						data-key="footerTemplatePath"
-						value={format.footerTemplatePath}
-					/>
-				</div>
-				<div className="zt-format__input-note">
-					Open the data explorer from the command pallet to see
-					available template data. Templates are written using{" "}
-					<a
-						href="https://mozilla.github.io/nunjucks/templating.html#variables"
-						target="_blank"
-					>
-						Nunjucks
-					</a>
-					.
-				</div>
-			</div>
+      <div className="zt-format__form">
+        <div className="zt-format__label">Footer Template File</div>
+        <div className="zt-format__input-wrapper">
+          <input
+            onChange={onChangeStr}
+            type="text"
+            data-key="footerTemplatePath"
+            value={format.footerTemplatePath}
+          />
+        </div>
+        <div className="zt-format__input-note">
+          Open the data explorer from the command pallet to see available
+          template data. Templates are written using{' '}
+          <a
+            href="https://mozilla.github.io/nunjucks/templating.html#variables"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Nunjucks
+          </a>
+          .
+        </div>
+      </div>
 
-			<div className="zt-format__form">
-				<div className="zt-format__label">Bilbiography Style</div>
-				<div className="zt-format__input-wrapper">
-					<AsyncSelect
-						noOptionsMessage={NoOptionMessage}
-						placeholder="Search..."
-						cacheOptions
-						defaultValue={defaultStyle}
-						className="zt-multiselect"
-						loadOptions={loadCSLOptions}
-						isClearable
-						onChange={onChangeCSLStyle}
-						styles={customSelectStyles}
-					/>
-				</div>
-				<div className="zt-format__input-note">
-					Note, the chosen style must be installed in Zotero. See{" "}
-					<a
-						target="_blank"
-						href="https://www.zotero.org/support/styles"
-					>
-						Zotero: Citation Styles
-					</a>
-				</div>
-			</div>
-		</div>
-	);
+      <div className="zt-format__form">
+        <div className="zt-format__label">Bilbiography Style</div>
+        <div className="zt-format__input-wrapper">
+          <AsyncSelect
+            noOptionsMessage={NoOptionMessage}
+            placeholder="Search..."
+            cacheOptions
+            defaultValue={defaultStyle}
+            className="zt-multiselect"
+            loadOptions={loadCSLOptions}
+            isClearable
+            onChange={onChangeCSLStyle}
+            styles={customSelectStyles}
+          />
+        </div>
+        <div className="zt-format__input-note">
+          Note, the chosen style must be installed in Zotero. See{' '}
+          <a
+            target="_blank"
+            href="https://www.zotero.org/support/styles"
+            rel="noreferrer"
+          >
+            Zotero: Citation Styles
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
