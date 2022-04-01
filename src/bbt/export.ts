@@ -107,19 +107,84 @@ async function processItem(
   item.attachments?.forEach(processAttachment);
 }
 
+export async function renderTemplates(
+  app: App,
+  params: ExportToMarkdownParams,
+  templateData: Record<any, any>,
+  existingAnnotations: string
+) {
+  const { headerTemplate, annotationTemplate, footerTemplate } =
+    await getTemplates(app, params);
+
+  if (!headerTemplate && !annotationTemplate && !footerTemplate) {
+    new Notice(
+      `Error: No templates found for export ${params.exportFormat.name}`,
+      10000
+    );
+    return false;
+  }
+
+  let header = '';
+  try {
+    header = headerTemplate
+      ? template.renderString(headerTemplate, templateData)
+      : '';
+  } catch (e) {
+    new Notice(
+      `Error parsing template "${params.exportFormat.headerTemplatePath}": ${e.message}`,
+      10000
+    );
+    return false;
+  }
+
+  let annotations = '';
+  try {
+    annotations = annotationTemplate
+      ? template.renderString(annotationTemplate, templateData)
+      : '';
+  } catch (e) {
+    new Notice(
+      `Error parsing template "${params.exportFormat.annotationTemplatePath}": ${e.message}`,
+      10000
+    );
+    return false;
+  }
+
+  let footer = '';
+  try {
+    footer = footerTemplate
+      ? template.renderString(footerTemplate, templateData)
+      : '';
+  } catch (e) {
+    new Notice(
+      `Error parsing template "${params.exportFormat.footerTemplatePath}": ${e.message}`
+    );
+    return false;
+  }
+
+  const output: string[] = [];
+
+  if (headerTemplate && header.trim()) {
+    output.push(header);
+  }
+
+  if (annotationTemplate && (existingAnnotations + annotations).trim()) {
+    output.push(wrapAnnotationTemplate(existingAnnotations + annotations));
+  }
+
+  if (footerTemplate && footer.trim()) {
+    output.push(footer);
+  }
+
+  return appendExportDate(output.join(''));
+}
+
 export async function exportToMarkdown(
   app: App,
   params: ExportToMarkdownParams
 ) {
   const exportDate = moment();
   const { database, exportFormat, settings } = params;
-  const { headerTemplate, annotationTemplate, footerTemplate } =
-    await getTemplates(app, params);
-
-  if (!headerTemplate && !annotationTemplate && !footerTemplate) {
-    new Notice(`Error: No templates found for export`, 10000);
-    return;
-  }
 
   const citeKeys: string[] = await getCiteKeys(database);
 
@@ -229,64 +294,19 @@ export async function exportToMarkdown(
 
       if (annots) templateData.annotations = annots;
 
-      let header = '';
-      try {
-        header = headerTemplate
-          ? template.renderString(headerTemplate, templateData)
-          : '';
-      } catch (e) {
-        new Notice(
-          `Error parsing template "${params.exportFormat.headerTemplatePath}": ${e.message}`,
-          10000
-        );
-        return false;
-      }
+      const rendered = await renderTemplates(
+        app,
+        params,
+        templateData,
+        existingAnnotations
+      );
 
-      let annotations = '';
-      try {
-        annotations = annotationTemplate
-          ? template.renderString(annotationTemplate, templateData)
-          : '';
-      } catch (e) {
-        new Notice(
-          `Error parsing template "${params.exportFormat.annotationTemplatePath}": ${e.message}`,
-          10000
-        );
-        return false;
-      }
-
-      let footer = '';
-      try {
-        footer = footerTemplate
-          ? template.renderString(footerTemplate, templateData)
-          : '';
-      } catch (e) {
-        new Notice(
-          `Error parsing template "${params.exportFormat.footerTemplatePath}": ${e.message}`
-        );
-        return false;
-      }
-
-      const output: string[] = [];
-
-      if (headerTemplate && header.trim()) {
-        output.push(header);
-      }
-
-      if (annotationTemplate && (existingAnnotations + annotations).trim()) {
-        output.push(wrapAnnotationTemplate(existingAnnotations + annotations));
-      }
-
-      if (footerTemplate && footer.trim()) {
-        output.push(footer);
-      }
-
-      const combined = appendExportDate(output.join(''));
+      if (!rendered) return false;
 
       if (existingMarkdown) {
-        app.vault.modify(existingMarkdown as TFile, combined);
+        app.vault.modify(existingMarkdown as TFile, rendered);
       } else {
-        app.vault.create(markdownPath, combined);
+        app.vault.create(markdownPath, rendered);
       }
     }
   }
@@ -294,7 +314,7 @@ export async function exportToMarkdown(
   return true;
 }
 
-export async function pdfDebugPrompt(settings: ZoteroConnectorSettings) {
+export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   const citeKeys: string[] = await getCiteKeys(settings.database);
 
   if (!citeKeys.length) return null;
@@ -355,7 +375,7 @@ export async function pdfDebugPrompt(settings: ZoteroConnectorSettings) {
       data.annotations = firstPDF.annotations;
     }
 
-    data.lastExportDate = moment();
+    data.lastExportDate = moment().set("year", 1970);
   });
 
   return itemData;

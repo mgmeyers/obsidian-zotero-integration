@@ -194,14 +194,14 @@ export function loadTemplate(
 ): Promise<string | null> {
   if (!path) return null;
 
-  const headerTemplateFile = app.vault.getAbstractFileByPath(
+  const templateFile = app.vault.getAbstractFileByPath(
     sanitizeObsidianPath(path)
   );
 
-  if (!headerTemplateFile) {
+  if (!templateFile) {
     new Notice(`Error: ${name} template not found ${path}`);
     return null;
   }
 
-  return app.vault.cachedRead(headerTemplateFile as TFile);
+  return app.vault.cachedRead(templateFile as TFile);
 }

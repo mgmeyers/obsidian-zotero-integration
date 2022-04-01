@@ -1,10 +1,12 @@
-import { ItemView, WorkspaceLeaf, moment } from 'obsidian';
+import { ItemView, WorkspaceLeaf, moment, TFile } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { JSONTree } from 'react-json-tree';
 
-import { pdfDebugPrompt } from './bbt/export';
+import { dataExplorerPrompt, renderTemplates } from './bbt/export';
+import { sanitizeObsidianPath } from './bbt/template.helpers';
 import ZoteroConnector from './main';
+import { ExportFormat, ExportToMarkdownParams } from './types';
 
 export const viewType = 'zdc-debug';
 
@@ -50,32 +52,184 @@ const tomorrowDark = {
   base0F: '#a3685a',
 };
 
+function TemplatePreview({
+  plugin,
+  formatIndex,
+  templateData,
+}: {
+  plugin: ZoteroConnector;
+  formatIndex: number | null;
+  templateData: Record<any, any>;
+}) {
+  const [template, setTemplate] = React.useState<null | string>(null);
+  const [forceRef, setForceRef] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    const fmt = plugin.settings.exportFormats[formatIndex];
+    const headerFile = fmt.headerTemplatePath
+      ? plugin.app.vault.getAbstractFileByPath(
+          sanitizeObsidianPath(fmt.headerTemplatePath)
+        )
+      : null;
+    const annotFile = fmt.annotationTemplatePath
+      ? plugin.app.vault.getAbstractFileByPath(
+          sanitizeObsidianPath(fmt.annotationTemplatePath)
+        )
+      : null;
+    const footerFile = fmt.footerTemplatePath
+      ? plugin.app.vault.getAbstractFileByPath(
+          sanitizeObsidianPath(fmt.footerTemplatePath)
+        )
+      : null;
+
+    const onUpdate = (file: TFile) => {
+      if (!file) return;
+      if (file === headerFile || file === annotFile || file === footerFile) {
+        setForceRef(Date.now());
+      }
+    };
+
+    const onSettingsUpdate = () => {
+      setForceRef(Date.now());
+    };
+
+    plugin.emitter.on('fileUpdated', onUpdate);
+    plugin.emitter.on('settingsUpdated', onSettingsUpdate);
+
+    return () => {
+      plugin.emitter.off('fileUpdated', onUpdate);
+      plugin.emitter.off('settingsUpdated', onSettingsUpdate);
+    };
+  }, [formatIndex]);
+
+  React.useEffect(() => {
+    if (formatIndex === null) return;
+
+    const params: ExportToMarkdownParams = {
+      settings: plugin.settings,
+      database: plugin.settings.database,
+      exportFormat: plugin.settings.exportFormats[formatIndex],
+    };
+
+    renderTemplates(plugin.app, params, templateData, '').then((t) => {
+      if (t) {
+        setTemplate(t);
+      } else {
+        setTemplate(null);
+      }
+    });
+  }, [formatIndex, forceRef]);
+
+  if (!template) return null;
+
+  return (
+    <div className="zt-json-viewer__preview">
+      <pre>
+        <code>{template}</code>
+      </pre>
+    </div>
+  );
+}
+
+function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
+  const [error, setError] = React.useState<string | null>(null);
+  const [data, setData] = React.useState<Record<any, any> | null>(null);
+  const [previewFormatIndex, setPreviewFormatIndex] = React.useState<
+    number | null
+  >(null);
+
+  const promptForSelection = React.useCallback(() => {
+    dataExplorerPrompt(plugin.settings).then((res) => {
+      if (!res || res.length === 0) {
+        setError('No data retrieved');
+      } else {
+        setError(null);
+        setData(res[0]);
+      }
+    });
+  }, []);
+
+  return (
+    <div className="zt-json-viewer">
+      <div className="zt-json-viewer__btns">
+        <div>
+          <button onClick={promptForSelection}>Prompt For Selection</button>
+        </div>
+        <div>
+          <select
+            className="dropdown"
+            onChange={(e) => {
+              if (e.target.value) {
+                setPreviewFormatIndex(Number(e.target.value));
+              } else {
+                setPreviewFormatIndex(null);
+              }
+            }}
+          >
+            <option value="">Preview Export Format</option>
+            {plugin.settings.exportFormats.map((e, index) => {
+              return (
+                <option key={index} value={index}>
+                  {e.name}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      </div>
+
+      {error ? (
+        <div>{error}</div>
+      ) : (
+        <div>
+          {data && (
+            <>
+              {previewFormatIndex !== null && (
+                <TemplatePreview
+                  plugin={plugin}
+                  formatIndex={previewFormatIndex}
+                  templateData={data}
+                />
+              )}
+              <div className="zt-json-viewer__data">
+                <JSONTree
+                  data={data}
+                  sortObjectKeys={(a: string, b: string) => a.localeCompare(b)}
+                  isCustomNode={(v) => v instanceof moment}
+                  valueRenderer={(v) => {
+                    if (v instanceof moment) {
+                      return `moment(${(v as moment.Moment).toLocaleString()})`;
+                    }
+                    return v;
+                  }}
+                  labelRenderer={(keyPath: (string | number)[]) => {
+                    return keyPath.length === 1 ? 'Template Data' : keyPath[0];
+                  }}
+                  theme={
+                    document.body.hasClass('theme-dark')
+                      ? tomorrowDark
+                      : tomorrowLight
+                  }
+                  invertTheme={false}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export class DataExplorerView extends ItemView {
   plugin: ZoteroConnector;
-  wrapper: HTMLDivElement;
-  btn: HTMLButtonElement;
+  data?: Record<any, any>;
+  exportFormat?: ExportFormat;
 
   constructor(plugin: ZoteroConnector, leaf: WorkspaceLeaf) {
     super(leaf);
     this.plugin = plugin;
-    this.btn = this.contentEl.createEl(
-      'button',
-      { text: 'Prompt For Selection' },
-      (btn) => {
-        btn.onClickEvent((e) => {
-          pdfDebugPrompt(this.plugin.settings).then((res) => {
-            if (!res || res.length === 0) {
-              this.wrapper.innerText = 'No data retrieved';
-            } else {
-              this.mountJsonViewer(res[0]);
-            }
-          });
-        });
-      }
-    );
-    this.wrapper = this.contentEl.createDiv({
-      cls: 'zt-json-viewer',
-    });
+    this.mountJsonViewer();
   }
 
   getViewType() {
@@ -90,31 +244,13 @@ export class DataExplorerView extends ItemView {
     return 'Zotero Data Explorer';
   }
 
-  mountJsonViewer(json: any) {
-    ReactDOM.unmountComponentAtNode(this.wrapper);
-    ReactDOM.render(
-      <JSONTree
-        data={json}
-        sortObjectKeys={(a: string, b: string) => a.localeCompare(b)}
-        isCustomNode={(v) => v instanceof moment}
-        valueRenderer={(v) => {
-          if (v instanceof moment) {
-            return `moment(${(v as moment.Moment).toLocaleString()})`;
-          }
-          return v;
-        }}
-        theme={
-          document.body.hasClass('theme-dark') ? tomorrowDark : tomorrowLight
-        }
-        invertTheme={false}
-        hideRoot
-      />,
-      this.wrapper
-    );
+  mountJsonViewer() {
+    ReactDOM.unmountComponentAtNode(this.contentEl);
+    ReactDOM.render(<DataExporer plugin={this.plugin} />, this.contentEl);
   }
 
   unmountJsonViewer() {
-    ReactDOM.unmountComponentAtNode(this.wrapper);
+    ReactDOM.unmountComponentAtNode(this.contentEl);
   }
 
   async onClose() {

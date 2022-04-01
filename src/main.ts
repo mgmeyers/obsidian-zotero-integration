@@ -1,7 +1,7 @@
 import './styles.css';
 import './bbt/template.helpers';
 
-import { Plugin } from 'obsidian';
+import { Plugin, TFile } from 'obsidian';
 
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown } from './bbt/export';
@@ -13,6 +13,7 @@ import {
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
+import { createEmitter, Emitter } from './emitter';
 
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
@@ -26,11 +27,19 @@ const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   exportFormats: [],
 };
 
+interface ViewEvents {
+  settingsUpdated: () => void;
+  fileUpdated: (file: TFile) => void;
+}
+
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
+  emitter: Emitter<ViewEvents>;
 
   async onload() {
     await this.loadSettings();
+
+    this.emitter = createEmitter();
 
     this.addSettingTab(new ZoteroConnectorSettingsTab(this.app, this));
     this.registerView(viewType, (leaf) => new DataExplorerView(this, leaf));
@@ -42,6 +51,14 @@ export default class ZoteroConnector extends Plugin {
     this.settings.exportFormats.forEach((f) => {
       this.addExportCommand(f);
     });
+
+    this.registerEvent(
+      this.app.vault.on('modify', (file) => {
+        if (file instanceof TFile) {
+          this.emitter.emit('fileUpdated', file);
+        }
+      })
+    );
 
     this.addCommand({
       id: 'zdc-insert-notes',
@@ -133,6 +150,7 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async saveSettings() {
+    this.emitter.emit('settingsUpdated', undefined);
     await this.saveData(this.settings);
   }
 

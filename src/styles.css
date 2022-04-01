@@ -56,6 +56,43 @@
   font-family: var(--font-monospace) !important;
 }
 
+.zt-json-viewer__btns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.zt-json-viewer__btns label {
+  display: block;
+  font-weight: bold;
+  padding-top: 1em;
+}
+
+.zt-json-viewer__btns select {
+  font-size: 1em;
+}
+
+.zt-json-viewer__preview,
+.zt-json-viewer__data {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 1em;
+  margin-top: 1em;
+}
+
+.zt-json-viewer__preview pre {
+  overflow: auto;
+  white-space: pre-wrap;
+  max-height: 70vh;
+  min-height: 400px;
+  font-family: var(--font-text, --font-default, --default-font);
+  margin: 0;
+}
+
+.zt-json-viewer__preview code {
+  font-family: inherit;
+}
+
 .zt-multiselect {
   width: 300px;
 }
