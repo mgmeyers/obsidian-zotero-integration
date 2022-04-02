@@ -54,7 +54,7 @@ export default class ZoteroConnector extends Plugin {
 
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
-        if (file instanceof TFile) {
+        if (file instanceof TFile && this.emitter.events.fileUpdated?.length) {
           this.emitter.emit('fileUpdated', file);
         }
       })
@@ -150,7 +150,9 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async saveSettings() {
-    this.emitter.emit('settingsUpdated', undefined);
+    if (this.emitter.events.settingsUpdated?.length) {
+      this.emitter.emit('settingsUpdated', undefined);
+    }
     await this.saveData(this.settings);
   }
 
