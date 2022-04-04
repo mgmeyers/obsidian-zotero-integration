@@ -24,6 +24,7 @@ import {
   template,
   wrapAnnotationTemplate,
 } from './template.helpers';
+import { mkMDDir } from './helpers';
 
 function processNote(note: any) {
   if (note.note) {
@@ -306,6 +307,7 @@ export async function exportToMarkdown(
       if (existingMarkdown) {
         app.vault.modify(existingMarkdown as TFile, rendered);
       } else {
+        await mkMDDir(markdownPath);
         app.vault.create(markdownPath, rendered);
       }
     }
