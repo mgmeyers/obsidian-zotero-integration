@@ -9,6 +9,9 @@ import {
   NoOptionMessage,
   customSelectStyles,
   loadCSLOptions,
+  buildFileSearch,
+  buildLoadFileOptions,
+  NoFileOptionMessage,
 } from './select.helpers';
 
 interface FormatSettingsProps {
@@ -72,6 +75,32 @@ export function ExportFormatSettings({
   updateFormat,
   removeFormat,
 }: FormatSettingsProps) {
+  const loadFileOptions = React.useMemo(() => {
+    const fileSearch = buildFileSearch();
+    return buildLoadFileOptions(fileSearch);
+  }, []);
+
+  const defaultHeaderTemplate = React.useMemo(() => {
+    const file = app.vault
+      .getMarkdownFiles()
+      .find((item) => item.path === format.headerTemplatePath);
+    return file ? { value: file.path, label: file.path } : undefined;
+  }, [format.headerTemplatePath]);
+
+  const defaultAnnotationTemplate = React.useMemo(() => {
+    const file = app.vault
+      .getMarkdownFiles()
+      .find((item) => item.path === format.annotationTemplatePath);
+    return file ? { value: file.path, label: file.path } : undefined;
+  }, [format.annotationTemplatePath]);
+
+  const defaultFooterTemplate = React.useMemo(() => {
+    const file = app.vault
+      .getMarkdownFiles()
+      .find((item) => item.path === format.footerTemplatePath);
+    return file ? { value: file.path, label: file.path } : undefined;
+  }, [format.footerTemplatePath]);
+
   const defaultStyle = React.useMemo(() => {
     return cslListRaw.find((item) => item.value === format.cslStyle);
   }, [format.cslStyle]);
@@ -92,6 +121,37 @@ export function ExportFormatSettings({
       updateFormat(index, {
         ...format,
         cslStyle: e?.value,
+      });
+    },
+    [updateFormat, index, format]
+  );
+
+  const onChangeHeaderPath = React.useCallback(
+    (e: SingleValue<{ value: string; label: string }>) => {
+      console.log(e?.value);
+      updateFormat(index, {
+        ...format,
+        headerTemplatePath: e?.value,
+      });
+    },
+    [updateFormat, index, format]
+  );
+
+  const onChangeAnnotationPath = React.useCallback(
+    (e: SingleValue<{ value: string; label: string }>) => {
+      updateFormat(index, {
+        ...format,
+        annotationTemplatePath: e?.value,
+      });
+    },
+    [updateFormat, index, format]
+  );
+
+  const onChangeFooterPath = React.useCallback(
+    (e: SingleValue<{ value: string; label: string }>) => {
+      updateFormat(index, {
+        ...format,
+        footerTemplatePath: e?.value,
       });
     },
     [updateFormat, index, format]
@@ -177,11 +237,16 @@ export function ExportFormatSettings({
       <div className="zt-format__form">
         <div className="zt-format__label">Header Template File</div>
         <div className="zt-format__input-wrapper">
-          <input
-            onChange={onChangeStr}
-            type="text"
-            data-key="headerTemplatePath"
-            value={format.headerTemplatePath}
+          <AsyncSelect
+            noOptionsMessage={NoFileOptionMessage}
+            placeholder="Search..."
+            cacheOptions
+            defaultValue={defaultHeaderTemplate}
+            className="zt-multiselect"
+            loadOptions={loadFileOptions}
+            isClearable
+            onChange={onChangeHeaderPath}
+            styles={customSelectStyles}
           />
         </div>
         <div className="zt-format__input-note">
@@ -201,11 +266,16 @@ export function ExportFormatSettings({
       <div className="zt-format__form">
         <div className="zt-format__label">Annotation Template File</div>
         <div className="zt-format__input-wrapper">
-          <input
-            onChange={onChangeStr}
-            type="text"
-            data-key="annotationTemplatePath"
-            value={format.annotationTemplatePath}
+          <AsyncSelect
+            noOptionsMessage={NoFileOptionMessage}
+            placeholder="Search..."
+            cacheOptions
+            defaultValue={defaultAnnotationTemplate}
+            className="zt-multiselect"
+            loadOptions={loadFileOptions}
+            isClearable
+            onChange={onChangeAnnotationPath}
+            styles={customSelectStyles}
           />
         </div>
         <div className="zt-format__input-note">
@@ -225,11 +295,16 @@ export function ExportFormatSettings({
       <div className="zt-format__form">
         <div className="zt-format__label">Footer Template File</div>
         <div className="zt-format__input-wrapper">
-          <input
-            onChange={onChangeStr}
-            type="text"
-            data-key="footerTemplatePath"
-            value={format.footerTemplatePath}
+          <AsyncSelect
+            noOptionsMessage={NoFileOptionMessage}
+            placeholder="Search..."
+            cacheOptions
+            defaultValue={defaultFooterTemplate}
+            className="zt-multiselect"
+            loadOptions={loadFileOptions}
+            isClearable
+            onChange={onChangeFooterPath}
+            styles={customSelectStyles}
           />
         </div>
         <div className="zt-format__input-note">

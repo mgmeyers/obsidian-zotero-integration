@@ -1,3 +1,5 @@
+import Fuse from 'fuse.js';
+import { TFile } from 'obsidian';
 import React from 'react';
 import { StylesConfig } from 'react-select';
 
@@ -45,3 +47,40 @@ export function loadCSLOptions(
 export function NoOptionMessage() {
   return <span>Type to search CSL styles</span>;
 }
+
+export function NoFileOptionMessage() {
+  return <span>Type to search</span>;
+}
+
+export function buildFileSearch() {
+  const files = app.vault.getMarkdownFiles();
+  return new Fuse(files, {
+    keys: ['basename'],
+    minMatchCharLength: 2,
+  });
+}
+
+let fileSearchDB = 0;
+
+export const buildLoadFileOptions =
+  (search: Fuse<TFile>) =>
+  (
+    inputValue: string,
+    callback: (options: Array<{ value: string; label: string }>) => void
+  ) => {
+    if (inputValue === '') {
+      callback([]);
+    } else {
+      clearTimeout(fileSearchDB);
+      fileSearchDB = window.setTimeout(() => {
+        callback(
+          search.search(inputValue).map((res) => {
+            return {
+              value: res.item.path,
+              label: res.item.path,
+            };
+          })
+        );
+      }, 150);
+    }
+  };
