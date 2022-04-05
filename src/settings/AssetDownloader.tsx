@@ -10,7 +10,7 @@ import { ZoteroConnectorSettings } from 'src/types';
 import { Icon } from './Icon';
 import { SettingItem } from './SettingItem';
 
-const currentVersion = '0.0.11';
+const currentVersion = '0.0.12';
 
 const options: Record<string, Record<string, string>> = {
   darwin: {
@@ -37,7 +37,7 @@ function getDownloadUrl() {
   return url;
 }
 
-async function downloadAndExtract() {
+export async function downloadAndExtract() {
   const url = getDownloadUrl();
 
   console.log('Zotero Desktop Connector: Downloading ' + url);
