@@ -75,6 +75,7 @@ export async function getBibFromCiteKeys(
     };
 
     if (cslStyle) {
+      delete params.quickCopy;
       params.id = cslStyle;
     }
 
