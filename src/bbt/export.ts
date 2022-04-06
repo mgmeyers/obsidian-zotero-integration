@@ -373,7 +373,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       a.path?.endsWith('.pdf')
     );
 
-    if (firstPDF.annotations) {
+    if (firstPDF?.annotations) {
       data.annotations = firstPDF.annotations;
     }
 
