@@ -166,7 +166,7 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
               }
             }}
           >
-            <option value="">Preview Export Format</option>
+            <option value="">Preview Import Format</option>
             {plugin.settings.exportFormats.map((e, index) => {
               return (
                 <option key={index} value={index}>
