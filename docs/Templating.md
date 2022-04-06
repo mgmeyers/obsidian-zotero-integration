@@ -38,8 +38,8 @@ And a basic annotation template:
 > {% endif %}
 > {% if annotation.comment %}
 > {{annotation.comment}}
-> {% endif %}
-> {% endfor %}
+{% endif %}
+{% endfor %}
 ```
 
 Please see the [Nunjucks docs](https://mozilla.github.io/nunjucks/templating.html#variables) for more detail on templating.
