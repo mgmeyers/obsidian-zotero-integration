@@ -82,7 +82,7 @@ function SettingsComponent({
   const addExport = React.useCallback(() => {
     setExportFormatState(
       addExportFormat({
-        name: `Export #${exportFormatState.length + 1}`,
+        name: `Import #${exportFormatState.length + 1}`,
         outputPathTemplate: '{{citekey}}.md',
         imageOutputPathTemplate: '{{citekey}}/',
         imageBaseNameTemplate: 'image',
@@ -144,8 +144,8 @@ function SettingsComponent({
         );
       })}
 
-      <SettingItem name="Export Settings" isHeading />
-      <SettingItem name="Image Export Format">
+      <SettingItem name="Import Settings" isHeading />
+      <SettingItem name="Image Format">
         <select
           className="dropdown"
           defaultValue={settings.pdfExportImageFormat}
@@ -157,7 +157,7 @@ function SettingsComponent({
           <option value="png">png</option>
         </select>
       </SettingItem>
-      <SettingItem name="Image Export Quality (jpg only)">
+      <SettingItem name="Image Quality (jpg only)">
         <input
           min="0"
           max="100"
@@ -168,7 +168,7 @@ function SettingsComponent({
           defaultValue={settings.pdfExportImageQuality}
         />
       </SettingItem>
-      <SettingItem name="Image Export DPI">
+      <SettingItem name="Image DPI">
         <input
           min="0"
           onChange={(e) =>
@@ -179,10 +179,10 @@ function SettingsComponent({
         />
       </SettingItem>
 
-      <SettingItem name="Export Formats" isHeading />
+      <SettingItem name="Import Formats" isHeading />
       <SettingItem>
         <button onClick={addExport} className="mod-cta">
-          Add Export Format
+          Add Import Format
         </button>
       </SettingItem>
       {exportFormatState.map((f, i) => {
@@ -227,7 +227,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 
   addCiteFormat = (format: CitationFormat) => {
     this.plugin.addFormatCommand(format);
-    this.plugin.settings.citeFormats.push(format);
+    this.plugin.settings.citeFormats.unshift(format);
     this.debouncedSave();
 
     return this.plugin.settings.citeFormats.slice();
@@ -252,7 +252,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 
   addExportFormat = (format: ExportFormat) => {
     this.plugin.addExportCommand(format);
-    this.plugin.settings.exportFormats.push(format);
+    this.plugin.settings.exportFormats.unshift(format);
     this.debouncedSave();
 
     return this.plugin.settings.exportFormats.slice();
