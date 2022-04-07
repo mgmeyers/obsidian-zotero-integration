@@ -26,9 +26,13 @@ const pdfZoteroLinkTemplate = `
 `;
 
 const annotationsTemplate = `
-{%- for annotation in annotations -%}
+{%- set annots = annotations | filterby("date", "dateafter", lastExportDate) -%}
+{%- if annots.length > 0 %}
+**Exported: {{exportDate | format("YYYY-MM-DD")}}**
+
+{% for annotation in annots -%}
 	{%- if annotation.annotatedText -%}
-    > “{{annotation.annotatedText}}”{% if annotation.color %} <mark style="background:{{annotation.color}}dd">({{annotation.type}})</mark> {% else %} ({{annotation.type}}) {% endif %}[Page {{annotation.page}}](zotero://open-pdf/library/items/{{annotation.attachment.itemKey}}?page={{annotation.page}})
+    > “{{annotation.annotatedText}}”{% if annotation.color %} <mark style="background:{{annotation.color}}dd">{{annotation.type | capitalize}}</mark> {% else %} ({{annotation.type | capitalize}}) {% endif %}[Page {{annotation.page}}](zotero://open-pdf/library/items/{{annotation.attachment.itemKey}}?page={{annotation.page}})
     {%- endif %}
 	{%- if annotation.imageRelativePath -%}
 	> ![[{{annotation.imageRelativePath}}]]
@@ -37,6 +41,7 @@ const annotationsTemplate = `
 {{annotation.comment}}
 {% endif %}
 {% endfor -%}
+{%- endif -%}
 `
 
 export function applyBasicTemplates(itemData: Record<any, any>) {

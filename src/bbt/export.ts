@@ -369,11 +369,13 @@ export async function exportToMarkdown(
       }
 
       const templateData: Record<any, any> = {
-        ...applyBasicTemplates(itemData[i]),
+        ...itemData[i],
         lastExportDate,
       };
 
       if (annots) templateData.annotations = annots;
+
+      applyBasicTemplates(templateData)
 
       const rendered = await renderTemplates(
         app,
