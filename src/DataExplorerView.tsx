@@ -61,6 +61,7 @@ function TemplatePreview({
   formatIndex: number | null;
   templateData: Record<any, any>;
 }) {
+  const [templateError, setTemplateError] = React.useState<null | string>(null);
   const [template, setTemplate] = React.useState<null | string>(null);
   const [forceRef, setForceRef] = React.useState<number>(0);
 
@@ -103,6 +104,8 @@ function TemplatePreview({
   }, [formatIndex]);
 
   React.useEffect(() => {
+    setTemplateError(null);
+
     if (formatIndex === null) return;
 
     const params: ExportToMarkdownParams = {
@@ -111,21 +114,25 @@ function TemplatePreview({
       exportFormat: plugin.settings.exportFormats[formatIndex],
     };
 
-    renderTemplates(plugin.app, params, templateData, '').then((t) => {
-      if (t) {
-        setTemplate(t);
-      } else {
-        setTemplate(null);
-      }
-    });
+    renderTemplates(plugin.app, params, templateData, '', true)
+      .then((t) => {
+        if (t) {
+          setTemplate(t);
+        } else {
+          setTemplate(null);
+        }
+      })
+      .catch((e) => {
+        setTemplateError(e.message);
+      });
   }, [formatIndex, forceRef]);
 
-  if (!template) return null;
+  if (!template && !templateError) return null;
 
   return (
-    <div className="zt-json-viewer__preview">
+    <div className={`zt-json-viewer__preview${templateError ? ' error' : ''}`}>
       <pre>
-        <code>{template}</code>
+        <code>{templateError || template}</code>
       </pre>
     </div>
   );
@@ -200,6 +207,11 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
                     if (v instanceof moment) {
                       return `moment(${(v as moment.Moment).toLocaleString()})`;
                     }
+
+                    if (typeof v === 'string' && v.length > 800) {
+                      return v.slice(0, 800) + '...'
+                    }
+
                     return v;
                   }}
                   labelRenderer={(keyPath: (string | number)[]) => {

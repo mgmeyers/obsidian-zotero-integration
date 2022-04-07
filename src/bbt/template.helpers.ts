@@ -3,7 +3,7 @@ import { App, Notice, TFile, moment } from 'obsidian';
 
 import { ExportToMarkdownParams } from 'src/types';
 
-export const template = new nunjucks.Environment();
+export const template = new nunjucks.Environment(undefined, { autoescape: false });
 
 function _prepareAttributeParts(attr: string) {
   if (!attr) {

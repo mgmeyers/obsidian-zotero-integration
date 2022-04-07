@@ -25,6 +25,7 @@ import {
   wrapAnnotationTemplate,
 } from './template.helpers';
 import { mkMDDir } from './helpers';
+import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 
 function processNote(note: any) {
   if (note.note) {
@@ -108,21 +109,69 @@ async function processItem(
   item.attachments?.forEach(processAttachment);
 }
 
+function generateHelpfulTemplateError(e: Error, template: string) {
+  const message = e.message;
+
+  try {
+    if (message) {
+      const match = message.match(/\[Line (\d+), Column (\d+)]/);
+
+      if (match) {
+        const lines = template.split(/\n/g);
+        const line = lines[Number(match[1]) - 1];
+        const indicator = ' '.repeat(Number(match[2]) - 1) + '^';
+
+        return `${message}\n\n${line}\n${indicator}`;
+      }
+    }
+  } catch {
+    //
+  }
+
+  return message;
+}
+
+function errorToHelpfulNotification(
+  e: Error,
+  templatePath: string,
+  template: string
+) {
+  new Notice(
+    createFragment((f) => {
+      f.createSpan({
+        text: `Error parsing template "${templatePath}": `,
+      });
+      f.createEl('code', {
+        text: generateHelpfulTemplateError(e, template),
+      });
+    }),
+    10000
+  );
+}
+
+function errorToHelpfulError(e: Error, templatePath: string, template: string) {
+  return new Error(
+    `Error parsing template "${templatePath}": ${generateHelpfulTemplateError(
+      e,
+      template
+    )}`
+  );
+}
+
 export async function renderTemplates(
   app: App,
   params: ExportToMarkdownParams,
   templateData: Record<any, any>,
-  existingAnnotations: string
+  existingAnnotations: string,
+  shouldThrow?: boolean
 ) {
   const { headerTemplate, annotationTemplate, footerTemplate } =
     await getTemplates(app, params);
 
   if (!headerTemplate && !annotationTemplate && !footerTemplate) {
-    new Notice(
-      `Error: No templates found for export ${params.exportFormat.name}`,
-      10000
+    throw new Error(
+      `No templates found for export ${params.exportFormat.name}`
     );
-    return false;
   }
 
   let header = '';
@@ -131,11 +180,20 @@ export async function renderTemplates(
       ? template.renderString(headerTemplate, templateData)
       : '';
   } catch (e) {
-    new Notice(
-      `Error parsing template "${params.exportFormat.headerTemplatePath}": ${e.message}`,
-      10000
-    );
-    return false;
+    if (shouldThrow) {
+      throw errorToHelpfulError(
+        e,
+        params.exportFormat.headerTemplatePath,
+        headerTemplate
+      );
+    } else {
+      errorToHelpfulNotification(
+        e,
+        params.exportFormat.headerTemplatePath,
+        headerTemplate
+      );
+      return false;
+    }
   }
 
   let annotations = '';
@@ -144,11 +202,20 @@ export async function renderTemplates(
       ? template.renderString(annotationTemplate, templateData)
       : '';
   } catch (e) {
-    new Notice(
-      `Error parsing template "${params.exportFormat.annotationTemplatePath}": ${e.message}`,
-      10000
-    );
-    return false;
+    if (shouldThrow) {
+      throw errorToHelpfulError(
+        e,
+        params.exportFormat.annotationTemplatePath,
+        annotationTemplate
+      );
+    } else {
+      errorToHelpfulNotification(
+        e,
+        params.exportFormat.annotationTemplatePath,
+        annotationTemplate
+      );
+      return false;
+    }
   }
 
   let footer = '';
@@ -157,10 +224,20 @@ export async function renderTemplates(
       ? template.renderString(footerTemplate, templateData)
       : '';
   } catch (e) {
-    new Notice(
-      `Error parsing template "${params.exportFormat.footerTemplatePath}": ${e.message}`
-    );
-    return false;
+    if (shouldThrow) {
+      throw errorToHelpfulError(
+        e,
+        params.exportFormat.footerTemplatePath,
+        footerTemplate
+      );
+    } else {
+      errorToHelpfulNotification(
+        e,
+        params.exportFormat.footerTemplatePath,
+        footerTemplate
+      );
+      return false;
+    }
   }
 
   const output: string[] = [];
@@ -169,7 +246,10 @@ export async function renderTemplates(
     output.push(header);
   }
 
-  if (annotationTemplate && (existingAnnotations + annotations).trim()) {
+  const haveAnnotations =
+    annotationTemplate && (existingAnnotations + annotations).trim();
+
+  if (haveAnnotations) {
     output.push(wrapAnnotationTemplate(existingAnnotations + annotations));
   }
 
@@ -177,7 +257,7 @@ export async function renderTemplates(
     output.push(footer);
   }
 
-  return appendExportDate(output.join(''));
+  return haveAnnotations ? appendExportDate(output.join('')) : output.join('');
 }
 
 export async function exportToMarkdown(
@@ -288,8 +368,8 @@ export async function exportToMarkdown(
         attachments[j].annotations = annots;
       }
 
-      const templateData = {
-        ...itemData[i],
+      const templateData: Record<any, any> = {
+        ...applyBasicTemplates(itemData[i]),
         lastExportDate,
       };
 
@@ -377,7 +457,9 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       data.annotations = firstPDF.annotations;
     }
 
-    data.lastExportDate = moment().set("year", 1970);
+    data.lastExportDate = moment().set('year', 1970);
+
+    applyBasicTemplates(data);
   });
 
   return itemData;
