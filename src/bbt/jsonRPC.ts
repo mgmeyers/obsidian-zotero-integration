@@ -186,10 +186,11 @@ export async function getIssueDateFromCiteKey(
 
   try {
     const items = JSON.parse(JSON.parse(res).result[2]);
+    console.log(items)
     const dates = items
       .map((i: any) => {
         const { issued } = i;
-        if (!issued) return null;
+        if (!issued || !issued['date-parts']) return null;
 
         const dateParts = issued['date-parts'][0];
 
