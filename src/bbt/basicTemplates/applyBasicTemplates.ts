@@ -84,6 +84,7 @@ export function applyBasicTemplates(itemData: Record<any, any>) {
 
   if (itemData.tags?.length) {
     itemData.allTags = itemData.tags.map((t: any) => t.tag).join(', ');
+    itemData.hashTags = itemData.tags.map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`).join(', ');
   }
 
   if (itemData.annotations?.length) {
