@@ -10,18 +10,18 @@ import { ZoteroConnectorSettings } from 'src/types';
 import { Icon } from './Icon';
 import { SettingItem } from './SettingItem';
 
-const currentVersion = '0.0.13';
+const currentVersion = '0.0.14';
 
 const options: Record<string, Record<string, string>> = {
   darwin: {
-    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.darwin.amd64.tar.gz`,
-    arm64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.darwin.arm64.tar.gz`,
+    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Mac.Intel.tar.gz`,
+    arm64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Mac.M1.tar.gz`,
   },
   linux: {
-    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.linux.amd64.tar.gz`,
+    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Linux.x64.tar.gz`,
   },
   win32: {
-    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.windows.amd64.zip`,
+    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Windows.x64.zip`,
   },
 };
 

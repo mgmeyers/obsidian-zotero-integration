@@ -26,10 +26,11 @@ import {
 } from './template.helpers';
 import { mkMDDir } from './helpers';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
+import { processZoteroAnnotationNotes } from './exportNotes';
 
 function processNote(note: any) {
   if (note.note) {
-    note.note = htmlToMarkdown(note.note);
+    note.note = htmlToMarkdown(processZoteroAnnotationNotes(note.note));
   }
   if (note.dateAdded) {
     note.dateAdded = moment(note.dateAdded);

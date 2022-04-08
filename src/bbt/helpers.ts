@@ -14,9 +14,8 @@ export function getPort(database: Database) {
 
 export async function mkMDDir(mdPath: string) {
   const dir = path.dirname(mdPath);
-  const folder = app.vault.getAbstractFileByPath(dir);
 
-  if (folder) return;
+  if (await app.vault.adapter.exists(dir)) return;
 
   await app.vault.createFolder(dir);
 }
