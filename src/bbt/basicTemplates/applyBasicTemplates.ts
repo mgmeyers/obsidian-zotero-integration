@@ -32,7 +32,7 @@ const annotationsTemplate = `
 
 {% for annotation in annots -%}
 	{%- if annotation.annotatedText -%}
-    > “{{annotation.annotatedText}}”{% if annotation.color %} <mark style="background:{{annotation.color}}dd">{{annotation.type | capitalize}}</mark> {% else %} ({{annotation.type | capitalize}}) {% endif %}[Page {{annotation.page}}](zotero://open-pdf/library/items/{{annotation.attachment.itemKey}}?page={{annotation.page}})
+    > “{{annotation.annotatedText}}”{% if annotation.color %} <mark style="background:{{annotation.color}}dd">{{annotation.type | capitalize}}</mark> {% else %} {{annotation.type | capitalize}} {% endif %}[Page {{annotation.page}}](zotero://open-pdf/library/items/{{annotation.attachment.itemKey}}?page={{annotation.page}})
     {%- endif %}
 	{%- if annotation.imageRelativePath -%}
 	> ![[{{annotation.imageRelativePath}}]]
