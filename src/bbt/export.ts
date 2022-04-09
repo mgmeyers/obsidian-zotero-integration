@@ -77,7 +77,8 @@ function processAnnotation(
 async function processItem(
   item: any,
   exportDate: moment.Moment,
-  database: Database
+  database: Database,
+  cslStyle?: string
 ) {
   item.exportDate = exportDate;
   item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
@@ -101,7 +102,11 @@ async function processItem(
   }
 
   try {
-    item.bibliography = await getBibFromCiteKey(item.citekey, database);
+    item.bibliography = await getBibFromCiteKey(
+      item.citekey,
+      database,
+      cslStyle
+    );
   } catch {
     item.bibliography = 'Error generating bibliography';
   }
@@ -280,20 +285,50 @@ export async function exportToMarkdown(
   }
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], exportDate, database);
+    await processItem(itemData[i], exportDate, database, exportFormat.cslStyle);
   }
 
   const vaultRoot = getVaultRoot();
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    const attachments = itemData[i].attachments;
+    const attachments = itemData[i].attachments as any[];
+    const hasPDF = attachments.some((a) => a.path?.endsWith('.pdf'));
+
+    // Handle the case of an item with no PDF attachments
+    if (!hasPDF) {
+      const templateData = itemData[i];
+      const markdownPath = exportFormat.outputPathTemplate
+        ? removeStartingSlash(
+            template.renderString(exportFormat.outputPathTemplate, templateData)
+          )
+        : './';
+
+      const existingMarkdown = app.vault.getAbstractFileByPath(markdownPath);
+
+      applyBasicTemplates(templateData);
+
+      const rendered = await renderTemplates(app, params, templateData, '');
+
+      if (!rendered) return false;
+
+      if (existingMarkdown) {
+        app.vault.modify(existingMarkdown as TFile, rendered);
+      } else {
+        await mkMDDir(markdownPath);
+        app.vault.create(markdownPath, rendered);
+      }
+
+      continue;
+    }
+
+    // Handle the case of an item WITH PDF attachments
     for (let j = 0, jLen = attachments.length; j < jLen; j++) {
       const pdfInputPath = attachments[j].path;
       if (!pdfInputPath?.endsWith('.pdf')) continue;
 
       const pathTemplateData = {
-        ...itemData[i],
         ...attachments[j],
+        ...itemData[i],
       };
 
       const imageOutputPath = path.resolve(
@@ -337,7 +372,7 @@ export async function exportToMarkdown(
 
       const existingMarkdown = app.vault.getAbstractFileByPath(markdownPath);
 
-      let lastExportDate = moment().set('year', 1970);
+      let lastExportDate = moment(0);
       let existingAnnotations = '';
 
       if (existingMarkdown) {
@@ -359,24 +394,22 @@ export async function exportToMarkdown(
             imageQuality: settings.pdfExportImageQuality,
           });
           annots = JSON.parse(res);
+          annots.forEach((a: any) => {
+            processAnnotation(a, attachments[j], imageRelativePath);
+          });
+          attachments[j].annotations = annots;
         } catch (e) {
           return false;
         }
-
-        annots.forEach((a: any) => {
-          processAnnotation(a, attachments[j], imageRelativePath);
-        });
-        attachments[j].annotations = annots;
       }
 
       const templateData: Record<any, any> = {
         ...itemData[i],
         lastExportDate,
+        annotations: annots ? annots : []
       };
 
-      if (annots) templateData.annotations = annots;
-
-      applyBasicTemplates(templateData)
+      applyBasicTemplates(templateData);
 
       const rendered = await renderTemplates(
         app,
@@ -399,6 +432,20 @@ export async function exportToMarkdown(
   return true;
 }
 
+function getAStyle(settings: ZoteroConnectorSettings) {
+  const exportStyle = settings.exportFormats.find((f) => !!f.cslStyle);
+
+  if (exportStyle) {
+    return exportStyle.cslStyle;
+  }
+
+  const citeStyle = settings.citeFormats.find((f) => !!f.cslStyle);
+
+  if (citeStyle) {
+    return citeStyle.cslStyle;
+  }
+}
+
 export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   const citeKeys: string[] = await getCiteKeys(settings.database);
 
@@ -412,9 +459,10 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   }
 
   const exportDate = moment();
+  const style = getAStyle(settings);
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], exportDate, settings.database);
+    await processItem(itemData[i], exportDate, settings.database, style);
   }
 
   if (doesEXEExist()) {
@@ -438,15 +486,14 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
             imageQuality: settings.pdfExportImageQuality,
           });
           annots = JSON.parse(res);
+          annots.forEach((a: any) => {
+            processAnnotation(a, attachments[j], 'output_path');
+          });
+
+          attachments[j].annotations = annots;
         } catch (e) {
           return false;
         }
-
-        annots.forEach((a: any) => {
-          processAnnotation(a, attachments[j], 'output_path');
-        });
-
-        attachments[j].annotations = annots;
       }
     }
   }
@@ -456,11 +503,8 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       a.path?.endsWith('.pdf')
     );
 
-    if (firstPDF?.annotations) {
-      data.annotations = firstPDF.annotations;
-    }
-
-    data.lastExportDate = moment().set('year', 1970);
+    data.annotations = firstPDF?.annotations ? firstPDF.annotations : [];
+    data.lastExportDate = moment(0);
 
     applyBasicTemplates(data);
   });

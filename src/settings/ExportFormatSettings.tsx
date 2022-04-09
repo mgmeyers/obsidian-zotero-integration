@@ -128,7 +128,6 @@ export function ExportFormatSettings({
 
   const onChangeHeaderPath = React.useCallback(
     (e: SingleValue<{ value: string; label: string }>) => {
-      console.log(e?.value);
       updateFormat(index, {
         ...format,
         headerTemplatePath: e?.value,

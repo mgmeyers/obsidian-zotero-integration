@@ -14,6 +14,8 @@ import { DataExplorerView, viewType } from './DataExplorerView';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
 import { createEmitter, Emitter } from './emitter';
+import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
+import { LoadingModal } from './bbt/LoadingModal';
 
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
@@ -38,9 +40,9 @@ export default class ZoteroConnector extends Plugin {
 
   async onload() {
     await this.loadSettings();
-
     this.emitter = createEmitter();
 
+    this.updatePDFUtility();
     this.addSettingTab(new ZoteroConnectorSettingsTab(this.app, this));
     this.registerView(viewType, (leaf) => new DataExplorerView(this, leaf));
 
@@ -170,5 +172,28 @@ export default class ZoteroConnector extends Plugin {
     await leaf.setViewState({
       type: viewType,
     });
+  }
+
+  async updatePDFUtility() {
+    if (this.settings.exeVersion && this.settings.exeVersion !== currentVersion) {
+      const modal = new LoadingModal(
+        (window as any).app,
+        'Updating Zotero Desktop Connector PDF Utility...'
+      );
+      modal.open();
+
+      try {  
+        const success = await downloadAndExtract()
+
+        if (success) {
+          this.settings.exeVersion = currentVersion;
+          this.saveSettings();
+        }
+      } catch {
+        //
+      }
+
+      modal.close();
+    }
   }
 }

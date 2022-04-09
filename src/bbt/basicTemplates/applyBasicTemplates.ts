@@ -1,4 +1,5 @@
 import { template } from '../template.helpers';
+import { moment } from 'obsidian';
 
 const creatorTemplate = `
 {%- for creator in creators -%}
@@ -32,7 +33,7 @@ const annotationsTemplate = `
 
 {% for annotation in annots -%}
 	{%- if annotation.annotatedText -%}
-    > “{{annotation.annotatedText}}”{% if annotation.color %} <mark style="background:{{annotation.color}}dd">{{annotation.type | capitalize}}</mark> {% else %} {{annotation.type | capitalize}} {% endif %}[Page {{annotation.page}}](zotero://open-pdf/library/items/{{annotation.attachment.itemKey}}?page={{annotation.page}})
+    > “{{annotation.annotatedText}}”{% if annotation.color %} {{annotation.colorCategory}} {{annotation.type | capitalize}} {% else %} {{annotation.type | capitalize}} {% endif %}[Page {{annotation.page}}](zotero://open-pdf/library/items/{{annotation.attachment.itemKey}}?page={{annotation.page}})
     {%- endif %}
 	{%- if annotation.imageRelativePath -%}
 	> ![[{{annotation.imageRelativePath}}]]
@@ -88,7 +89,11 @@ export function applyBasicTemplates(itemData: Record<any, any>) {
   }
 
   if (itemData.annotations?.length) {
-      itemData.formattedAnnotations = template.renderString(annotationsTemplate, itemData).trim()
+      itemData.formattedAnnotationsNew = template.renderString(annotationsTemplate, itemData).trim()
+      itemData.formattedAnnotations = template.renderString(annotationsTemplate, {
+        ...itemData,
+        lastExportDate: moment(0)
+      }).trim()
   }
 
   return itemData;

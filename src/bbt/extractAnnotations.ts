@@ -1,5 +1,6 @@
 import { execa } from 'execa';
 import { Notice } from 'obsidian';
+import path from "path";
 
 import { getExeName, getExeRoot } from 'src/helpers';
 
@@ -58,6 +59,11 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
 
     modal.close();
 
+    if (result.stderr.toLowerCase().includes('password')) {
+      new Notice(`Error opening ${path.basename(input)}: PDF is password protected`, 10000);
+      return '[]'
+    }
+
     if (result.stderr && !result.stderr.includes('warning')) {
       new Notice(`Error processing PDF: ${result.stderr}`, 10000);
       throw new Error(result.stderr);
@@ -66,6 +72,11 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
     return result.stdout;
   } catch (e) {
     modal.close();
+    if (e.message.toLowerCase().includes('password')) {
+      new Notice(`Error opening ${path.basename(input)}: PDF is password protected`, 10000);
+      return '[]'
+    }
+
     console.error(e);
     new Notice(`Error processing PDF: ${e.message}`, 10000);
     throw e;

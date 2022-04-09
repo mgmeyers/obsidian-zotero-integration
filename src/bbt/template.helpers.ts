@@ -144,7 +144,7 @@ export function getLastExport(md: string): moment.Moment {
     return moment(new Date(match[1]));
   }
 
-  return moment().set('year', 1970);
+  return moment(0);
 }
 
 export function appendExportDate(md: string): string {
