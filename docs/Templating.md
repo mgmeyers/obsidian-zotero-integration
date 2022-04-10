@@ -44,6 +44,60 @@ And a basic annotation template:
 
 Please see the [Nunjucks docs](https://mozilla.github.io/nunjucks/templating.html#variables) for more detail on templating.
 
+## How do I format lists of data?
+
+In the data explorer, you'll notice that annotations, tags, creators, and other values look something like:
+
+![](Screen%20Shot%202022-04-09%20at%206.07.10%20PM.png)
+
+The square brackets next to `annotations` here means that this is a list of annotations. To format a list you can use what's called a `for` loop ([see the docs on this here](https://mozilla.github.io/nunjucks/templating.html#for)). Which looks like:
+
+```
+{% for annotation in annotations %}
+...do something...
+{% endfor %}
+```
+
+Let's break this down a bit. Speaking this out loud, you might say, "for each annotation in the annotations list, '...do something...'". This will then loop through each item in the list.
+
+`annotations` specifically refers the list provided by the Template Data, and `annotation` (singular) is what we're calling the current annotation, but we can call it whatever we want, for example:
+
+```
+{% for a in annotations %}
+...do something...
+{% endfor %}
+```
+
+But how do we access the fields of each annotation? This can be done using dot notation:
+
+```
+{% for a in annotations %}
+{{a.annotatedText}}
+{% endfor %}
+```
+
+Here, `a` is the current annotation and `annotatedText` is one field of this annotation. You can access all fields of the annotation this way:
+
+```
+{% for a in annotations %}
+{{a.annotatedText}}
+{{a.color}}
+{{a.colorCategory}}
+{{a.page}}
+...ect...
+{% endfor %}
+```
+
+Finally, there are special values that nunjucks provides. For example `loop.first` and `loop.last` will tell you if you are on the first item in a list or the last item. This can be useful if you're delimiting items in a list. Take tags, for example.
+
+![](Screen%20Shot%202022-04-09%20at%206.22.35%20PM.png)
+
+```
+{% for t in tags %}{{t.tag}}{% if not loop.last %}, {% endif %}{% endfor %}
+```
+
+This will output each tag and place a comma after each except the last tag in the list, resulting in something like: `Fear conditioning, Learning and memory, Long-term memory`
+
 ## Where do I store my templates?
 
 Templates can reside anywhere in your Obsidian vault. The path to the template is supplied in the export settings.
