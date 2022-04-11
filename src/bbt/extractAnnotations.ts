@@ -54,23 +54,13 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
   });
 
   try {
-    const result = await execa(`./${getExeName()}`, args, {
-      cwd: getExeRoot(),
-    });
+    const result = await execa(path.join(getExeRoot(), getExeName()), args);
 
     modal.close();
 
     if (result.stderr.toLowerCase().includes('password')) {
       new Notice(
         `Error opening ${path.basename(input)}: PDF is password protected`,
-        10000
-      );
-      return '[]';
-    }
-
-    if (result.stderr.includes('ENOENT')) {
-      new Notice(
-        `Error opening ${path.basename(input)}: File not found`,
         10000
       );
       return '[]';
@@ -88,14 +78,6 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
     if (e.message.toLowerCase().includes('password')) {
       new Notice(
         `Error opening ${path.basename(input)}: PDF is password protected`,
-        10000
-      );
-      return '[]';
-    }
-
-    if (e.message.includes('ENOENT')) {
-      new Notice(
-        `Error opening ${path.basename(input)}: File not found`,
         10000
       );
       return '[]';
