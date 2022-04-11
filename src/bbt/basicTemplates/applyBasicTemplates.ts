@@ -1,5 +1,6 @@
-import { template } from '../template.helpers';
 import { moment } from 'obsidian';
+
+import { template } from '../template.helpers';
 
 const creatorTemplate = `
 {%- for creator in creators -%}
@@ -43,7 +44,7 @@ const annotationsTemplate = `
 {% endif %}
 {% endfor -%}
 {%- endif -%}
-`
+`;
 
 export function applyBasicTemplates(itemData: Record<any, any>) {
   if (!itemData) return itemData;
@@ -58,25 +59,31 @@ export function applyBasicTemplates(itemData: Record<any, any>) {
   );
 
   Object.keys(creatorsByType).forEach((type) => {
-    itemData[`${type}s`] = template.renderString(creatorTemplate, {
-      creators: creatorsByType[type],
-    }).trim();
+    itemData[`${type}s`] = template
+      .renderString(creatorTemplate, {
+        creators: creatorsByType[type],
+      })
+      .trim();
   });
 
   const pdfLink = template.renderString(pdfLinkTemplate, itemData).trim();
   if (pdfLink) itemData.pdfLink = pdfLink;
 
-  const pdfZoteroLink = template.renderString(pdfZoteroLinkTemplate, itemData).trim();
+  const pdfZoteroLink = template
+    .renderString(pdfZoteroLinkTemplate, itemData)
+    .trim();
   if (pdfZoteroLink) itemData.pdfZoteroLink = pdfZoteroLink;
 
   if (itemData.notes?.length) {
-    const notes = itemData.notes.reduce((combined: string, current: any) => {
-      if (current.note) {
-        return `${combined}\n\n${current.note.trim()}`;
-      }
+    const notes = itemData.notes
+      .reduce((combined: string, current: any) => {
+        if (current.note) {
+          return `${combined}\n\n${current.note.trim()}`;
+        }
 
-      return combined;
-    }, '').trim();
+        return combined;
+      }, '')
+      .trim();
 
     if (notes) {
       itemData.markdownNotes = notes;
@@ -85,15 +92,21 @@ export function applyBasicTemplates(itemData: Record<any, any>) {
 
   if (itemData.tags?.length) {
     itemData.allTags = itemData.tags.map((t: any) => t.tag).join(', ');
-    itemData.hashTags = itemData.tags.map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`).join(', ');
+    itemData.hashTags = itemData.tags
+      .map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`)
+      .join(', ');
   }
 
   if (itemData.annotations?.length) {
-      itemData.formattedAnnotationsNew = template.renderString(annotationsTemplate, itemData).trim()
-      itemData.formattedAnnotations = template.renderString(annotationsTemplate, {
+    itemData.formattedAnnotationsNew = template
+      .renderString(annotationsTemplate, itemData)
+      .trim();
+    itemData.formattedAnnotations = template
+      .renderString(annotationsTemplate, {
         ...itemData,
-        lastExportDate: moment(0)
-      }).trim()
+        lastExportDate: moment(0),
+      })
+      .trim();
   }
 
   return itemData;

@@ -8,8 +8,11 @@ import {
   ExportToMarkdownParams,
   ZoteroConnectorSettings,
 } from '../types';
+import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { getCiteKeys } from './cayw';
+import { processZoteroAnnotationNotes } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
+import { mkMDDir, sanitizeFilePath } from './helpers';
 import {
   getBibFromCiteKey,
   getIssueDateFromCiteKey,
@@ -24,9 +27,6 @@ import {
   template,
   wrapAnnotationTemplate,
 } from './template.helpers';
-import { mkMDDir } from './helpers';
-import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
-import { processZoteroAnnotationNotes } from './exportNotes';
 
 function processNote(note: any) {
   if (note.note) {
@@ -301,11 +301,11 @@ export async function exportToMarkdown(
         annotations: [],
       };
 
-      const markdownPath = exportFormat.outputPathTemplate
-        ? removeStartingSlash(
-            template.renderString(exportFormat.outputPathTemplate, templateData)
-          )
-        : './';
+      const markdownPath = sanitizeFilePath(
+        removeStartingSlash(
+          template.renderString(exportFormat.outputPathTemplate, templateData)
+        )
+      );
 
       const existingMarkdown = app.vault.getAbstractFileByPath(markdownPath);
 
@@ -365,14 +365,14 @@ export async function exportToMarkdown(
           )
         : 'image';
 
-      const markdownPath = exportFormat.outputPathTemplate
-        ? removeStartingSlash(
-            template.renderString(
-              exportFormat.outputPathTemplate,
-              pathTemplateData
-            )
+      const markdownPath = sanitizeFilePath(
+        removeStartingSlash(
+          template.renderString(
+            exportFormat.outputPathTemplate,
+            pathTemplateData
           )
-        : './';
+        )
+      );
 
       const existingMarkdown = app.vault.getAbstractFileByPath(markdownPath);
 

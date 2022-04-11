@@ -6,12 +6,12 @@ import { ExportFormat } from '../types';
 import { cslListRaw } from './cslList';
 import { Icon } from './Icon';
 import {
+  NoFileOptionMessage,
   NoOptionMessage,
-  customSelectStyles,
-  loadCSLOptions,
   buildFileSearch,
   buildLoadFileOptions,
-  NoFileOptionMessage,
+  customSelectStyles,
+  loadCSLOptions,
 } from './select.helpers';
 
 interface FormatSettingsProps {

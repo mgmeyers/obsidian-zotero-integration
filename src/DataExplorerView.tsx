@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, moment, TFile } from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf, moment } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { JSONTree } from 'react-json-tree';
@@ -209,7 +209,7 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
                     }
 
                     if (typeof v === 'string' && v.length > 800) {
-                      return v.slice(0, 800) + '...'
+                      return v.slice(0, 800) + '...';
                     }
 
                     return v;

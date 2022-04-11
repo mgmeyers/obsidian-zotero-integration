@@ -1,6 +1,7 @@
+import path from 'path';
+
 import { execa } from 'execa';
 import { Notice } from 'obsidian';
-import path from "path";
 
 import { getExeName, getExeRoot } from 'src/helpers';
 
@@ -60,8 +61,19 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
     modal.close();
 
     if (result.stderr.toLowerCase().includes('password')) {
-      new Notice(`Error opening ${path.basename(input)}: PDF is password protected`, 10000);
-      return '[]'
+      new Notice(
+        `Error opening ${path.basename(input)}: PDF is password protected`,
+        10000
+      );
+      return '[]';
+    }
+
+    if (result.stderr.includes('ENOENT')) {
+      new Notice(
+        `Error opening ${path.basename(input)}: File not found`,
+        10000
+      );
+      return '[]';
     }
 
     if (result.stderr && !result.stderr.includes('warning')) {
@@ -72,9 +84,21 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
     return result.stdout;
   } catch (e) {
     modal.close();
+
     if (e.message.toLowerCase().includes('password')) {
-      new Notice(`Error opening ${path.basename(input)}: PDF is password protected`, 10000);
-      return '[]'
+      new Notice(
+        `Error opening ${path.basename(input)}: PDF is password protected`,
+        10000
+      );
+      return '[]';
+    }
+
+    if (e.message.includes('ENOENT')) {
+      new Notice(
+        `Error opening ${path.basename(input)}: File not found`,
+        10000
+      );
+      return '[]';
     }
 
     console.error(e);

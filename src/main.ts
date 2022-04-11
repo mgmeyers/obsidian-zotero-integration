@@ -10,12 +10,12 @@ import {
   insertNotesIntoCurrentDoc,
   noteExportPrompt,
 } from './bbt/exportNotes';
+import { LoadingModal } from './bbt/LoadingModal';
 import { DataExplorerView, viewType } from './DataExplorerView';
+import { Emitter, createEmitter } from './emitter';
+import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
-import { createEmitter, Emitter } from './emitter';
-import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
-import { LoadingModal } from './bbt/LoadingModal';
 
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
@@ -175,15 +175,18 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async updatePDFUtility() {
-    if (this.settings.exeVersion && this.settings.exeVersion !== currentVersion) {
+    if (
+      this.settings.exeVersion &&
+      this.settings.exeVersion !== currentVersion
+    ) {
       const modal = new LoadingModal(
         (window as any).app,
         'Updating Zotero Desktop Connector PDF Utility...'
       );
       modal.open();
 
-      try {  
-        const success = await downloadAndExtract()
+      try {
+        const success = await downloadAndExtract();
 
         if (success) {
           this.settings.exeVersion = currentVersion;

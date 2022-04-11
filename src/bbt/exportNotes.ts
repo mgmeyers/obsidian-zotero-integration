@@ -116,7 +116,7 @@ export async function newFile(
 ) {
   const target = folder.replace(/(?:^\/|\/$)/g, '');
 
-  if (!await app.vault.adapter.exists(target)) {
+  if (!(await app.vault.adapter.exists(target))) {
     try {
       await app.vault.createFolder(target);
     } catch (e) {

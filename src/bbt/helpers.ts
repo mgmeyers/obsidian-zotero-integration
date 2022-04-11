@@ -1,5 +1,6 @@
-import { Database } from 'src/types';
 import path from 'path';
+
+import { Database } from 'src/types';
 
 export const defaultHeaders = {
   'Content-Type': 'application/json',
@@ -18,4 +19,19 @@ export async function mkMDDir(mdPath: string) {
   if (await app.vault.adapter.exists(dir)) return;
 
   await app.vault.createFolder(dir);
+}
+
+const toSpaceRegEx = /\s*[*?]+\s*/g;
+const toDashRegEx = /[\\/:"<>|]+/g;
+
+function replaceIllegalChars(str: string) {
+  return str.replace(toSpaceRegEx, ' ').trim().replace(toDashRegEx, '-');
+}
+
+export function sanitizeFilePath(filePath: string) {
+  const parsed = path.parse(filePath);
+  const dir = replaceIllegalChars(parsed.dir);
+  const name = replaceIllegalChars(parsed.name);
+
+  return path.join(dir, `${name}${parsed.ext}`);
 }
