@@ -296,7 +296,11 @@ export async function exportToMarkdown(
 
     // Handle the case of an item with no PDF attachments
     if (!hasPDF) {
-      const templateData = itemData[i];
+      const templateData = {
+        ...itemData[i],
+        annotations: [],
+      };
+
       const markdownPath = exportFormat.outputPathTemplate
         ? removeStartingSlash(
             template.renderString(exportFormat.outputPathTemplate, templateData)
@@ -406,7 +410,7 @@ export async function exportToMarkdown(
       const templateData: Record<any, any> = {
         ...itemData[i],
         lastExportDate,
-        annotations: annots ? annots : []
+        annotations: annots ? annots : [],
       };
 
       applyBasicTemplates(templateData);
