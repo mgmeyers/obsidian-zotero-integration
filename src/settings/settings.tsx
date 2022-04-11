@@ -188,7 +188,7 @@ function SettingsComponent({
       {exportFormatState.map((f, i) => {
         return (
           <ExportFormatSettings
-            key={f.name}
+            key={exportFormatState.length - i}
             format={f}
             index={i}
             updateFormat={updateExport}

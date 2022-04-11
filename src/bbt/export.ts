@@ -348,19 +348,23 @@ export async function exportToMarkdown(
       );
 
       const imageRelativePath = exportFormat.imageOutputPathTemplate
-        ? removeStartingSlash(
-            template.renderString(
-              exportFormat.imageOutputPathTemplate,
-              pathTemplateData
+        ? sanitizeFilePath(
+            removeStartingSlash(
+              template.renderString(
+                exportFormat.imageOutputPathTemplate,
+                pathTemplateData
+              )
             )
           )
         : '';
 
       const imageBaseName = exportFormat.imageOutputPathTemplate
-        ? removeStartingSlash(
-            template.renderString(
-              exportFormat.imageBaseNameTemplate,
-              pathTemplateData
+        ? sanitizeFilePath(
+            removeStartingSlash(
+              template.renderString(
+                exportFormat.imageBaseNameTemplate,
+                pathTemplateData
+              )
             )
           )
         : 'image';

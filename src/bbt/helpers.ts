@@ -22,7 +22,7 @@ export async function mkMDDir(mdPath: string) {
 }
 
 const toSpaceRegEx = /\s*[*?]+\s*/g;
-const toDashRegEx = /[\\/:"<>|]+/g;
+const toDashRegEx = /[:"<>|]+/g;
 
 function replaceIllegalChars(str: string) {
   return str.replace(toSpaceRegEx, ' ').trim().replace(toDashRegEx, '-');
