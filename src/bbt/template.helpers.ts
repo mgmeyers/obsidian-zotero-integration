@@ -166,7 +166,7 @@ export function getExistingAnnotations(md: string): string {
 }
 
 export function wrapAnnotationTemplate(str: string) {
-  return `\n%% Begin annotations %%\n${str}\n%% End annotations %%`;
+  return `\n%% Begin annotations %%\n${str}\n%% End annotations %%\n`;
 }
 
 export function removeStartingSlash(str: string) {
