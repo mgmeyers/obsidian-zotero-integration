@@ -10220,6 +10220,107 @@ export const cslListRaw = [
     value: 'zwitscher-maschine',
     label: 'Zwitscher-Maschine',
   },
+  {
+    value: 'jm-azr-erstzitat-kurz-mit-verzeichnissen',
+    label: 'JM AZR (Erstzitat kurz mit Verzeichnissen)',
+  },
+  {
+    value: 'jm-azr',
+    label: 'JM AZR',
+  },
+  {
+    value: 'jm-chicago-fullnote-bibliography-nagoya',
+    label: 'JM Chicago Manual of Style 16th edition (full note) [Nagoya]',
+  },
+  {
+    value: 'jm-chicago-fullnote-bibliography-polyglot',
+    label: 'JM Chicago Manual of Style 16th edition (full note, polyglot)',
+  },
+  {
+    value: 'jm-chicago-fullnote-bibliography',
+    label: 'JM Chicago Manual of Style 16th edition (full note)',
+  },
+  {
+    value: 'jm-chinese-gb7714-2005-numeric',
+    label: 'JM Chinese Std GB/T 7714-2005 (numeric, Chinese)',
+  },
+  {
+    value: 'jm-diritto-pubblico-comparato-ed-europeo',
+    label: 'JM Diritto pubblico comparato ed europeo',
+  },
+  {
+    value: 'harvard-australian-national-university',
+    label: 'JM Harvard - Australian National University',
+  },
+  {
+    value: 'jm-ibfd-with-page-label',
+    label: 'JM IBFD Standard Citations and References (with page label)',
+  },
+  {
+    value: 'jm-ibfd',
+    label: 'JM IBFD Standard Citations and References',
+  },
+  {
+    value: 'jm-indigobook-law-review',
+    label: 'JM Indigo Book Law Review',
+  },
+  {
+    value: 'jm-indigobook',
+    label: 'JM Indigo Book',
+  },
+  {
+    value: 'japan-sociological-society',
+    label: '日本社会学会 (author-date, Japanese)',
+  },
+  {
+    value: 'jm-leg-cit-literaturverzeichnis',
+    label: 'JM leg cit mit Literaturverzeichnis',
+  },
+  {
+    value: 'jm-leg-cit-ohne-verzeichnisse',
+    label: 'JM leg cit ohne Verzeichnisse',
+  },
+  {
+    value: 'jm-leg-cit-rechtsquellenverzeichnis-literaturverzeichnis',
+    label: 'JM leg cit mit Rechtsquellenverzeichnis und Literaturverzeichnis',
+  },
+  {
+    value: 'jm-mgcill-v9',
+    label:
+      'JM - Canadian Guide to Uniform Legal Citation (9th edition) / Manuel canadien de la référence juridique (9ᵉ édition)',
+  },
+  {
+    value: 'jm-new-zealand-law',
+    label: 'JM New Zealand Law Style',
+  },
+  {
+    value: 'jm-oscola',
+    label: 'JM OSCOLA - Oxford Standard for Citation of Legal Authorities',
+  },
+  {
+    value: 'jm-taylor-and-francis-chicago-author-date',
+    label: 'JM Taylor & Francis - Chicago Manual of Style (author-date)',
+  },
+  {
+    value: 'jm-turabian-fullnote-bibliography-eu-multi',
+    label: 'JM Turabian 8th edition (full note, EU multilingual)',
+  },
+  {
+    value: 'jm-turabian-fullnote-bibliography-nl-multi',
+    label: 'JM Turabian 8th edition (full note, Dutch multilingual)',
+  },
+  {
+    value: 'jm-vis-moot-1',
+    label: 'JM Vis Moot variant 1',
+  },
+  {
+    value: 'jm-wirtschaftsuniversitat-wien-steuerrecht',
+    label: 'JM Wirtschaftsuniversität Wien – Steuerrecht',
+  },
+  {
+    value: 'juris-eu.int',
+    label: 'Verwijzingen en Afkortingen (Belgium)',
+  },
 ];
 
 export const cslList = new Fuse(cslListRaw, {

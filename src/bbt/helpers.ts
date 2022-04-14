@@ -22,10 +22,14 @@ export async function mkMDDir(mdPath: string) {
 }
 
 const toSpaceRegEx = /\s*[*?]+\s*/g;
-const toDashRegEx = /[:"<>|]+/g;
+const toDashRegEx = /\s*[:"<>|]+\s*/g;
 
-function replaceIllegalChars(str: string) {
-  return str.replace(toSpaceRegEx, ' ').trim().replace(toDashRegEx, '-');
+export function replaceIllegalChars(str: string) {
+  return str
+    .replace(toSpaceRegEx, ' ')
+    .trim()
+    .replace(toDashRegEx, ' - ')
+    .trim();
 }
 
 export function sanitizeFilePath(filePath: string) {
