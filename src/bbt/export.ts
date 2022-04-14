@@ -296,10 +296,10 @@ export async function exportToMarkdown(
 
     // Handle the case of an item with no PDF attachments
     if (!hasPDF) {
-      const templateData = {
+      const templateData = applyBasicTemplates({
         ...itemData[i],
         annotations: [],
-      };
+      });
 
       const markdownPath = sanitizeFilePath(
         removeStartingSlash(
@@ -308,9 +308,6 @@ export async function exportToMarkdown(
       );
 
       const existingMarkdown = app.vault.getAbstractFileByPath(markdownPath);
-
-      applyBasicTemplates(templateData);
-
       const rendered = await renderTemplates(app, params, templateData, '');
 
       if (!rendered) return false;
@@ -330,10 +327,10 @@ export async function exportToMarkdown(
       const pdfInputPath = attachments[j].path;
       if (!pdfInputPath?.endsWith('.pdf')) continue;
 
-      const pathTemplateData = {
+      const pathTemplateData = applyBasicTemplates({
         ...attachments[j],
         ...itemData[i],
-      };
+      });
 
       const imageOutputPath = path.resolve(
         vaultRoot,
@@ -411,13 +408,11 @@ export async function exportToMarkdown(
         }
       }
 
-      const templateData: Record<any, any> = {
+      const templateData: Record<any, any> = applyBasicTemplates({
         ...itemData[i],
         lastExportDate,
         annotations: annots ? annots : [],
-      };
-
-      applyBasicTemplates(templateData);
+      });
 
       const rendered = await renderTemplates(
         app,

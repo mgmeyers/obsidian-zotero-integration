@@ -3,31 +3,38 @@ import { moment } from 'obsidian';
 import { template } from '../template.helpers';
 
 const creatorTemplate = `
-{%- for creator in creators -%}
-	{%- if creator.name -%}
-		{{creator.name}}
-	{%- else -%}
-		{{creator.firstName}} {{creator.lastName}}
-	{%- endif -%}
-	{% if not loop.last %}, {% endif %}
-{%- endfor -%}
+{%- if creators and creators.length > 0 -%}
+  {%- for creator in creators -%}
+    {%- if creator.name -%}
+      {{creator.name}}
+    {%- else -%}
+      {{creator.firstName}} {{creator.lastName}}
+    {%- endif -%}
+    {% if not loop.last %}, {% endif %}
+  {%- endfor -%}
+{%- endif -%}
 `;
 
 const pdfLinkTemplate = `
+{%- if attachments and attachments.length > 0 -%}
 {%- set file = attachments | filterby("path", "endswith", ".pdf") | first -%}
 {%- if file and file.path and file.path.endsWith(".pdf") -%}
 	[{{file.title}}](file://{{file.path | replace(" ", "%20")}})
 {%- endif -%}
+{%- endif -%}
 `;
 
 const pdfZoteroLinkTemplate = `
+{%- if attachments and attachments.length > 0 -%}
 {%- set file = attachments | filterby("path", "endswith", ".pdf") | first -%}
 {%- if file and file.path and file.path.endsWith(".pdf") -%}
 	[{{file.title}}]({{file.desktopURI}})
 {%- endif -%}
+{%- endif -%}
 `;
 
 const annotationsTemplate = `
+{%- if annotations and annotations.length > 0 -%}
 {%- set annots = annotations | filterby("date", "dateafter", lastExportDate) -%}
 {%- if annots.length > 0 %}
 **Exported: {{exportDate | format("YYYY-MM-DD")}}**
@@ -43,6 +50,7 @@ const annotationsTemplate = `
 {{annotation.comment}}
 {% endif %}
 {% endfor -%}
+{%- endif -%}
 {%- endif -%}
 `;
 
