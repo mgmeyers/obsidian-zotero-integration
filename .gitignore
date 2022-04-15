@@ -21,3 +21,4 @@ data.json
 .DS_Store
 dist
 .hotreload
+coverage
