@@ -12,11 +12,7 @@ function _prepareAttributeParts(attr: string) {
     return [];
   }
 
-  if (typeof attr === 'string') {
-    return attr.split('.');
-  }
-
-  return [attr];
+  return attr.split('.');
 }
 
 function hasOwnProp(obj: any, k: string) {
@@ -32,8 +28,6 @@ function getAttrGetter(attribute: string) {
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
 
-      // If item is not an object, and we still got parts to handle, it means
-      // that something goes wrong. Just roll out to undefined in that case.
       if (hasOwnProp(_item, part)) {
         _item = _item[part];
       } else {
@@ -54,59 +48,66 @@ type FilterByCmd =
   | 'datebefore'
   | 'dateonorbefore';
 
-template.addFilter(
-  'filterby',
-  function (arr: any[], prop: string, cmd: FilterByCmd, val: string) {
-    const getter = getAttrGetter(prop);
+export function filterBy(
+  arr: any[],
+  prop: string,
+  cmd: FilterByCmd,
+  val: string | moment.Moment
+) {
+  const getter = getAttrGetter(prop);
 
-    return arr.filter((v: any) => {
-      let toTest: string = typeof v === 'string' ? v : getter(v);
+  return arr.filter((v: any) => {
+    let toTest: string = typeof v === 'string' ? v : getter(v);
 
-      if (!toTest) return false;
+    if (!toTest) return false;
 
-      if (['startswith', 'endswith', 'contains'].includes(cmd)) {
-        const testVal = val.toLocaleLowerCase();
+    if (
+      typeof val === 'string' &&
+      ['startswith', 'endswith', 'contains'].includes(cmd)
+    ) {
+      const testVal = val.toLocaleLowerCase();
 
-        toTest = toTest.toString().toLocaleLowerCase();
+      toTest = toTest.toString().toLocaleLowerCase();
 
-        if (cmd === 'startswith') {
-          return toTest.startsWith(testVal);
-        }
-
-        if (cmd === 'endswith') {
-          return toTest.endsWith(testVal);
-        }
-
-        if (cmd === 'contains') {
-          return toTest.contains(testVal);
-        }
+      if (cmd === 'startswith') {
+        return toTest.startsWith(testVal);
       }
 
-      if (
-        ['dateafter', 'dateonorafter', 'datebefore', 'dateonorbefore'].includes(
-          cmd
-        )
-      ) {
-        if (!moment.isMoment(toTest) || !moment.isMoment(val)) return false;
-
-        switch (cmd) {
-          case 'dateafter':
-            return toTest.isAfter(val);
-          case 'dateonorafter':
-            return toTest.isSameOrAfter(val);
-          case 'datebefore':
-            return toTest.isBefore(val);
-          case 'dateonorbefore':
-            return toTest.isSameOrBefore(val);
-        }
+      if (cmd === 'endswith') {
+        return toTest.endsWith(testVal);
       }
 
-      return false;
-    });
-  }
-);
+      if (cmd === 'contains') {
+        return toTest.includes(testVal);
+      }
+    }
 
-template.addFilter('format', function (date: moment.Moment, format: string) {
+    if (
+      ['dateafter', 'dateonorafter', 'datebefore', 'dateonorbefore'].includes(
+        cmd
+      )
+    ) {
+      if (!moment.isMoment(toTest) || !moment.isMoment(val)) return false;
+
+      switch (cmd) {
+        case 'dateafter':
+          return toTest.isAfter(val);
+        case 'dateonorafter':
+          return toTest.isSameOrAfter(val);
+        case 'datebefore':
+          return toTest.isBefore(val);
+        case 'dateonorbefore':
+          return toTest.isSameOrBefore(val);
+      }
+    }
+
+    return false;
+  });
+}
+
+template.addFilter('filterby', filterBy);
+
+export function format(date: moment.Moment, format: string) {
   if (date instanceof moment) {
     return date.format(format);
   }
@@ -115,7 +116,28 @@ template.addFilter('format', function (date: moment.Moment, format: string) {
     'Error: `format` can only be applied to dates. Tried for format ' +
     typeof date
   );
-});
+}
+
+template.addFilter('format', format);
+
+export function loadTemplate(
+  app: App,
+  name: string,
+  path: string
+): Promise<string | null> {
+  if (!path) return null;
+
+  const templateFile = app.vault.getAbstractFileByPath(
+    sanitizeObsidianPath(path)
+  );
+
+  if (!templateFile) {
+    new Notice(`Error: ${name} template not found ${path}`);
+    return null;
+  }
+
+  return app.vault.cachedRead(templateFile as TFile);
+}
 
 export async function getTemplates(app: App, params: ExportToMarkdownParams) {
   const { exportFormat } = params;
@@ -187,23 +209,4 @@ export function sanitizeObsidianPath(str: string) {
   }
 
   return str;
-}
-
-export function loadTemplate(
-  app: App,
-  name: string,
-  path: string
-): Promise<string | null> {
-  if (!path) return null;
-
-  const templateFile = app.vault.getAbstractFileByPath(
-    sanitizeObsidianPath(path)
-  );
-
-  if (!templateFile) {
-    new Notice(`Error: ${name} template not found ${path}`);
-    return null;
-  }
-
-  return app.vault.cachedRead(templateFile as TFile);
 }
