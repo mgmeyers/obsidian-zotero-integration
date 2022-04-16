@@ -397,6 +397,10 @@ export async function exportToMarkdown(
             imageFormat: settings.pdfExportImageFormat,
             imageOutputPath: imageOutputPath,
             imageQuality: settings.pdfExportImageQuality,
+            attemptOCR: settings.pdfExportImageOCR,
+            ocrLang: settings.pdfExportImageOCRLang,
+            tesseractPath: settings.pdfExportImageTesseractPath,
+            tessDataDir: settings.pdfExportImageTessDataDir,
           });
           annots = JSON.parse(res);
           annots.forEach((a: any) => {
@@ -487,6 +491,10 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
             imageFormat: settings.pdfExportImageFormat,
             imageOutputPath: path.join(vaultRoot, 'output_path'),
             imageQuality: settings.pdfExportImageQuality,
+            attemptOCR: settings.pdfExportImageOCR,
+            ocrLang: settings.pdfExportImageOCRLang,
+            tesseractPath: settings.pdfExportImageTesseractPath,
+            tessDataDir: settings.pdfExportImageTessDataDir,
           });
           annots = JSON.parse(res);
           annots.forEach((a: any) => {

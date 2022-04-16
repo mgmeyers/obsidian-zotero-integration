@@ -41,6 +41,8 @@ function SettingsComponent({
     settings.exportFormats
   );
 
+  const [ocrState, setOCRState] = React.useState(settings.pdfExportImageOCR);
+
   const updateCite = React.useCallback(
     debounce(
       (index: number, format: CitationFormat) => {
@@ -144,7 +146,29 @@ function SettingsComponent({
         );
       })}
 
-      <SettingItem name="Import Settings" isHeading />
+      <SettingItem name="Import Formats" isHeading />
+      <SettingItem>
+        <button onClick={addExport} className="mod-cta">
+          Add Import Format
+        </button>
+      </SettingItem>
+      {exportFormatState.map((f, i) => {
+        return (
+          <ExportFormatSettings
+            key={exportFormatState.length - i}
+            format={f}
+            index={i}
+            updateFormat={updateExport}
+            removeFormat={removeExport}
+          />
+        );
+      })}
+
+      <SettingItem
+        name="Import Image Settings"
+        description="Rectangle annotations will be extracted from PDFs as images."
+        isHeading
+      />
       <SettingItem name="Image Format">
         <select
           className="dropdown"
@@ -178,24 +202,109 @@ function SettingsComponent({
           defaultValue={settings.pdfExportImageDPI}
         />
       </SettingItem>
-
-      <SettingItem name="Import Formats" isHeading />
-      <SettingItem>
-        <button onClick={addExport} className="mod-cta">
-          Add Import Format
-        </button>
+      <SettingItem
+        name="Image OCR"
+        description={
+          <div>
+            Attempt to extract text from images created by rectangle
+            annotations. This requires that{' '}
+            <a
+              href="https://tesseract-ocr.github.io/tessdoc/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              tesseract
+            </a>{' '}
+            be installed on your system. Tesseract can be installed from
+            <a href="https://brew.sh/" target="_blank" rel="noreferrer">
+              homebrew on mac
+            </a>
+            , various linux package managers, and from{' '}
+            <a
+              href="https://github.com/UB-Mannheim/tesseract/wiki"
+              target="_blank"
+              rel="noreferrer"
+            >
+              here on windows
+            </a>
+            .
+          </div>
+        }
+      >
+        <div
+          onClick={() =>
+            setOCRState((s) => {
+              updateSetting('pdfExportImageOCR', !s);
+              return !s;
+            })
+          }
+          className={`checkbox-container${ocrState ? ' is-enabled' : ''}`}
+        />
       </SettingItem>
-      {exportFormatState.map((f, i) => {
-        return (
-          <ExportFormatSettings
-            key={exportFormatState.length - i}
-            format={f}
-            index={i}
-            updateFormat={updateExport}
-            removeFormat={removeExport}
-          />
-        );
-      })}
+      <SettingItem
+        name="Tesseract path"
+        description={
+          <div>
+            Required: An absolute path to the tesseract executable. This can be
+            found on mac and linux with the terminal command{' '}
+            <pre>which tesseract</pre>
+          </div>
+        }
+      >
+        <input
+          onChange={(e) =>
+            updateSetting('pdfExportImageTesseractPath', e.target.value)
+          }
+          type="text"
+          defaultValue={settings.pdfExportImageTesseractPath}
+        />
+      </SettingItem>
+      <SettingItem
+        name="Image OCR Language"
+        description={
+          <div>
+            Optional: defaults to english. Multiple languages can be specified
+            like so: <pre>eng+deu</pre>. Each language must be installed on your
+            system.{' '}
+            <a
+              href="https://github.com/tesseract-ocr/tessdata"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Languages can be downloaded here
+            </a>
+            . (See{' '}
+            <a
+              href="https://tesseract-ocr.github.io/tessdoc/Data-Files-in-different-versions.html"
+              target="_blank"
+              rel="noreferrer"
+            >
+              here for a description of the language codes
+            </a>
+            )
+          </div>
+        }
+      >
+        <input
+          onChange={(e) =>
+            updateSetting('pdfExportImageOCRLang', e.target.value)
+          }
+          type="text"
+          defaultValue={settings.pdfExportImageOCRLang}
+        />
+      </SettingItem>
+      <SettingItem
+        name="Tesseract data directory"
+        description="Optional: supply an absolute path to the directory where tesseract's language files reside."
+      >
+        <input
+          onChange={(e) =>
+            updateSetting('pdfExportImageTessDataDir', e.target.value)
+          }
+          type="text"
+          defaultValue={settings.pdfExportImageTessDataDir}
+        />
+      </SettingItem>
     </>
   );
 }

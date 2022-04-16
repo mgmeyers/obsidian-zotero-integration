@@ -15,16 +15,24 @@ interface ExtractParams {
   imageDPI?: number;
   imageQuality?: number;
   ignoreBefore?: string;
+  attemptOCR?: boolean;
+  ocrLang?: string;
+  tesseractPath?: string;
+  tessDataDir?: string;
 }
 
 const paramMap: Record<keyof ExtractParams, string> = {
-  noWrite: 'w',
-  imageOutputPath: 'o',
-  imageBaseName: 'n',
-  imageFormat: 'f',
-  imageDPI: 'd',
-  imageQuality: 'q',
-  ignoreBefore: 'b',
+  noWrite: '-w',
+  imageOutputPath: '-o',
+  imageBaseName: '-n',
+  imageFormat: '-f',
+  imageDPI: '-d',
+  imageQuality: '-q',
+  ignoreBefore: '-b',
+  attemptOCR: '-e',
+  ocrLang: '-l',
+  tesseractPath: '--tesseract-path',
+  tessDataDir: '--tess-data-dir',
 };
 
 export async function extractAnnotations(input: string, params: ExtractParams) {
@@ -45,10 +53,10 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
 
     if (typeof val === 'boolean') {
       if (val) {
-        args.push(`-${key}`);
+        args.push(key);
       }
     } else {
-      args.push(`-${key}`);
+      args.push(key);
       args.push(val.toString());
     }
   });

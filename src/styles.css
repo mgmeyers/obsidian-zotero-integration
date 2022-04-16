@@ -123,6 +123,7 @@
   margin-bottom: 10px;
 }
 
+.zt-setting-item pre,
 .zt-format__input-note pre {
   display: inline-block;
   margin: 0;

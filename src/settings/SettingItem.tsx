@@ -22,7 +22,7 @@ export function SettingItem({
   isHeading,
 }: React.PropsWithChildren<ItemInfo>) {
   return (
-    <div className={`setting-item${isHeading ? ' setting-item-heading' : ''}`}>
+    <div className={`zt-setting-item setting-item${isHeading ? ' setting-item-heading' : ''}`}>
       <SettingItemInfo name={name} description={description} />
       <div className="setting-item-control">{children}</div>
     </div>
