@@ -17,6 +17,7 @@ import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
 
+const commandPrefix = 'obsidian-zotero-desktop-connector:';
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
@@ -123,7 +124,7 @@ export default class ZoteroConnector extends Plugin {
 
   removeFormatCommand(format: CitationFormat) {
     (this.app as any).commands.removeCommand(
-      `obsidian-zotero-desktop-connector:${citationCommandIDPrefix}${format.name}`
+      `${commandPrefix}${citationCommandIDPrefix}${format.name}`
     );
   }
 
@@ -143,7 +144,7 @@ export default class ZoteroConnector extends Plugin {
 
   removeExportCommand(format: ExportFormat) {
     (this.app as any).commands.removeCommand(
-      `zotero-desktop-connector:${exportCommandIDPrefix}${format.name}`
+      `${commandPrefix}${exportCommandIDPrefix}${format.name}`
     );
   }
 
