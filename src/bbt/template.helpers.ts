@@ -1,4 +1,4 @@
-import nunjucks from 'nunjucks';
+import nunjucks, { Extension } from 'nunjucks';
 import { App, Notice, TFile, moment } from 'obsidian';
 
 import { ExportToMarkdownParams } from 'src/types';
@@ -105,8 +105,6 @@ export function filterBy(
   });
 }
 
-template.addFilter('filterby', filterBy);
-
 export function format(date: moment.Moment, format: string) {
   if (date instanceof moment) {
     return date.format(format);
@@ -118,7 +116,64 @@ export function format(date: moment.Moment, format: string) {
   );
 }
 
+interface WithRetained {
+  _retained?: Record<string, string>;
+}
+
+export class RetainExtension implements Extension {
+  tags: string[] = ['retain'];
+
+  parse(parser: any, nodes: any) {
+    // get the tag token
+    const tok = parser.nextToken();
+
+    // parse the args and move after the block end. passing true
+    // as the second arg is required if there are no parentheses
+    const args = parser.parseSignature(null, true);
+    parser.advanceAfterBlockEnd(tok.value);
+
+    // parse the body and possibly the error block, which is optional
+    const body = parser.parseUntilBlocks('endretain');
+
+    parser.advanceAfterBlockEnd();
+
+    // See above for notes about CallExtension
+    return new nodes.CallExtension(this, 'run', args, [body]);
+  }
+
+  run(context: any, id: string, body: any) {
+    let retained = '';
+
+    if (context?.ctx?._retained && context.ctx._retained[id]) {
+      retained = context.ctx._retained[id];
+    }
+
+    return new nunjucks.runtime.SafeString(
+      `%% begin ${id} %%${retained}${body()}%% end ${id} %%`
+    );
+  }
+
+  static re = /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/g;
+  static prepareTemplateData<T>(templateData: T, md: string): T & WithRetained {
+    const out: Record<string, string> = {};
+
+    if (!md) return templateData;
+
+    const matches = md.matchAll(this.re);
+    for (const match of matches) {
+      out[match[1]] = match[2];
+    }
+
+    return {
+      ...templateData,
+      _retained: out,
+    };
+  }
+}
+
+template.addFilter('filterby', filterBy);
 template.addFilter('format', format);
+template.addExtension('RetainExtension', new RetainExtension());
 
 export function loadTemplate(
   app: App,

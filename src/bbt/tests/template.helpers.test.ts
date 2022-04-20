@@ -1,5 +1,6 @@
+import nunjucks from 'nunjucks';
 import moment from 'moment';
-import { filterBy, format } from '../template.helpers';
+import { filterBy, format, RetainExtension } from '../template.helpers';
 
 jest.mock(
   'obsidian',
@@ -155,6 +156,62 @@ describe('filter#format()', () => {
   it('returns an error on non-date values', () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    expect(format('hi', 'YYYY-MM-DD')).toBe('Error: `format` can only be applied to dates. Tried for format string')
+    expect(format('hi', 'YYYY-MM-DD')).toBe(
+      'Error: `format` can only be applied to dates. Tried for format string'
+    );
+  });
+});
+
+describe('class RetainExtension', () => {
+  it('parses text and returns content to retain', () => {
+    const expected = {
+      _retained: {
+        hello: 'world',
+        'two words': 'hello',
+      }
+    };
+
+    const templateData = {}
+
+    const text = `
+      %% begin hello %%world%% end hello %%
+
+      %% begin two words %%hello%% end two words %%
+    `;
+
+    expect(RetainExtension.prepareTemplateData(templateData, text)).toEqual(expected);
+    expect(RetainExtension.prepareTemplateData(templateData, '')).toEqual({});
+  });
+
+  it('appends new text to retained text', () => {
+    const env = new nunjucks.Environment(undefined, {
+      autoescape: false,
+    });
+
+    env.addExtension('RetainExtension', new RetainExtension())
+
+    const templateData = {
+      a: 'one',
+      b: 'two',
+      _retained: {
+        hello: '‘hello’',
+        'two words': 'world',
+      }
+    };
+
+    const template = `
+      {% retain "hello" %}{{a}}{% endretain %}
+
+      {% retain "two words" %}{{b}}{% endretain %}
+    `;
+
+    const expected = `
+      %% begin hello %%‘hello’one%% end hello %%
+
+      %% begin two words %%worldtwo%% end two words %%
+    `;
+
+
+    expect(env.renderString(template, templateData)).toEqual(expected);
   });
 });

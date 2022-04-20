@@ -103,10 +103,14 @@ export async function getBibFromCiteKeys(
   } catch (e) {
     console.error(e);
     console.error(`Response from BBT: ${res}`);
-    new Notice(
-      `Error converting formatted bibliography to markdown: ${e.message}`,
-      10000
-    );
+
+    let message = `Error converting formatted bibliography to markdown: ${e.message}`;
+
+    if ((e.message as string).includes('element/document/fragment')) {
+      message = `Error: Received empty bibliography from Zotero. Ensure Zotero's quick copy settings are set and the selected citation style is installed.`;
+    }
+
+    new Notice(message, 10000);
     return null;
   }
 }
