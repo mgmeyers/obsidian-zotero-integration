@@ -1,6 +1,11 @@
 import nunjucks from 'nunjucks';
 import moment from 'moment';
-import { filterBy, format, RetainExtension } from '../template.helpers';
+import {
+  filterBy,
+  format,
+  ObsidianMarkdownLoader,
+  PersistExtension,
+} from '../template.env';
 
 jest.mock(
   'obsidian',
@@ -162,16 +167,16 @@ describe('filter#format()', () => {
   });
 });
 
-describe('class RetainExtension', () => {
+describe('class PersistExtension', () => {
   it('parses text and returns content to retain', () => {
     const expected = {
       _retained: {
         hello: 'world',
         'two words': 'hello',
-      }
+      },
     };
 
-    const templateData = {}
+    const templateData = {};
 
     const text = `
       %% begin hello %%world%% end hello %%
@@ -179,8 +184,10 @@ describe('class RetainExtension', () => {
       %% begin two words %%hello%% end two words %%
     `;
 
-    expect(RetainExtension.prepareTemplateData(templateData, text)).toEqual(expected);
-    expect(RetainExtension.prepareTemplateData(templateData, '')).toEqual({});
+    expect(PersistExtension.prepareTemplateData(templateData, text)).toEqual(
+      expected
+    );
+    expect(PersistExtension.prepareTemplateData(templateData, '')).toEqual({});
   });
 
   it('appends new text to retained text', () => {
@@ -188,7 +195,7 @@ describe('class RetainExtension', () => {
       autoescape: false,
     });
 
-    env.addExtension('RetainExtension', new RetainExtension())
+    env.addExtension(PersistExtension.id, new PersistExtension());
 
     const templateData = {
       a: 'one',
@@ -196,13 +203,13 @@ describe('class RetainExtension', () => {
       _retained: {
         hello: '‘hello’',
         'two words': 'world',
-      }
+      },
     };
 
     const template = `
-      {% retain "hello" %}{{a}}{% endretain %}
+      {% persist "hello" %}{{a}}{% endpersist %}
 
-      {% retain "two words" %}{{b}}{% endretain %}
+      {% persist "two words" %}{{b}}{% endpersist %}
     `;
 
     const expected = `
@@ -211,7 +218,196 @@ describe('class RetainExtension', () => {
       %% begin two words %%worldtwo%% end two words %%
     `;
 
-
     expect(env.renderString(template, templateData)).toEqual(expected);
+  });
+});
+
+describe('class ObsidianMarkdownLoader', () => {
+  it('returns source of wikilinked file', (done) => {
+    global.app = {
+      metadataCache: {
+        getFirstLinkpathDest: jest.fn(() => true),
+      },
+      vault: {
+        cachedRead() {
+          return Promise.resolve('hello content');
+        },
+      },
+    } as any;
+
+    const loader = new ObsidianMarkdownLoader();
+
+    const env = new nunjucks.Environment(loader as any, {
+      autoescape: false,
+    });
+
+    const template = `
+      {% include "[[hello]]" %}
+    `;
+    const expected = `
+      hello content
+    `;
+
+    env.renderString(template, {}, (err, res) => {
+      expect(err).toBeNull();
+      expect(res).toBe(expected);
+      done();
+    });
+  });
+
+  it('returns source of markdown linked file', (done) => {
+    global.app = {
+      metadataCache: {
+        getFirstLinkpathDest: jest.fn(() => true),
+      },
+      vault: {
+        cachedRead() {
+          return Promise.resolve('hello content');
+        },
+      },
+    } as any;
+
+    const loader = new ObsidianMarkdownLoader();
+
+    const env = new nunjucks.Environment(loader as any, {
+      autoescape: false,
+    });
+
+    const template = `
+      {% include "[](hello)" %}
+    `;
+    const expected = `
+      hello content
+    `;
+
+    env.renderString(template, {}, (err, res) => {
+      expect(err).toBeNull();
+      expect(res).toBe(expected);
+      done();
+    });
+  });
+
+  it('supplies the set source file', (done) => {
+    const getFirstFn = jest.fn(() => true);
+
+    global.app = {
+      metadataCache: {
+        getFirstLinkpathDest: getFirstFn,
+      },
+      vault: {
+        cachedRead() {
+          return Promise.resolve('hello content');
+        },
+      },
+    } as any;
+
+    const loader = new ObsidianMarkdownLoader();
+
+    const env = new nunjucks.Environment(loader as any, {
+      autoescape: false,
+    });
+
+    const template = `
+      {% include "[[hello]]" %}
+    `;
+    const expected = `
+      hello content
+    `;
+
+    loader.setSourceFile('world');
+
+    env.renderString(template, {}, (err, res) => {
+      expect(err).toBeNull();
+      expect(res).toBe(expected);
+      expect(getFirstFn).toBeCalledWith('hello', 'world');
+      done();
+    });
+  });
+
+  it('returns error on invalid markdown link', (done) => {
+    global.app = {
+      metadataCache: {
+        getFirstLinkpathDest: jest.fn(() => true),
+      },
+      vault: {
+        cachedRead() {
+          return Promise.resolve('hello content');
+        },
+      },
+    } as any;
+
+    const loader = new ObsidianMarkdownLoader();
+
+    const env = new nunjucks.Environment(loader as any, {
+      autoescape: false,
+    });
+
+    const template = `
+      {% include "hello" %}
+    `;
+
+    env.renderString(template, {}, (err) => {
+      expect(err).not.toBeNull();
+      expect(err.message).toContain('Invalid markdown link')
+      done();
+    });
+  });
+
+  it('returns error on null file', (done) => {
+    global.app = {
+      metadataCache: {
+        getFirstLinkpathDest: jest.fn(() => null),
+      },
+      vault: {
+        cachedRead() {
+          return Promise.resolve('hello content');
+        },
+      },
+    } as any;
+
+    const loader = new ObsidianMarkdownLoader();
+
+    const env = new nunjucks.Environment(loader as any, {
+      autoescape: false,
+    });
+
+    const template = `
+      {% include "[[hello]]" %}
+    `;
+
+    env.renderString(template, {}, (err) => {
+      expect(err).not.toBeNull();
+      expect(err.message).toContain('File not found')
+      done();
+    });
+  });
+
+  it('returns error from obsidian\'s cachedRead', (done) => {
+    global.app = {
+      metadataCache: {
+        getFirstLinkpathDest: jest.fn(() => true),
+      },
+      vault: {
+        cachedRead() {
+          return Promise.reject('hello content');
+        },
+      },
+    } as any;
+
+    const loader = new ObsidianMarkdownLoader();
+
+    const env = new nunjucks.Environment(loader as any, {
+      autoescape: false,
+    });
+
+    const template = `
+      {% include "[[hello]]" %}
+    `;
+
+    env.renderString(template, {}, (err) => {
+      expect(err).not.toBeNull();
+      expect(err.message).toContain('hello content')
+      done();
+    });
   });
 });
