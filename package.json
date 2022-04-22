@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "cross-env BUILD=dev obsidian-plugin dev src/main.ts -e esbuild.config.js",
     "build": "cross-env BUILD=production obsidian-plugin build src/main.ts -e esbuild.config.js",
+    "check-types": "tsc --noemit",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src/**/* --fix",
     "sort-imports": "import-sort --write \"./src/**/*.{ts,tsx}\"",

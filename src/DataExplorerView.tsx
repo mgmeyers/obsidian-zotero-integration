@@ -3,8 +3,17 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { JSONTree } from 'react-json-tree';
 
-import { dataExplorerPrompt, renderTemplates } from './bbt/export';
-import { sanitizeObsidianPath } from './bbt/template.helpers';
+import {
+  dataExplorerPrompt,
+  getATemplatePath,
+  renderTemplates,
+} from './bbt/export';
+import { sanitizeFilePath } from './bbt/helpers';
+import { PersistExtension, renderTemplate } from './bbt/template.env';
+import {
+  removeStartingSlash,
+  sanitizeObsidianPath,
+} from './bbt/template.helpers';
 import ZoteroConnector from './main';
 import { ExportFormat, ExportToMarkdownParams } from './types';
 
@@ -114,17 +123,45 @@ function TemplatePreview({
       exportFormat: plugin.settings.exportFormats[formatIndex],
     };
 
-    renderTemplates(plugin.app, params, templateData, '', true)
-      .then((t) => {
-        if (t) {
-          setTemplate(t);
-        } else {
-          setTemplate(null);
+    const render = async () => {
+      const sourcePath = getATemplatePath(params);
+
+      try {
+        const renderedPath = await renderTemplate(
+          sourcePath,
+          params.exportFormat.outputPathTemplate,
+          templateData
+        );
+
+        const markdownPath = sanitizeFilePath(
+          removeStartingSlash(renderedPath)
+        );
+
+        const existingMarkdownFile =
+          app.vault.getAbstractFileByPath(markdownPath);
+
+        let existingMarkdown = '';
+
+        if (existingMarkdownFile) {
+          existingMarkdown = await app.vault.cachedRead(
+            existingMarkdownFile as TFile
+          );
         }
-      })
-      .catch((e) => {
-        setTemplateError(e.message);
-      });
+
+        const output = await renderTemplates(
+          params,
+          PersistExtension.prepareTemplateData(templateData, existingMarkdown),
+          '',
+          true
+        );
+
+        setTemplate(output ? output : null);
+      } catch (e) {
+        setTemplateError(e);
+      }
+    };
+
+    render();
   }, [formatIndex, forceRef]);
 
   if (!template && !templateError) return null;

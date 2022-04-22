@@ -1,10 +1,12 @@
-import nunjucks from 'nunjucks';
 import moment from 'moment';
+import nunjucks from 'nunjucks';
+
 import {
-  filterBy,
-  format,
   ObsidianMarkdownLoader,
   PersistExtension,
+  filterBy,
+  format,
+  renderTemplate,
 } from '../template.env';
 
 jest.mock(
@@ -348,7 +350,7 @@ describe('class ObsidianMarkdownLoader', () => {
 
     env.renderString(template, {}, (err) => {
       expect(err).not.toBeNull();
-      expect(err.message).toContain('Invalid markdown link')
+      expect(err.message).toContain('Invalid markdown link');
       done();
     });
   });
@@ -377,12 +379,12 @@ describe('class ObsidianMarkdownLoader', () => {
 
     env.renderString(template, {}, (err) => {
       expect(err).not.toBeNull();
-      expect(err.message).toContain('File not found')
+      expect(err.message).toContain('File not found');
       done();
     });
   });
 
-  it('returns error from obsidian\'s cachedRead', (done) => {
+  it("returns error from obsidian's cachedRead", (done) => {
     global.app = {
       metadataCache: {
         getFirstLinkpathDest: jest.fn(() => true),
@@ -406,7 +408,23 @@ describe('class ObsidianMarkdownLoader', () => {
 
     env.renderString(template, {}, (err) => {
       expect(err).not.toBeNull();
-      expect(err.message).toContain('hello content')
+      expect(err.message).toContain('hello content');
+      done();
+    });
+  });
+});
+
+describe('renderTemplate()', () => {
+  it('returns output from promise', (done) => {
+    renderTemplate('', 'hello', {}).then((res) => {
+      expect(res).toBe('hello');
+      done();
+    });
+  });
+
+  it('returns error from promise', (done) => {
+    renderTemplate('', '{% hello %}', {}).catch((e) => {
+      expect(e).toBeInstanceOf(Error);
       done();
     });
   });

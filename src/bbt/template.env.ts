@@ -1,10 +1,6 @@
 import nunjucks, { Callback, Extension, Loader, LoaderSource } from 'nunjucks';
 import { moment } from 'obsidian';
 
-export const template = new nunjucks.Environment(undefined, {
-  autoescape: false,
-});
-
 function _prepareAttributeParts(attr: string) {
   if (!attr) {
     return [];
@@ -238,6 +234,30 @@ export class ObsidianMarkdownLoader extends Loader {
   }
 }
 
+const loader = new ObsidianMarkdownLoader();
+
+export const template = new nunjucks.Environment(loader as any, {
+  autoescape: false,
+});
+
 template.addFilter('filterby', filterBy);
 template.addFilter('format', format);
 template.addExtension(PersistExtension.id, new PersistExtension());
+
+export function renderTemplate(
+  sourceFile: string,
+  templateStr: string,
+  templateData: Record<any, any>
+) {
+  return new Promise<string>((res, rej) => {
+    loader.setSourceFile(sourceFile);
+
+    template.renderString(templateStr, templateData, (err, output) => {
+      if (err) {
+        return rej(err);
+      }
+
+      res(output);
+    });
+  });
+}

@@ -81,7 +81,7 @@ export default class ZoteroConnector extends Plugin {
       callback: () => {
         noteExportPrompt(this.settings.database).then((notes) => {
           if (notes) {
-            filesFromNotes(this.app, this.settings.noteImportFolder, notes);
+            filesFromNotes(this.settings.noteImportFolder, notes);
           }
         });
       },
@@ -133,7 +133,7 @@ export default class ZoteroConnector extends Plugin {
       id: `${exportCommandIDPrefix}${format.name}`,
       name: format.name,
       callback: () => {
-        exportToMarkdown(this.app, {
+        exportToMarkdown({
           settings: this.settings,
           database: this.settings.database,
           exportFormat: format,

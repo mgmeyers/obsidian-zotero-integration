@@ -1,9 +1,8 @@
-import { App, Notice, TFile, moment } from 'obsidian';
+import { Notice, TFile, moment } from 'obsidian';
 
 import { ExportToMarkdownParams } from 'src/types';
 
 export function loadTemplate(
-  app: App,
   name: string,
   path: string
 ): Promise<string | null> {
@@ -21,22 +20,19 @@ export function loadTemplate(
   return app.vault.cachedRead(templateFile as TFile);
 }
 
-export async function getTemplates(app: App, params: ExportToMarkdownParams) {
+export async function getTemplates(params: ExportToMarkdownParams) {
   const { exportFormat } = params;
 
   return {
     headerTemplate: await loadTemplate(
-      app,
       'Header',
       exportFormat.headerTemplatePath
     ),
     annotationTemplate: await loadTemplate(
-      app,
       'Annotation',
       exportFormat.annotationTemplatePath
     ),
     footerTemplate: await loadTemplate(
-      app,
       'Footer',
       exportFormat.footerTemplatePath
     ),

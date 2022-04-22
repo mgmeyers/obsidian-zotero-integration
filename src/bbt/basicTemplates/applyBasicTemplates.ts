@@ -1,6 +1,6 @@
 import { moment } from 'obsidian';
 
-import { template } from '../template.helpers';
+import { renderTemplate } from '../template.env';
 
 const creatorTemplate = `
 {%- if creators and creators.length > 0 -%}
@@ -54,7 +54,10 @@ const annotationsTemplate = `
 {%- endif -%}
 `;
 
-export function applyBasicTemplates(itemData: Record<any, any>) {
+export async function applyBasicTemplates(
+  sourceFile: string,
+  itemData: Record<any, any>
+) {
   if (!itemData) return itemData;
 
   const creatorsByType = (itemData.creators || []).reduce(
@@ -66,20 +69,25 @@ export function applyBasicTemplates(itemData: Record<any, any>) {
     {}
   );
 
-  Object.keys(creatorsByType).forEach((type) => {
-    itemData[`${type}s`] = template
-      .renderString(creatorTemplate, {
-        creators: creatorsByType[type],
-      })
-      .trim();
-  });
+  await Promise.all(
+    Object.keys(creatorsByType).map(async (type) => {
+      itemData[`${type}s`] = (
+        await renderTemplate(sourceFile, creatorTemplate, {
+          creators: creatorsByType[type],
+        })
+      ).trim();
+    })
+  );
 
-  const pdfLink = template.renderString(pdfLinkTemplate, itemData).trim();
+  const pdfLink = (
+    await renderTemplate(sourceFile, pdfLinkTemplate, itemData)
+  ).trim();
   if (pdfLink) itemData.pdfLink = pdfLink;
 
-  const pdfZoteroLink = template
-    .renderString(pdfZoteroLinkTemplate, itemData)
-    .trim();
+  const pdfZoteroLink = (
+    await renderTemplate(sourceFile, pdfZoteroLinkTemplate, itemData)
+  ).trim();
+
   if (pdfZoteroLink) itemData.pdfZoteroLink = pdfZoteroLink;
 
   if (itemData.notes?.length) {
@@ -106,15 +114,16 @@ export function applyBasicTemplates(itemData: Record<any, any>) {
   }
 
   if (itemData.annotations?.length) {
-    itemData.formattedAnnotationsNew = template
-      .renderString(annotationsTemplate, itemData)
-      .trim();
-    itemData.formattedAnnotations = template
-      .renderString(annotationsTemplate, {
+    itemData.formattedAnnotationsNew = (
+      await renderTemplate(sourceFile, annotationsTemplate, itemData)
+    ).trim();
+
+    itemData.formattedAnnotations = (
+      await renderTemplate(sourceFile, annotationsTemplate, {
         ...itemData,
         lastExportDate: moment(0),
       })
-      .trim();
+    ).trim();
   }
 
   return itemData;

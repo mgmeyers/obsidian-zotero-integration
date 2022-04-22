@@ -1,4 +1,4 @@
-import { App, Editor, Notice, htmlToMarkdown } from 'obsidian';
+import { Editor, Notice, htmlToMarkdown } from 'obsidian';
 
 import { Database } from '../types';
 import { getCiteKeys } from './cayw';
@@ -95,21 +95,19 @@ export function insertNotesIntoCurrentDoc(
 }
 
 export async function filesFromNotes(
-  app: App,
   folder: string,
   notes: Record<string, string>
 ) {
   const keys = Object.keys(notes);
 
   for (let i = 0, len = keys.length; i < len; i++) {
-    if (!(await newFile(app, folder, keys[i], notes[keys[i]]))) {
+    if (!(await newFile(folder, keys[i], notes[keys[i]]))) {
       break;
     }
   }
 }
 
 export async function newFile(
-  app: App,
   folder: string,
   citeKey: string,
   content: string

@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { App, Notice, TFile, htmlToMarkdown, moment } from 'obsidian';
+import { Notice, TFile, htmlToMarkdown, moment } from 'obsidian';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -18,13 +18,13 @@ import {
   getIssueDateFromCiteKey,
   getItemJSONFromCiteKeys,
 } from './jsonRPC';
+import { PersistExtension, renderTemplate } from './template.env';
 import {
   appendExportDate,
   getExistingAnnotations,
   getLastExport,
   getTemplates,
   removeStartingSlash,
-  template,
   wrapAnnotationTemplate,
 } from './template.helpers';
 
@@ -165,14 +165,13 @@ function errorToHelpfulError(e: Error, templatePath: string, template: string) {
 }
 
 export async function renderTemplates(
-  app: App,
   params: ExportToMarkdownParams,
   templateData: Record<any, any>,
   existingAnnotations: string,
   shouldThrow?: boolean
 ) {
   const { headerTemplate, annotationTemplate, footerTemplate } =
-    await getTemplates(app, params);
+    await getTemplates(params);
 
   if (!headerTemplate && !annotationTemplate && !footerTemplate) {
     throw new Error(
@@ -183,7 +182,11 @@ export async function renderTemplates(
   let header = '';
   try {
     header = headerTemplate
-      ? template.renderString(headerTemplate, templateData)
+      ? await renderTemplate(
+          params.exportFormat.headerTemplatePath,
+          headerTemplate,
+          templateData
+        )
       : '';
   } catch (e) {
     if (shouldThrow) {
@@ -205,7 +208,11 @@ export async function renderTemplates(
   let annotations = '';
   try {
     annotations = annotationTemplate
-      ? template.renderString(annotationTemplate, templateData)
+      ? await renderTemplate(
+          params.exportFormat.annotationTemplatePath,
+          annotationTemplate,
+          templateData
+        )
       : '';
   } catch (e) {
     if (shouldThrow) {
@@ -227,7 +234,11 @@ export async function renderTemplates(
   let footer = '';
   try {
     footer = footerTemplate
-      ? template.renderString(footerTemplate, templateData)
+      ? await renderTemplate(
+          params.exportFormat.footerTemplatePath,
+          footerTemplate,
+          templateData
+        )
       : '';
   } catch (e) {
     if (shouldThrow) {
@@ -266,12 +277,19 @@ export async function renderTemplates(
   return haveAnnotations ? appendExportDate(output.join('')) : output.join('');
 }
 
-export async function exportToMarkdown(
-  app: App,
-  params: ExportToMarkdownParams
-) {
+export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
+  return (
+    exportFormat.headerTemplatePath ||
+    exportFormat.annotationTemplatePath ||
+    exportFormat.footerTemplatePath ||
+    ''
+  );
+}
+
+export async function exportToMarkdown(params: ExportToMarkdownParams) {
   const exportDate = moment();
   const { database, exportFormat, settings } = params;
+  const sourcePath = getATemplatePath(params);
 
   const citeKeys: string[] = await getCiteKeys(database);
 
@@ -296,24 +314,41 @@ export async function exportToMarkdown(
 
     // Handle the case of an item with no PDF attachments
     if (!hasPDF) {
-      const templateData = applyBasicTemplates({
+      const templateData = await applyBasicTemplates(sourcePath, {
         ...itemData[i],
         annotations: [],
       });
 
       const markdownPath = sanitizeFilePath(
         removeStartingSlash(
-          template.renderString(exportFormat.outputPathTemplate, templateData)
+          await renderTemplate(
+            sourcePath,
+            exportFormat.outputPathTemplate,
+            templateData
+          )
         )
       );
 
-      const existingMarkdown = app.vault.getAbstractFileByPath(markdownPath);
-      const rendered = await renderTemplates(app, params, templateData, '');
+      const existingMarkdownFile =
+        app.vault.getAbstractFileByPath(markdownPath);
+      let existingMarkdown = '';
+
+      if (existingMarkdownFile) {
+        existingMarkdown = await app.vault.cachedRead(
+          existingMarkdownFile as TFile
+        );
+      }
+
+      const rendered = await renderTemplates(
+        params,
+        PersistExtension.prepareTemplateData(templateData, existingMarkdown),
+        ''
+      );
 
       if (!rendered) return false;
 
       if (existingMarkdown) {
-        app.vault.modify(existingMarkdown as TFile, rendered);
+        app.vault.modify(existingMarkdownFile as TFile, rendered);
       } else {
         await mkMDDir(markdownPath);
         app.vault.create(markdownPath, rendered);
@@ -327,7 +362,7 @@ export async function exportToMarkdown(
       const pdfInputPath = attachments[j].path;
       if (!pdfInputPath?.endsWith('.pdf')) continue;
 
-      const pathTemplateData = applyBasicTemplates({
+      const pathTemplateData = await applyBasicTemplates(sourcePath, {
         ...attachments[j],
         ...itemData[i],
       });
@@ -336,7 +371,8 @@ export async function exportToMarkdown(
         vaultRoot,
         exportFormat.imageOutputPathTemplate
           ? removeStartingSlash(
-              template.renderString(
+              await renderTemplate(
+                sourcePath,
                 exportFormat.imageOutputPathTemplate,
                 pathTemplateData
               )
@@ -347,7 +383,8 @@ export async function exportToMarkdown(
       const imageRelativePath = exportFormat.imageOutputPathTemplate
         ? sanitizeFilePath(
             removeStartingSlash(
-              template.renderString(
+              await renderTemplate(
+                sourcePath,
                 exportFormat.imageOutputPathTemplate,
                 pathTemplateData
               )
@@ -358,7 +395,8 @@ export async function exportToMarkdown(
       const imageBaseName = exportFormat.imageOutputPathTemplate
         ? sanitizeFilePath(
             removeStartingSlash(
-              template.renderString(
+              await renderTemplate(
+                sourcePath,
                 exportFormat.imageBaseNameTemplate,
                 pathTemplateData
               )
@@ -368,23 +406,28 @@ export async function exportToMarkdown(
 
       const markdownPath = sanitizeFilePath(
         removeStartingSlash(
-          template.renderString(
+          await renderTemplate(
+            sourcePath,
             exportFormat.outputPathTemplate,
             pathTemplateData
           )
         )
       );
 
-      const existingMarkdown = app.vault.getAbstractFileByPath(markdownPath);
+      const existingMarkdownFile =
+        app.vault.getAbstractFileByPath(markdownPath);
 
+      let existingMarkdown = '';
       let lastExportDate = moment(0);
       let existingAnnotations = '';
 
-      if (existingMarkdown) {
-        const markdown = await app.vault.cachedRead(existingMarkdown as TFile);
+      if (existingMarkdownFile) {
+        existingMarkdown = await app.vault.cachedRead(
+          existingMarkdownFile as TFile
+        );
 
-        lastExportDate = getLastExport(markdown);
-        existingAnnotations = getExistingAnnotations(markdown);
+        lastExportDate = getLastExport(existingMarkdown);
+        existingAnnotations = getExistingAnnotations(existingMarkdown);
       }
 
       let annots: any;
@@ -412,23 +455,25 @@ export async function exportToMarkdown(
         }
       }
 
-      const templateData: Record<any, any> = applyBasicTemplates({
-        ...itemData[i],
-        lastExportDate,
-        annotations: annots ? annots : [],
-      });
+      const templateData: Record<any, any> = await applyBasicTemplates(
+        markdownPath,
+        {
+          ...itemData[i],
+          lastExportDate,
+          annotations: annots ? annots : [],
+        }
+      );
 
       const rendered = await renderTemplates(
-        app,
         params,
-        templateData,
+        PersistExtension.prepareTemplateData(templateData, existingMarkdown),
         existingAnnotations
       );
 
       if (!rendered) return false;
 
-      if (existingMarkdown) {
-        app.vault.modify(existingMarkdown as TFile, rendered);
+      if (existingMarkdownFile) {
+        app.vault.modify(existingMarkdownFile as TFile, rendered);
       } else {
         await mkMDDir(markdownPath);
         app.vault.create(markdownPath, rendered);
@@ -509,16 +554,18 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
     }
   }
 
-  itemData.forEach((data: any) => {
-    const firstPDF = data.attachments.find((a: any) =>
-      a.path?.endsWith('.pdf')
-    );
+  await Promise.all(
+    itemData.map(async (data: any) => {
+      const firstPDF = data.attachments.find((a: any) =>
+        a.path?.endsWith('.pdf')
+      );
 
-    data.annotations = firstPDF?.annotations ? firstPDF.annotations : [];
-    data.lastExportDate = moment(0);
+      data.annotations = firstPDF?.annotations ? firstPDF.annotations : [];
+      data.lastExportDate = moment(0);
 
-    applyBasicTemplates(data);
-  });
+      await applyBasicTemplates('', data);
+    })
+  );
 
   return itemData;
 }
