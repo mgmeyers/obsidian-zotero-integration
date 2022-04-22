@@ -222,6 +222,75 @@ describe('class PersistExtension', () => {
 
     expect(env.renderString(template, templateData)).toEqual(expected);
   });
+
+  it('sanely handles new lines', () => {
+    const env = new nunjucks.Environment(undefined, {
+      autoescape: false,
+    });
+
+    env.addExtension(PersistExtension.id, new PersistExtension());
+
+    const templateData = {
+      a: 'one',
+      b: 'two',
+    };
+
+    let template = `
+{% persist "hello" %}
+{{a}}
+{% endpersist %}
+    `.trim();
+
+    let existing = `
+%% begin hello %%
+hello
+%% end hello %%
+    `.trim();
+
+    let expected = `
+%% begin hello %%
+hello
+one
+%% end hello %%
+    `.trim();
+
+    expect(
+      env.renderString(
+        template,
+        PersistExtension.prepareTemplateData(templateData, existing)
+      )
+    ).toEqual(expected);
+
+    template = `
+{% persist "hello" %}
+
+{{a}}
+{% endpersist %}
+    `.trim();
+
+    existing = `
+%% begin hello %%
+
+hello
+%% end hello %%
+    `.trim();
+
+    expected = `
+%% begin hello %%
+
+hello
+
+one
+%% end hello %%
+    `.trim();
+
+    expect(
+      env.renderString(
+        template,
+        PersistExtension.prepareTemplateData(templateData, existing)
+      )
+    ).toEqual(expected);
+  });
 });
 
 describe('class ObsidianMarkdownLoader', () => {
