@@ -160,7 +160,7 @@ function TemplatePreview({
 
         setTemplate(output ? output : null);
       } catch (e) {
-        setTemplateError(e);
+        setTemplateError(e.message);
       }
     };
 

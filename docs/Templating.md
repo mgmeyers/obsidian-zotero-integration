@@ -40,6 +40,13 @@ And a basic annotation template:
 
 Please see the [Nunjucks docs](https://mozilla.github.io/nunjucks/templating.html#variables) for more detail on templating.
 
+## Where do I store my templates?
+
+Templates can reside anywhere in your Obsidian vault. The path to the template is supplied in the import settings.
+
+![](Screen%20Shot%202022-04-23%20at%2010.54.56%20AM.png)
+
+
 ## How do I format lists of data?
 
 In the data explorer, you'll notice that annotations, tags, creators, and other values look something like:
@@ -139,12 +146,21 @@ You can also use this to import only the annotations that were added since the l
 
 This would then allow you to add block IDs to annotations, edit annotations or annotation comments, and add additional notes to annotations.
 
+## How do I include content from other markdown files
 
-## Where do I store my templates?
+Templates can be split into multiple files if that makes organization easier for you. You can include those files in your main template using obsidian links:
 
-Templates can reside anywhere in your Obsidian vault. The path to the template is supplied in the import settings.
+```markdown
+{% include "[[link to markdown file]]" %}
+```
 
-![](Screen%20Shot%202022-04-23%20at%2010.54.56%20AM.png)
+**Note:** if you want to include other markdown files in a `for` loop, you need to use `asyncEach` instead of `for`:
+
+```
+{% asyncEach a in annotations %}
+{% include "[[annotation template]]" %}
+{% endeach %}
+```
 
 ## What custom nunjucks filters are available?
 
