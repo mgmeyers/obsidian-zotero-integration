@@ -170,16 +170,51 @@ export async function renderTemplates(
   existingAnnotations: string,
   shouldThrow?: boolean
 ) {
-  const { headerTemplate, annotationTemplate, footerTemplate } =
+  const { template, headerTemplate, annotationTemplate, footerTemplate } =
     await getTemplates(params);
 
-  if (!headerTemplate && !annotationTemplate && !footerTemplate) {
+  if (!template && !headerTemplate && !annotationTemplate && !footerTemplate) {
     throw new Error(
       `No templates found for export ${params.exportFormat.name}`
     );
   }
 
+  let main = '';
+
+  if (template) {
+    try {
+      main = template
+        ? await renderTemplate(
+            params.exportFormat.templatePath,
+            template,
+            templateData
+          )
+        : '';
+    } catch (e) {
+      if (shouldThrow) {
+        throw errorToHelpfulError(
+          e,
+          params.exportFormat.templatePath,
+          template
+        );
+      } else {
+        errorToHelpfulNotification(
+          e,
+          params.exportFormat.templatePath,
+          template
+        );
+        return false;
+      }
+    }
+
+    return appendExportDate(main);
+  }
+
+  // Legacy templates
   let header = '';
+  let annotations = '';
+  let footer = '';
+
   try {
     header = headerTemplate
       ? await renderTemplate(
@@ -205,7 +240,6 @@ export async function renderTemplates(
     }
   }
 
-  let annotations = '';
   try {
     annotations = annotationTemplate
       ? await renderTemplate(
@@ -231,7 +265,6 @@ export async function renderTemplates(
     }
   }
 
-  let footer = '';
   try {
     footer = footerTemplate
       ? await renderTemplate(
@@ -279,6 +312,7 @@ export async function renderTemplates(
 
 export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
   return (
+    exportFormat.templatePath ||
     exportFormat.headerTemplatePath ||
     exportFormat.annotationTemplatePath ||
     exportFormat.footerTemplatePath ||

@@ -21,54 +21,6 @@ interface FormatSettingsProps {
   updateFormat: (index: number, format: ExportFormat) => void;
 }
 
-// const typeOptions = [
-// 	{ value: "annotation", label: "Annotation" },
-// 	{ value: "artwork", label: "Artwork" },
-// 	{ value: "attachment", label: "Attachment" },
-// 	{ value: "audioRecording", label: "Audio Recording" },
-// 	{ value: "bill", label: "Bill" },
-// 	{ value: "blogPost", label: "Blog Post" },
-// 	{ value: "book", label: "Book" },
-// 	{ value: "bookSection", label: "Book Section" },
-// 	{ value: "case", label: "Case" },
-// 	{ value: "classic", label: "Classic" },
-// 	{ value: "computerProgram", label: "Software" },
-// 	{ value: "conferencePaper", label: "Conference Paper" },
-// 	{ value: "dictionaryEntry", label: "Dictionary Entry" },
-// 	{ value: "document", label: "Document" },
-// 	{ value: "email", label: "E-mail" },
-// 	{ value: "encyclopediaArticle", label: "Encyclopedia Article" },
-// 	{ value: "film", label: "Film" },
-// 	{ value: "forumPost", label: "Forum Post" },
-// 	{ value: "gazette", label: "Gazette" },
-// 	{ value: "hearing", label: "Hearing" },
-// 	{ value: "instantMessage", label: "Instant Message" },
-// 	{ value: "interview", label: "Interview" },
-// 	{ value: "journalArticle", label: "Journal Article" },
-// 	{ value: "legalCommentary", label: "Legal Commentary" },
-// 	{ value: "letter", label: "Letter" },
-// 	{ value: "magazineArticle", label: "Magazine Article" },
-// 	{ value: "manuscript", label: "Manuscript" },
-// 	{ value: "map", label: "Map" },
-// 	{ value: "newspaperArticle", label: "Newspaper Article" },
-// 	{ value: "note", label: "Note" },
-// 	{ value: "patent", label: "Patent" },
-// 	{ value: "periodical", label: "Periodical" },
-// 	{ value: "podcast", label: "Podcast" },
-// 	{ value: "preprint", label: "Preprint" },
-// 	{ value: "presentation", label: "Presentation" },
-// 	{ value: "radioBroadcast", label: "Radio Broadcast" },
-// 	{ value: "regulation", label: "Regulation" },
-// 	{ value: "report", label: "Report" },
-// 	{ value: "standard", label: "Standard" },
-// 	{ value: "statute", label: "Statute" },
-// 	{ value: "thesis", label: "Thesis" },
-// 	{ value: "treaty", label: "Treaty" },
-// 	{ value: "tvBroadcast", label: "TV Broadcast" },
-// 	{ value: "videoRecording", label: "Video Recording" },
-// 	{ value: "webpage", label: "Web Page" },
-// ];
-
 export function ExportFormatSettings({
   format,
   index,
@@ -80,26 +32,14 @@ export function ExportFormatSettings({
     return buildLoadFileOptions(fileSearch);
   }, []);
 
-  const defaultHeaderTemplate = React.useMemo(() => {
-    const file = app.vault
-      .getMarkdownFiles()
-      .find((item) => item.path === format.headerTemplatePath);
-    return file ? { value: file.path, label: file.path } : undefined;
-  }, [format.headerTemplatePath]);
+  const defaultTemplate = React.useMemo(() => {
+    if (!format.templatePath) return undefined;
 
-  const defaultAnnotationTemplate = React.useMemo(() => {
     const file = app.vault
       .getMarkdownFiles()
-      .find((item) => item.path === format.annotationTemplatePath);
+      .find((item) => item.path === format.templatePath);
     return file ? { value: file.path, label: file.path } : undefined;
-  }, [format.annotationTemplatePath]);
-
-  const defaultFooterTemplate = React.useMemo(() => {
-    const file = app.vault
-      .getMarkdownFiles()
-      .find((item) => item.path === format.footerTemplatePath);
-    return file ? { value: file.path, label: file.path } : undefined;
-  }, [format.footerTemplatePath]);
+  }, [format.templatePath]);
 
   const defaultStyle = React.useMemo(() => {
     return cslListRaw.find((item) => item.value === format.cslStyle);
@@ -126,31 +66,11 @@ export function ExportFormatSettings({
     [updateFormat, index, format]
   );
 
-  const onChangeHeaderPath = React.useCallback(
+  const onChangeTemplatePath = React.useCallback(
     (e: SingleValue<{ value: string; label: string }>) => {
       updateFormat(index, {
         ...format,
-        headerTemplatePath: e?.value,
-      });
-    },
-    [updateFormat, index, format]
-  );
-
-  const onChangeAnnotationPath = React.useCallback(
-    (e: SingleValue<{ value: string; label: string }>) => {
-      updateFormat(index, {
-        ...format,
-        annotationTemplatePath: e?.value,
-      });
-    },
-    [updateFormat, index, format]
-  );
-
-  const onChangeFooterPath = React.useCallback(
-    (e: SingleValue<{ value: string; label: string }>) => {
-      updateFormat(index, {
-        ...format,
-        footerTemplatePath: e?.value,
+        templatePath: e?.value,
       });
     },
     [updateFormat, index, format]
@@ -234,17 +154,17 @@ export function ExportFormatSettings({
       </div>
 
       <div className="zt-format__form">
-        <div className="zt-format__label">Header Template File</div>
+        <div className="zt-format__label">Template File</div>
         <div className="zt-format__input-wrapper">
           <AsyncSelect
             noOptionsMessage={NoFileOptionMessage}
             placeholder="Search..."
             cacheOptions
-            defaultValue={defaultHeaderTemplate}
+            defaultValue={defaultTemplate}
             className="zt-multiselect"
             loadOptions={loadFileOptions}
             isClearable
-            onChange={onChangeHeaderPath}
+            onChange={onChangeTemplatePath}
             styles={customSelectStyles}
           />
         </div>
@@ -257,68 +177,117 @@ export function ExportFormatSettings({
             rel="noreferrer"
           >
             Nunjucks
+          </a>
+          .{' '}
+          <a
+            href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            See the templating documentation here
           </a>
           .
         </div>
       </div>
 
-      <div className="zt-format__form">
-        <div className="zt-format__label">Annotation Template File</div>
-        <div className="zt-format__input-wrapper">
-          <AsyncSelect
-            noOptionsMessage={NoFileOptionMessage}
-            placeholder="Search..."
-            cacheOptions
-            defaultValue={defaultAnnotationTemplate}
-            className="zt-multiselect"
-            loadOptions={loadFileOptions}
-            isClearable
-            onChange={onChangeAnnotationPath}
-            styles={customSelectStyles}
-          />
+      {format.headerTemplatePath && (
+        <div className="zt-format__form is-deprecated">
+          <div className="zt-format__label">
+            Header Template File (deprecated)
+          </div>
+          <div className="zt-format__input-wrapper">
+            <input type="text" disabled value={format.headerTemplatePath} />
+            <button
+              className="mod-warning"
+              onClick={() => {
+                updateFormat(index, {
+                  ...format,
+                  headerTemplatePath: undefined,
+                });
+              }}
+            >
+              Remove Template
+            </button>
+          </div>
+          <div className="zt-format__input-note">
+            Deprecated: Separate template files are no longer needed.{' '}
+            <a
+              href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              See the templating documentation here
+            </a>
+            .
+          </div>
         </div>
-        <div className="zt-format__input-note">
-          Open the data explorer from the command pallet to see available
-          template data. Templates are written using{' '}
-          <a
-            href="https://mozilla.github.io/nunjucks/templating.html#variables"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Nunjucks
-          </a>
-          .
-        </div>
-      </div>
+      )}
 
-      <div className="zt-format__form">
-        <div className="zt-format__label">Footer Template File</div>
-        <div className="zt-format__input-wrapper">
-          <AsyncSelect
-            noOptionsMessage={NoFileOptionMessage}
-            placeholder="Search..."
-            cacheOptions
-            defaultValue={defaultFooterTemplate}
-            className="zt-multiselect"
-            loadOptions={loadFileOptions}
-            isClearable
-            onChange={onChangeFooterPath}
-            styles={customSelectStyles}
-          />
+      {format.annotationTemplatePath && (
+        <div className="zt-format__form is-deprecated">
+          <div className="zt-format__label">
+            Annotation Template File (deprecated)
+          </div>
+          <div className="zt-format__input-wrapper">
+            <input type="text" disabled value={format.annotationTemplatePath} />
+            <button
+              className="mod-warning"
+              onClick={() => {
+                updateFormat(index, {
+                  ...format,
+                  annotationTemplatePath: undefined,
+                });
+              }}
+            >
+              Remove Template
+            </button>
+          </div>
+          <div className="zt-format__input-note">
+            Deprecated: Separate template files are no longer needed.{' '}
+            <a
+              href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              See the templating documentation here
+            </a>
+            .
+          </div>
         </div>
-        <div className="zt-format__input-note">
-          Open the data explorer from the command pallet to see available
-          template data. Templates are written using{' '}
-          <a
-            href="https://mozilla.github.io/nunjucks/templating.html#variables"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Nunjucks
-          </a>
-          .
+      )}
+
+      {format.footerTemplatePath && (
+        <div className="zt-format__form is-deprecated">
+          <div className="zt-format__label">
+            Footer Template File (deprecated)
+          </div>
+          <div className="zt-format__input-wrapper">
+            <input type="text" disabled value={format.footerTemplatePath} />
+            <button
+              className="mod-warning"
+              onClick={() => {
+                updateFormat(index, {
+                  ...format,
+                  footerTemplatePath: undefined,
+                });
+              }}
+            >
+              Remove Template
+            </button>
+          </div>
+          <div className="zt-format__input-note">
+            Deprecated: Separate template files are no longer needed.{' '}
+            <a
+              href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              See the templating documentation here
+            </a>
+            .
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="zt-format__form">
         <div className="zt-format__label">Bilbiography Style</div>

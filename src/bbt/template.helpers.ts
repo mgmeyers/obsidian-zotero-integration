@@ -22,6 +22,16 @@ export function loadTemplate(
 
 export async function getTemplates(params: ExportToMarkdownParams) {
   const { exportFormat } = params;
+  const noLegacyTemplates =
+    !exportFormat.headerTemplatePath &&
+    !exportFormat.annotationTemplatePath &&
+    !exportFormat.footerTemplatePath;
+
+  if (exportFormat.templatePath || noLegacyTemplates) {
+    return {
+      template: await loadTemplate('', exportFormat.templatePath),
+    };
+  }
 
   return {
     headerTemplate: await loadTemplate(

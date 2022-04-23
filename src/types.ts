@@ -39,11 +39,13 @@ export interface ExportFormat {
   imageOutputPathTemplate: string;
   imageBaseNameTemplate: string;
 
+  templatePath?: string;
+  cslStyle?: string;
+
+  // Deprecated
   headerTemplatePath?: string;
   annotationTemplatePath?: string;
   footerTemplatePath?: string;
-
-  cslStyle?: string;
 }
 
 export interface ExportToMarkdownParams {
@@ -65,4 +67,5 @@ export interface ZoteroConnectorSettings {
   pdfExportImageTesseractPath?: string;
   pdfExportImageTessDataDir?: string;
   exeVersion?: string;
+  settingsVersion?: number;
 }

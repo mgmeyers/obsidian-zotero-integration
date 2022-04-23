@@ -149,11 +149,16 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loadedSettings = await this.loadData();
+
+    this.settings = {
+      ...DEFAULT_SETTINGS,
+      ...loadedSettings,
+    };
   }
 
   async saveSettings() {
-    if (this.emitter.events.settingsUpdated?.length) {
+    if (this.emitter?.events.settingsUpdated?.length) {
       this.emitter.emit('settingsUpdated', undefined);
     }
     await this.saveData(this.settings);

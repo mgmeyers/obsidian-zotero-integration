@@ -24,6 +24,10 @@
   margin-bottom: 5px;
 }
 
+.is-deprecated .zt-format__label {
+  color: var(--text-error);
+}
+
 .zt-format__input-wrapper {
   display: flex;
   align-items: center;
@@ -31,6 +35,13 @@
 
 .zt-format__input-wrapper > *:not(.checkbox-container) {
   width: 100% !important;
+}
+
+.is-deprecated .zt-format__input-wrapper button {
+  width: auto !important;
+  flex-grow: 0;
+  flex-shrink: 0;
+  margin-left: 5px;
 }
 
 .zt-format__delete-btn {

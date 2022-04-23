@@ -76,25 +76,15 @@ function TemplatePreview({
 
   React.useEffect(() => {
     const fmt = plugin.settings.exportFormats[formatIndex];
-    const headerFile = fmt.headerTemplatePath
+    const mainFile = fmt.templatePath
       ? plugin.app.vault.getAbstractFileByPath(
-          sanitizeObsidianPath(fmt.headerTemplatePath)
-        )
-      : null;
-    const annotFile = fmt.annotationTemplatePath
-      ? plugin.app.vault.getAbstractFileByPath(
-          sanitizeObsidianPath(fmt.annotationTemplatePath)
-        )
-      : null;
-    const footerFile = fmt.footerTemplatePath
-      ? plugin.app.vault.getAbstractFileByPath(
-          sanitizeObsidianPath(fmt.footerTemplatePath)
+          sanitizeObsidianPath(fmt.templatePath)
         )
       : null;
 
     const onUpdate = (file: TFile) => {
       if (!file) return;
-      if (file === headerFile || file === annotFile || file === footerFile) {
+      if (file === mainFile) {
         setForceRef(Date.now());
       }
     };
