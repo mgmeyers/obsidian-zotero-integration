@@ -151,7 +151,7 @@ export class PersistExtension implements Extension {
     );
   }
 
-  static re = /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/g;
+  static re = /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/ig;
   static prepareTemplateData<T>(templateData: T, md: string): T & WithRetained {
     const out: Record<string, string> = {};
 
