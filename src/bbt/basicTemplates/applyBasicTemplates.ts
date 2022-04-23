@@ -37,7 +37,7 @@ const annotationsTemplate = `
 {%- if annotations and annotations.length > 0 -%}
 {%- set annots = annotations | filterby("date", "dateafter", lastExportDate) -%}
 {%- if annots.length > 0 %}
-**Exported: {{exportDate | format("YYYY-MM-DD")}}**
+**Imported: {{importDate | format("YYYY-MM-DD")}}**
 
 {% for annotation in annots -%}
 	{%- if annotation.annotatedText -%}

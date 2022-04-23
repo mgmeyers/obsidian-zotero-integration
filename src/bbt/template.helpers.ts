@@ -50,7 +50,14 @@ export async function getTemplates(params: ExportToMarkdownParams) {
 }
 
 export function getLastExport(md: string): moment.Moment {
-  const match = md.match(/%% Export Date: (\S+) %%\n$/);
+  let match = md.match(/%% Import Date: (\S+) %%\n$/);
+
+  if (match && match[1]) {
+    return moment(new Date(match[1]));
+  }
+
+  // Legacy
+  match = md.match(/%% Export Date: (\S+) %%\n$/);
 
   if (match && match[1]) {
     return moment(new Date(match[1]));
@@ -60,7 +67,7 @@ export function getLastExport(md: string): moment.Moment {
 }
 
 export function appendExportDate(md: string): string {
-  return md + `\n\n%% Export Date: ${new Date().toISOString()} %%\n`;
+  return md + `\n\n%% Import Date: ${new Date().toISOString()} %%\n`;
 }
 
 export function getExistingAnnotations(md: string): string {

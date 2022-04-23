@@ -76,11 +76,13 @@ function processAnnotation(
 
 async function processItem(
   item: any,
-  exportDate: moment.Moment,
+  importDate: moment.Moment,
   database: Database,
   cslStyle?: string
 ) {
-  item.exportDate = exportDate;
+  item.importDate = importDate;
+  // legacy
+  item.exportDate = importDate;
   item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
 
   if (item.accessDate) {
@@ -321,7 +323,7 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
 }
 
 export async function exportToMarkdown(params: ExportToMarkdownParams) {
-  const exportDate = moment();
+  const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
 
@@ -337,7 +339,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
   }
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], exportDate, database, exportFormat.cslStyle);
+    await processItem(itemData[i], importDate, database, exportFormat.cslStyle);
   }
 
   const vaultRoot = getVaultRoot();
@@ -452,7 +454,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         app.vault.getAbstractFileByPath(markdownPath);
 
       let existingMarkdown = '';
-      let lastExportDate = moment(0);
+      let lastImportDate = moment(0);
       let existingAnnotations = '';
 
       if (existingMarkdownFile) {
@@ -460,7 +462,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
           existingMarkdownFile as TFile
         );
 
-        lastExportDate = getLastExport(existingMarkdown);
+        lastImportDate = getLastExport(existingMarkdown);
         existingAnnotations = getExistingAnnotations(existingMarkdown);
       }
 
@@ -493,8 +495,11 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         markdownPath,
         {
           ...itemData[i],
-          lastExportDate,
+          lastImportDate,
           annotations: annots ? annots : [],
+
+          // legacy
+          lastExportDate: lastImportDate,
         }
       );
 
@@ -544,11 +549,11 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
     return null;
   }
 
-  const exportDate = moment();
+  const importDate = moment();
   const style = getAStyle(settings);
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], exportDate, settings.database, style);
+    await processItem(itemData[i], importDate, settings.database, style);
   }
 
   if (doesEXEExist()) {

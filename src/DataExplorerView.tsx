@@ -11,6 +11,7 @@ import {
 import { sanitizeFilePath } from './bbt/helpers';
 import { PersistExtension, renderTemplate } from './bbt/template.env';
 import {
+  getLastExport,
   removeStartingSlash,
   sanitizeObsidianPath,
 } from './bbt/template.helpers';
@@ -131,16 +132,28 @@ function TemplatePreview({
           app.vault.getAbstractFileByPath(markdownPath);
 
         let existingMarkdown = '';
+        let lastImportDate = moment(0);
 
         if (existingMarkdownFile) {
           existingMarkdown = await app.vault.cachedRead(
             existingMarkdownFile as TFile
           );
+
+          lastImportDate = getLastExport(existingMarkdown);
         }
 
         const output = await renderTemplates(
           params,
-          PersistExtension.prepareTemplateData(templateData, existingMarkdown),
+          PersistExtension.prepareTemplateData(
+            {
+              ...templateData,
+              lastImportDate,
+
+              // legacy
+              lastExportDate: lastImportDate,
+            },
+            existingMarkdown
+          ),
           '',
           true
         );

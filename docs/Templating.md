@@ -1,7 +1,3 @@
-## Why are there three template options?
-
-Currently, you are able to define `Header`, `Annotation`, and `Footer` templates. Annotation templates are unique in that any existing exported annotations will not be overwritten. This allows you to edit the annotation markdown and have your changes persist when exporting multiple times. If you don't care about this, you can use just the header template. The same data is available to all templates.
-
 ## What data is available to templates?
 
 You can view the data available to templates using the `Data Explorer` command in Obsidian's command pallette.
@@ -98,9 +94,55 @@ Finally, there are special values that nunjucks provides. For example `loop.firs
 
 This will output each tag and place a comma after each except the last tag in the list, resulting in something like: `Fear conditioning, Learning and memory, Long-term memory`
 
+## How do I prevent sections of my templates from being overwritten
+
+Each time you import data from the same Zotero entry, it will overwrite the existing markdown file. You can prevent this using the `persist` template tag.
+
+This can be used to create a section for notes:
+
+```markdown
+## {{title}}
+
+### Notes
+{% persist "notes" %}
+{% endpersist %}
+```
+
+Which will create a markdown file that looks like:
+
+```markdown
+## The Boring Billion, a slingshot for Complex Life on Earth
+
+### Notes
+%% begin notes %%
+%% end notes %%
+```
+
+Any content added between `%% begin notes %%` and `%% end notes %%` will not be overwritten.
+
+You can also use this to import only the annotations that were added since the last import.
+
+```markdown
+{% persist "annotations" %}
+{% set newAnnotations = annotations | filterby("date", "dateafter", lastImportDate) %}
+{% if newAnnotations.length > 0 %}
+
+### Imported: {{importDate | format("YYYY-MM-DD h:mm a")}}
+
+{% for a in newAnnotations %}
+> {{a.annotatedText}}
+{% endfor %}
+
+{% endif %}
+{% endpersist %}
+```
+
+This would then allow you to add block IDs to annotations, edit annotations or annotation comments, and add additional notes to annotations.
+
+
 ## Where do I store my templates?
 
-Templates can reside anywhere in your Obsidian vault. The path to the template is supplied in the export settings.
+Templates can reside anywhere in your Obsidian vault. The path to the template is supplied in the import settings.
 
 ![](Screen%20Shot%202022-03-28%20at%2011.21.07%20AM.png)
 
@@ -108,7 +150,7 @@ Templates can reside anywhere in your Obsidian vault. The path to the template i
 
 ### `format("<Moment format>")`
 
-All exported dates support formatting via Moment. See the [moment format reference](https://momentjs.com/docs/#/displaying/format/) for more details.
+All dates support formatting via Moment. See the [moment format reference](https://momentjs.com/docs/#/displaying/format/) for more details.
 
 ### `filterby("<property>", "<command>", "<parameter>")`
 

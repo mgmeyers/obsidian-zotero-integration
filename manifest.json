@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-zotero-desktop-connector",
 	"name": "Zotero Desktop Connector",
-	"version": "1.2.26",
+	"version": "2.0.0",
 	"minAppVersion": "0.12.0",
 	"description": "Insert citations, bibliographies, and notes directly from Zotero desktop.",
 	"author": "mgmeyers",
