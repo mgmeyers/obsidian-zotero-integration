@@ -144,7 +144,7 @@ This would then allow you to add block IDs to annotations, edit annotations or a
 
 Templates can reside anywhere in your Obsidian vault. The path to the template is supplied in the import settings.
 
-![](Screen%20Shot%202022-03-28%20at%2011.21.07%20AM.png)
+![](Screen%20Shot%202022-04-23%20at%2010.54.56%20AM.png)
 
 ## What custom nunjucks filters are available?
 
