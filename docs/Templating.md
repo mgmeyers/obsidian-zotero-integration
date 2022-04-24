@@ -162,6 +162,18 @@ Templates can be split into multiple files if that makes organization easier for
 {% endeach %}
 ```
 
+## How do I migrate the old header, annotation, and footer templates to the new single template format?
+
+Previously, this plugin used three different template files. For the sake of this example, let's call the content of each template `<header content>`, `<annotation content>`, and `<footer content>`. To migrate to the new single file template format all you need to do is create new markdown file that contains:
+
+```
+<header content>
+{% persist "annotations" %}
+<annotation content>
+{% endpersist %}
+<footer content>
+```
+
 ## What custom nunjucks filters are available?
 
 ### `format("<Moment format>")`
