@@ -68,4 +68,5 @@ export interface ZoteroConnectorSettings {
   pdfExportImageTessDataDir?: string;
   exeVersion?: string;
   settingsVersion?: number;
+  shouldShowCiteSuggest?: boolean;
 }

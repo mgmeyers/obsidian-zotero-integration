@@ -51,6 +51,7 @@
     "execa": "^6.1.0",
     "fuse.js": "^6.5.3",
     "nunjucks": "3.2.3",
+    "p-debounce": "^4.0.0",
     "preact": "10.6.6",
     "react": "npm:@preact/compat",
     "react-dom": "npm:@preact/compat",

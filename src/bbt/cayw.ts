@@ -6,12 +6,15 @@ import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
 import { LoadingModal } from './LoadingModal';
 
-export async function isZoteroRunning(database: Database) {
-  const modal = new LoadingModal(
-    (window as any).app,
-    'Fetching data from Zotero...'
-  );
-  modal.open();
+export async function isZoteroRunning(database: Database, silent?: boolean) {
+  let modal: LoadingModal;
+  if (!silent) {
+    const modal = new LoadingModal(
+      (window as any).app,
+      'Fetching data from Zotero...'
+    );
+    modal.open();
+  }
   try {
     const res = await request({
       method: 'GET',
@@ -21,14 +24,15 @@ export async function isZoteroRunning(database: Database) {
       headers: defaultHeaders,
     });
 
-    modal.close();
+    modal?.close();
     return res === 'ready';
   } catch (e) {
-    modal.close();
-    new Notice(
-      'Cannot connect to Zotero. Please ensure it is running and the Better BibTeX plugin is installed',
-      10000
-    );
+    modal?.close();
+    !silent &&
+      new Notice(
+        'Cannot connect to Zotero. Please ensure it is running and the Better BibTeX plugin is installed',
+        10000
+      );
     return false;
   }
 }

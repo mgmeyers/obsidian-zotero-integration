@@ -42,6 +42,9 @@ function SettingsComponent({
   );
 
   const [ocrState, setOCRState] = React.useState(settings.pdfExportImageOCR);
+  const [citeSuggestState, setCiteSuggestState] = React.useState(
+    !!settings.shouldShowCiteSuggest
+  );
 
   const updateCite = React.useCallback(
     debounce(
@@ -126,6 +129,22 @@ function SettingsComponent({
           spellCheck="false"
           placeholder="Example: folder 1/folder 2"
           defaultValue={settings.noteImportFolder}
+        />
+      </SettingItem>
+      <SettingItem
+        name="Enable Cite Key Autocomplete"
+        description="Typing the @ symbol will display an autocomplete dialog for citation keys"
+      >
+        <div
+          onClick={() => {
+            setCiteSuggestState((state) => {
+              updateSetting('shouldShowCiteSuggest', !state);
+              return !state;
+            });
+          }}
+          className={`checkbox-container${
+            citeSuggestState ? ' is-enabled' : ''
+          }`}
         />
       </SettingItem>
       <SettingItem name="Citation Formats" isHeading />

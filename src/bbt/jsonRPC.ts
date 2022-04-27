@@ -217,3 +217,35 @@ export async function getIssueDateFromCiteKey(
     return null;
   }
 }
+
+export async function execSearch(
+  term: string,
+  database: Database
+) {
+  let res: string;
+
+  try {
+    res = await request({
+      method: 'POST',
+      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'item.search',
+        params: [term],
+      }),
+      headers: defaultHeaders,
+    });
+  } catch (e) {
+    console.error(e);
+    new Notice(`Error searching: ${e.message}`, 10000);
+    return null;
+  }
+
+  try {
+    return JSON.parse(res).result;
+  } catch (e) {
+    console.error(e);
+    new Notice(`Error searching: ${e.message}`, 10000);
+    return null;
+  }
+}

@@ -16,6 +16,7 @@ import { Emitter, createEmitter } from './emitter';
 import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
+import { CiteSuggest } from './citeSuggest/citeSuggest';
 
 const commandPrefix = 'obsidian-zotero-desktop-connector:';
 const citationCommandIDPrefix = 'zdc-';
@@ -94,6 +95,8 @@ export default class ZoteroConnector extends Plugin {
         this.activateView();
       },
     });
+
+    this.registerEditorSuggest(new CiteSuggest(this.app, this))
   }
 
   onunload() {
