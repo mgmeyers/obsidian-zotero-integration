@@ -9,7 +9,7 @@ import { LoadingModal } from './LoadingModal';
 export async function isZoteroRunning(database: Database, silent?: boolean) {
   let modal: LoadingModal;
   if (!silent) {
-    const modal = new LoadingModal(
+    modal = new LoadingModal(
       (window as any).app,
       'Fetching data from Zotero...'
     );
