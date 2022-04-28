@@ -80,8 +80,16 @@ readFiles(
       },
       function () {
         fs.writeFileSync(
-          './src/csl-list.json',
-          JSON.stringify(cslList, null, 2)
+          './src/settings/cslList.ts',
+          `import Fuse from 'fuse.js';
+
+export const cslListRaw = ${JSON.stringify(cslList, null, 2)};
+
+export const cslList = new Fuse(cslListRaw, {
+  keys: ['label'],
+  minMatchCharLength: 3,
+});
+`
         );
       }
     );

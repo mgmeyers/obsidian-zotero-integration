@@ -8,10 +8,8 @@ import {
   EditorSuggestContext,
   EditorSuggestTriggerInfo,
   MarkdownView,
-  // TFile,
 } from 'obsidian';
 import pDebounce from 'p-debounce';
-// import { isZoteroRunning } from 'src/bbt/cayw';
 import { execSearch } from 'src/bbt/jsonRPC';
 import ZoteroConnector from 'src/main';
 import { isZoteroRunning } from 'src/bbt/cayw';
@@ -192,7 +190,7 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       startPos
     );
 
-    if (precedingChar && !/[ [;]/.test(precedingChar)) {
+    if (precedingChar && !/[ .[;]/.test(precedingChar)) {
       return null;
     }
 

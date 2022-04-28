@@ -122,6 +122,10 @@ export const cslListRaw = [
     label: 'Acta Philosophica',
   },
   {
+    value: 'acta-physica-sinica',
+    label: 'Acta Physica Sinica (物理学报)',
+  },
+  {
     value: 'acta-physiologica',
     label: 'Acta Physiologica',
   },
@@ -638,6 +642,10 @@ export const cslListRaw = [
     label: 'Annals of Joint',
   },
   {
+    value: 'annals-of-laboratory-medicine',
+    label: 'Annals of Laboratory Medicine',
+  },
+  {
     value: 'annals-of-neurology',
     label: 'Annals of Neurology',
   },
@@ -668,6 +676,10 @@ export const cslListRaw = [
   {
     value: 'annual-review-of-astronomy-and-astrophysics',
     label: 'Annual Review of Astronomy and Astrophysics',
+  },
+  {
+    value: 'annual-review-of-linguistics',
+    label: 'Annual Review of Linguistics',
   },
   {
     value: 'annual-review-of-medicine',
@@ -708,10 +720,6 @@ export const cslListRaw = [
   {
     value: 'anticancer-research',
     label: 'Anticancer Research',
-  },
-  {
-    value: 'antioxidants-and-redox-signaling',
-    label: 'Antioxidants & Redox Signaling',
   },
   {
     value: 'antipode',
@@ -802,10 +810,6 @@ export const cslListRaw = [
   {
     value: 'applied-clay-science',
     label: 'Applied Clay Science',
-  },
-  {
-    value: 'applied-in-vitro-toxicology',
-    label: 'Applied In Vitro Toxicology',
   },
   {
     value: 'applied-spectroscopy-reviews',
@@ -972,10 +976,6 @@ export const cslListRaw = [
   {
     value: 'asian-studies-review',
     label: 'Asian Studies Review',
-  },
-  {
-    value: 'assay-and-drug-development-technologies',
-    label: 'ASSAY and Drug Development Technologies',
   },
   {
     value: 'associacao-brasileira-de-normas-tecnicas-eceme',
@@ -1712,17 +1712,19 @@ export const cslListRaw = [
     label: 'Cellular and Molecular Gastroenterology and Hepatology',
   },
   {
-    value: 'cellular-reprogramming',
-    label: 'Cellular Reprogramming',
-  },
-  {
     value: 'centaurus',
     label: 'Centaurus',
   },
   {
+    value:
+      'centre-de-recherche-sur-les-civilisations-de-l-asie-orientale-auteur-date',
+    label:
+      'Centre de recherche sur les civilisations de l’Asie orientale (Français - Auteur, Date)',
+  },
+  {
     value: 'centre-de-recherche-sur-les-civilisations-de-l-asie-orientale',
     label:
-      "Centre de recherche sur les civilisations de l'Asie orientale (Français)",
+      "Centre de recherche sur les civilisations de l'Asie orientale (Français - note)",
   },
   {
     value: 'cerebral-cortex',
@@ -2241,10 +2243,6 @@ export const cslListRaw = [
     label: 'Currents in Biblical Research',
   },
   {
-    value: 'cyberpsychology-behavior-and-social-networking',
-    label: 'Cyberpsychology, Behavior, and Social Networking',
-  },
-  {
     value: 'cybium',
     label: 'Cybium',
   },
@@ -2319,10 +2317,6 @@ export const cslListRaw = [
   {
     value: 'developmental-neurobiology',
     label: 'Developmental Neurobiology',
-  },
-  {
-    value: 'diabetes-technology-and-therapeutics',
-    label: 'Diabetes Technology & Therapeutics',
   },
   {
     value: 'diabetologia',
@@ -2766,6 +2760,10 @@ export const cslListRaw = [
     label: 'Ethnobiology and Conservation',
   },
   {
+    value: 'ethnobiology-letters',
+    label: 'Ethnobiology Letters',
+  },
+  {
     value: 'ethnographiques-org',
     label: 'ethnographiques.org (Français)',
   },
@@ -2966,6 +2964,10 @@ export const cslListRaw = [
     label: 'Experimental Dermatology',
   },
   {
+    value: 'expert-reviews-in-molecular-medicine',
+    label: 'Expert Reviews in Molecular Medicine',
+  },
+  {
     value: 'express-polymer-letters',
     label: 'eXPRESS Polymer Letters',
   },
@@ -3085,10 +3087,6 @@ export const cslListRaw = [
   {
     value: 'food-and-agriculture-organization-of-the-united-nations',
     label: 'Food and Agriculture Organization of the United Nations',
-  },
-  {
-    value: 'foodborne-pathogens-and-disease',
-    label: 'Foodborne Pathogens and Disease',
   },
   {
     value: 'forensic-anthropology',
@@ -3800,10 +3798,6 @@ export const cslListRaw = [
     label: 'Herpetologica',
   },
   {
-    value: 'high-altitude-medicine-and-biology',
-    label: 'High Altitude Medicine & Biology',
-  },
-  {
     value: 'hiob-ludolf-centre-for-ethiopian-studies-long-names',
     label: 'Hiob Ludolf Centre for Ethiopian Studies (long names)',
   },
@@ -3913,10 +3907,6 @@ export const cslListRaw = [
   {
     value: 'human-ecology',
     label: 'Human Ecology',
-  },
-  {
-    value: 'human-gene-therapy',
-    label: 'Human Gene Therapy',
   },
   {
     value: 'human-molecular-genetics',
@@ -4036,6 +4026,10 @@ export const cslListRaw = [
     label: 'Im Gespräch - Hefte der Martin Buber-Gesellschaft (Deutsch)',
   },
   {
+    value: 'incontext-studies-in-translation-and-interculturalism',
+    label: 'INContext: Studies in Translation and Interculturalism',
+  },
+  {
     value: 'indian-dermatology-online-journal',
     label: 'Indian Dermatology Online Journal',
   },
@@ -4110,6 +4104,10 @@ export const cslListRaw = [
   {
     value: 'ingenieria-agricola',
     label: 'Ingeniería Agrícola (Español)',
+  },
+  {
+    value: 'innovations-therapeutiques-en-oncologie',
+    label: 'Innovations & Thérapeutiques en Oncologie',
   },
   {
     value: 'instap-academic-press',
@@ -4741,10 +4739,6 @@ export const cslListRaw = [
     label: 'Journal of Advertising Research',
   },
   {
-    value: 'journal-of-aerosol-medicine-and-pulmonary-drug-delivery',
-    label: 'Journal of Aerosol Medicine and Pulmonary Drug Delivery',
-  },
-  {
     value: 'journal-of-agricultural-and-applied-economics',
     label: 'Journal of Agricultural and Applied Economics',
   },
@@ -4881,10 +4875,6 @@ export const cslListRaw = [
     label: 'Journal of Chemometrics',
   },
   {
-    value: 'journal-of-child-and-adolescent-psychopharmacology',
-    label: 'Journal of Child and Adolescent Psychopharmacology',
-  },
-  {
     value: 'journal-of-clinical-and-translational-science',
     label: 'Journal of Clinical and Translational Science',
   },
@@ -4943,6 +4933,10 @@ export const cslListRaw = [
   {
     value: 'journal-of-contemporary-medicine',
     label: 'Journal of Contemporary Medicine',
+  },
+  {
+    value: 'journal-of-contemporary-water-research-and-education',
+    label: 'Journal of Contemporary Water Research and Education',
   },
   {
     value: 'journal-of-crohns-and-colitis-supplements',
@@ -5267,10 +5261,6 @@ export const cslListRaw = [
   {
     value: 'journal-of-neuroscience-and-neuroengineering',
     label: 'Journal of Neuroscience and Neuroengineering',
-  },
-  {
-    value: 'journal-of-neurotrauma',
-    label: 'Journal of Neurotrauma',
   },
   {
     value: 'journal-of-new-zealand-grasslands',
@@ -6264,10 +6254,6 @@ export const cslListRaw = [
     label: 'Microbial Cell',
   },
   {
-    value: 'microbial-drug-resistance',
-    label: 'Microbial Drug Resistance',
-  },
-  {
     value: 'microbiology-society',
     label: 'Microbiology Society',
   },
@@ -6439,6 +6425,10 @@ export const cslListRaw = [
   {
     value: 'multidisciplinary-digital-publishing-institute',
     label: 'Multidisciplinary Digital Publishing Institute',
+  },
+  {
+    value: 'multilingual-matters',
+    label: 'Multilingual Matters',
   },
   {
     value: 'multimed',
@@ -7520,6 +7510,10 @@ export const cslListRaw = [
     label: 'Research on Biomedical Engineering',
   },
   {
+    value: 'respiratory-care-journal',
+    label: 'Respiratory Care Journal',
+  },
+  {
     value: 'restoration-ecology',
     label: 'Restoration Ecology',
   },
@@ -7591,6 +7585,10 @@ export const cslListRaw = [
   {
     value: 'revista-fave-seccion-ciencias-agrarias',
     label: 'Revista FAVE - Sección Ciencias Agrarias (Español)',
+  },
+  {
+    value: 'revista-ladinia',
+    label: 'Revista Ladinia',
   },
   {
     value: 'revista-latinoamericana-de-metalurgia-y-materiales',
@@ -7822,6 +7820,10 @@ export const cslListRaw = [
     label: 'SCIENCE CHINA Life Sciences',
   },
   {
+    value: 'science-china-materials',
+    label: 'SCIENCE CHINA Materials',
+  },
+  {
     value: 'science-translational-medicine',
     label: 'Science Translational Medicine',
   },
@@ -8028,10 +8030,6 @@ export const cslListRaw = [
   {
     value: 'sodertorns-hogskola-oxford',
     label: 'Södertörns högskola - Oxford',
-  },
-  {
-    value: 'soft-robotics',
-    label: 'Soft Robotics',
   },
   {
     value: 'soil-biology-and-biochemistry',
@@ -8266,10 +8264,6 @@ export const cslListRaw = [
   {
     value: 'stellenbosch-law-review',
     label: 'Stellenbosch Law Review',
-  },
-  {
-    value: 'stem-cells-and-development',
-    label: 'Stem Cells and Development',
   },
   {
     value: 'stem-cells',
@@ -8702,10 +8696,6 @@ export const cslListRaw = [
     label: 'The Company of Biologists',
   },
   {
-    value: 'the-crispr-journal',
-    label: 'The CRISPR Journal',
-  },
-  {
     value: 'the-design-journal',
     label: 'The Design Journal',
   },
@@ -9074,20 +9064,12 @@ export const cslListRaw = [
     label: 'Thrombosis and Haemostasis',
   },
   {
-    value: 'thyroid',
-    label: 'Thyroid',
-  },
-  {
     value: 'tijdschrift-voor-economische-en-sociale-geografie',
     label: 'Tijdschrift voor economische en sociale geografie',
   },
   {
     value: 'tijdschrift-voor-geneeskunde',
     label: 'Tijdschrift voor Geneeskunde en Gezondheidszorg (Nederlands)',
-  },
-  {
-    value: 'tissue-engineering',
-    label: 'Tissue Engineering',
   },
   {
     value: 'topoi-orient-occident-auteur-date',
