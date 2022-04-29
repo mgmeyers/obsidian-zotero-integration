@@ -9,21 +9,22 @@ import {
   EditorSuggestTriggerInfo,
   MarkdownView,
 } from 'obsidian';
-import pDebounce from 'p-debounce';
-import { execSearch } from 'src/bbt/jsonRPC';
 import ZoteroConnector from 'src/main';
 import { isZoteroRunning } from 'src/bbt/cayw';
+import { getAllCiteKeys } from 'src/bbt/getCiteKeyExport';
 
 export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
   private plugin: ZoteroConnector;
   private app: App;
   private fuse: Fuse<string>;
-  private suggestionCache: Fuse.FuseResult<string>[] = [];
-  private lastExec: number = 0;
-  private isZoteroRunning = false;
+  private lastCheck: number = 0;
+  private citeKeys: string[] = [];
+
+  limit: number = 20;
 
   constructor(app: App, plugin: ZoteroConnector) {
     super(app);
+
     this.app = app;
     this.plugin = plugin;
 
@@ -42,56 +43,57 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
     ]);
 
     this.fuse = new Fuse([] as string[], {
-      minMatchCharLength: 2,
       includeMatches: true,
+      threshold: 0.4,
     });
 
-    this.checkIsZoteroRunning();
+    this.getCiteKeys();
   }
 
-  checkIsZoteroRunning() {
-    isZoteroRunning(this.plugin.settings.database, true).then((isRunning) => {
-      this.isZoteroRunning = isRunning;
-    });
+  getCiteKeys() {
+    // Check at most once every 30 seconds
+    if (Date.now() - this.lastCheck < 30 * 1000) {
+      return;
+    }
+
+    const database = this.plugin.settings.database;
+    isZoteroRunning(database, true)
+      .then((isRunning) => {
+        if (isRunning) {
+          getAllCiteKeys(database)
+            .then((keys) => {
+              this.lastCheck = Date.now();
+              if (
+                keys.length != this.citeKeys.length ||
+                keys.some((value, index) => value !== this.citeKeys[index])
+              ) {
+                this.citeKeys = keys;
+                this.fuse.setCollection(keys);
+              }
+            })
+            .catch((e) => {
+              console.error(e);
+            });
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   }
 
-  async getSuggestions(
-    context: EditorSuggestContext
-  ): Promise<Fuse.FuseResult<string>[]> {
-    this.lastExec = Date.now();
+  getSuggestions(context: EditorSuggestContext) {
+    if (!context.query || context.query.includes(' ')) {
+      return null;
+    }
 
-    await this.getCiteKeySuggestions(context, this.lastExec);
+    const results = this.fuse.search(context.query);
 
-    if (this.suggestionCache.length) {
-      return this.suggestionCache;
+    if (results && results.length) {
+      return results;
     }
 
     return null;
   }
-
-  getCiteKeySuggestions = pDebounce(
-    async (
-      context: EditorSuggestContext,
-      timeStamp: number
-    ): Promise<EditorSuggestContext> => {
-      if (!context.query) return;
-
-      try {
-        const res = await execSearch(
-          context.query,
-          this.plugin.settings.database
-        );
-
-        if (timeStamp === this.lastExec) {
-          this.fuse.setCollection(res.map((r: any) => r.citekey));
-          this.suggestionCache = this.fuse.search(context.query);
-        }
-      } catch {
-        this.checkIsZoteroRunning();
-      }
-    },
-    300
-  );
 
   renderSuggestion(suggestion: Fuse.FuseResult<string>, el: HTMLElement): void {
     const item = suggestion.item;
@@ -142,44 +144,33 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       this.context.start,
       this.context.end
     );
-
-    this.close();
   }
 
-  close(): void {
-    super.close();
-    this.context = null;
-    this.suggestionCache = [];
-    this.fuse.setCollection([]);
-  }
-
-  checkDb = 0;
   onTrigger(cursor: EditorPosition, editor: Editor): EditorSuggestTriggerInfo {
     if (!this.plugin.settings.shouldShowCiteSuggest) {
       return null;
     }
 
     const triggerPhrase = '@';
-    const startPos = this.context?.start || {
+    let startPos = this.context?.start || {
       line: cursor.line,
       ch: cursor.ch - triggerPhrase.length,
     };
 
     if (!editor.getRange(startPos, cursor).startsWith(triggerPhrase)) {
-      return null;
-    }
+      const restartPos = {
+        line: cursor.line,
+        ch: cursor.ch - (triggerPhrase.length + 1),
+      };
 
-    if (!this.isZoteroRunning) {
-      clearTimeout(this.checkDb);
-      this.checkDb = window.setTimeout(() => {
-        this.checkIsZoteroRunning();
-      }, 300);
-
-      if (this.context) {
-        this.close();
+      if (
+        this.context ||
+        !editor.getRange(restartPos, cursor).startsWith(triggerPhrase)
+      ) {
+        return null;
       }
 
-      return null;
+      startPos = restartPos;
     }
 
     const precedingChar = editor.getRange(
@@ -193,6 +184,8 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
     if (precedingChar && !/[ .[;]/.test(precedingChar)) {
       return null;
     }
+
+    this.getCiteKeys();
 
     const query = editor
       .getRange(startPos, cursor)
