@@ -144,6 +144,8 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       this.context.start,
       this.context.end
     );
+
+    this.close();
   }
 
   onTrigger(cursor: EditorPosition, editor: Editor): EditorSuggestTriggerInfo {
