@@ -26,6 +26,10 @@ export function getExeRoot() {
 }
 
 export function getExeName() {
+  return os.platform() === 'win32' ? 'pdfannots2json.exe' : 'pdfannots2json';
+}
+
+export function getLegacyExeName() {
   return os.platform() === 'win32' ? 'pdf-annots2json.exe' : 'pdf-annots2json';
 }
 
@@ -33,6 +37,14 @@ export function doesEXEExist() {
   return fs.existsSync(path.join(getExeRoot(), getExeName()));
 }
 
+export function doesLegacyEXEExist() {
+  return fs.existsSync(path.join(getExeRoot(), getLegacyExeName()));
+}
+
 export function removeEXE() {
   fs.rmSync(path.join(getExeRoot(), getExeName()));
+}
+
+export function removeLegacyEXE() {
+  fs.rmSync(path.join(getExeRoot(), getLegacyExeName()));
 }

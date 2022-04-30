@@ -86,7 +86,7 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       return null;
     }
 
-    const results = this.fuse.search(context.query);
+    const results = this.fuse.search(context.query, { limit: this.limit });
 
     if (results && results.length) {
       return results;

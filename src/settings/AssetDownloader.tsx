@@ -4,24 +4,30 @@ import download from 'download';
 import { Notice } from 'obsidian';
 import React from 'react';
 
-import { doesEXEExist, getExeRoot, removeEXE } from 'src/helpers';
+import {
+  doesEXEExist,
+  doesLegacyEXEExist,
+  getExeRoot,
+  removeEXE,
+  removeLegacyEXE,
+} from 'src/helpers';
 import { ZoteroConnectorSettings } from 'src/types';
 
 import { Icon } from './Icon';
 import { SettingItem } from './SettingItem';
 
-export const currentVersion = '0.2.4';
+export const currentVersion = '1.0.0';
 
 const options: Record<string, Record<string, string>> = {
   darwin: {
-    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Mac.Intel.tar.gz`,
-    arm64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Mac.M1.tar.gz`,
+    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdfannots2json.Mac.Intel.tar.gz`,
+    arm64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdfannots2json.Mac.M1.tar.gz`,
   },
   linux: {
-    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Linux.x64.tar.gz`,
+    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdfannots2json.Linux.x64.tar.gz`,
   },
   win32: {
-    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdf-annots2json.Windows.x64.zip`,
+    x64: `https://github.com/mgmeyers/pdf-annots2json/releases/download/${currentVersion}/pdfannots2json.Windows.x64.zip`,
   },
 };
 
@@ -45,6 +51,10 @@ export async function downloadAndExtract() {
   if (!url) return false;
 
   try {
+    if (doesLegacyEXEExist()) {
+      removeLegacyEXE();
+    }
+
     if (doesEXEExist()) {
       removeEXE();
     }
