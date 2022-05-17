@@ -1,6 +1,28 @@
 import nunjucks, { Callback, Extension, Loader, LoaderSource } from 'nunjucks';
 import { moment } from 'obsidian';
 
+(nunjucks.runtime as any).memberLookup = function memberLookup(
+  obj: any,
+  val: any
+) {
+  if (obj === undefined || obj === null) {
+    return undefined;
+  }
+
+  if (val == '__proto__' || val == 'constructor') {
+    return function () {
+      return function () {};
+    };
+  }
+
+  if (typeof obj[val] === 'function') {
+    // eslint-disable-next-line prefer-spread
+    return (...args: any[]) => obj[val].apply(obj, args);
+  }
+
+  return obj[val];
+};
+
 function _prepareAttributeParts(attr: string) {
   if (!attr) {
     return [];
@@ -151,7 +173,7 @@ export class PersistExtension implements Extension {
     );
   }
 
-  static re = /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/ig;
+  static re = /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/gi;
   static prepareTemplateData<T>(templateData: T, md: string): T & WithRetained {
     const out: Record<string, string> = {};
 
