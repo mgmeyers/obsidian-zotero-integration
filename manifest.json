@@ -1,9 +1,9 @@
 {
 	"id": "obsidian-zotero-integration",
 	"name": "Zotero Integration",
-	"version": "2.1.11",
+	"version": "2.1.12",
 	"minAppVersion": "0.12.0",
-	"description": "Import citations, bibliographies, notes, and PDF annotations from Zotero into Obsidian.",
+	"description": "Insert and import citations, bibliographies, notes, and PDF annotations from Zotero.",
 	"author": "mgmeyers",
 	"authorUrl": "https://github.com/mgmeyers/obsidian-zotero-integration",
 	"isDesktopOnly": true
