@@ -21,7 +21,7 @@ export function getVaultRoot() {
 export function getExeRoot() {
   return path.join(
     getVaultRoot(),
-    './.obsidian/plugins/obsidian-zotero-desktop-connector/'
+    './.obsidian/plugins/obsidian-zotero-integration/'
   );
 }
 

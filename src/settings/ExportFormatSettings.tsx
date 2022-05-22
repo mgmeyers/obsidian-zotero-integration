@@ -180,7 +180,7 @@ export function ExportFormatSettings({
           </a>
           .{' '}
           <a
-            href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+            href="https://github.com/mgmeyers/obsidian-zotero-integration/blob/main/docs/Templating.md"
             target="_blank"
             rel="noreferrer"
           >
@@ -212,7 +212,7 @@ export function ExportFormatSettings({
           <div className="zt-format__input-note">
             Deprecated: Separate template files are no longer needed.{' '}
             <a
-              href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+              href="https://github.com/mgmeyers/obsidian-zotero-integration/blob/main/docs/Templating.md"
               target="_blank"
               rel="noreferrer"
             >
@@ -245,7 +245,7 @@ export function ExportFormatSettings({
           <div className="zt-format__input-note">
             Deprecated: Separate template files are no longer needed.{' '}
             <a
-              href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+              href="https://github.com/mgmeyers/obsidian-zotero-integration/blob/main/docs/Templating.md"
               target="_blank"
               rel="noreferrer"
             >
@@ -278,7 +278,7 @@ export function ExportFormatSettings({
           <div className="zt-format__input-note">
             Deprecated: Separate template files are no longer needed.{' '}
             <a
-              href="https://github.com/mgmeyers/obsidian-zotero-desktop-connector/blob/main/docs/Templating.md"
+              href="https://github.com/mgmeyers/obsidian-zotero-integration/blob/main/docs/Templating.md"
               target="_blank"
               rel="noreferrer"
             >

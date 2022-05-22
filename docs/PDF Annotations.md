@@ -7,7 +7,7 @@ Currently, the extraction tool supports:
 - Linux (x64)
 - Mac (Intel & M1)
 
-Please [file an issue](https://github.com/mgmeyers/obsidian-zotero-desktop-connector/issues) if annotation extraction doesn't work on your platform, or if you encounter any issues with it.
+Please [file an issue](https://github.com/mgmeyers/obsidian-zotero-integration/issues) if annotation extraction doesn't work on your platform, or if you encounter any issues with it.
 
 ## What annotations are supported?
 

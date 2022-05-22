@@ -18,7 +18,7 @@ import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
 import { CiteSuggest } from './citeSuggest/citeSuggest';
 
-const commandPrefix = 'obsidian-zotero-desktop-connector:';
+const commandPrefix = 'obsidian-zotero-integration:';
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
