@@ -46,7 +46,7 @@ function getDownloadUrl() {
 export async function downloadAndExtract() {
   const url = getDownloadUrl();
 
-  console.log('Zotero Desktop Connector: Downloading ' + url);
+  console.log('Obsidian Zotero Integration: Downloading ' + url);
 
   if (!url) return false;
 

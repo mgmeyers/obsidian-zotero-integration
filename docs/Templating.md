@@ -18,7 +18,7 @@ You can view the data available to templates using the `Data Explorer` command i
 
 ## What templating language do I use?
 
-Zotero Desktop Connector uses the [Nunjucks templating language](https://mozilla.github.io/nunjucks/templating.html#variables). Nunjucks is a robust templating language, but also has a learning curve.
+Obsidian Zotero Integration uses the [Nunjucks templating language](https://mozilla.github.io/nunjucks/templating.html#variables). Nunjucks is a robust templating language, but also has a learning curve.
 
 A basic template might looks something like:
 

@@ -1,6 +1,6 @@
 ## What is the PDF Utility?
 
-Zotero Desktop Connector uses an [external tool](https://github.com/mgmeyers/pdf-annots2json) to extract annotations from PDF files. This tool is not 100% perfect, but generally works well.
+Obsidian Zotero Integration uses an [external tool](https://github.com/mgmeyers/pdf-annots2json) to extract annotations from PDF files. This tool is not 100% perfect, but generally works well.
 
 Currently, the extraction tool supports:
 - Windows (x64)
