@@ -183,7 +183,7 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       startPos
     );
 
-    if (precedingChar && !/[ .[;]/.test(precedingChar)) {
+    if (precedingChar && !/[ .[;-]/.test(precedingChar)) {
       return null;
     }
 
