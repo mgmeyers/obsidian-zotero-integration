@@ -46,6 +46,105 @@ export async function getNotesFromCiteKeys(
   }
 }
 
+export async function getCollectionFromCiteKey(
+  citeKey: string,
+  database: Database
+) {
+  let res: string;
+
+  const modal = new LoadingModal(
+    (window as any).app,
+    'Fetching collections from Zotero...'
+  );
+  modal.open();
+
+  try {
+    res = await request({
+      method: 'POST',
+      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'item.collections',
+        params: [[citeKey], true],
+      }),
+      headers: defaultHeaders,
+    });
+  } catch (e) {
+    console.error(e);
+    modal.close();
+    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    return null;
+  }
+
+  modal.close();
+
+  try {
+    const result = JSON.parse(res).result;
+    const cols = result[citeKey];
+
+    return cols.map((c: any) => {
+      let pointer = c;
+      const fullPath = [c.name];
+
+      while (pointer.parentCollection) {
+        fullPath.push(pointer.parentCollection.name);
+        pointer = pointer.parentCollection;
+      }
+
+      return {
+        key: c.key,
+        name: c.name,
+        fullPath: fullPath.reverse(),
+      };
+    });
+  } catch (e) {
+    console.error(e);
+    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    return null;
+  }
+}
+
+export async function getAttachmentsFromCiteKey(
+  citeKey: string,
+  database: Database
+) {
+  let res: string;
+
+  const modal = new LoadingModal(
+    (window as any).app,
+    'Fetching collections from Zotero...'
+  );
+  modal.open();
+
+  try {
+    res = await request({
+      method: 'POST',
+      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'item.attachments',
+        params: [citeKey],
+      }),
+      headers: defaultHeaders,
+    });
+  } catch (e) {
+    console.error(e);
+    modal.close();
+    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    return null;
+  }
+
+  modal.close();
+
+  try {
+    return JSON.parse(res).result;
+  } catch (e) {
+    console.error(e);
+    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    return null;
+  }
+}
+
 export function getBibFromCiteKey(
   citeKey: string,
   database: Database,
@@ -218,10 +317,7 @@ export async function getIssueDateFromCiteKey(
   }
 }
 
-export async function execSearch(
-  term: string,
-  database: Database
-) {
+export async function execSearch(term: string, database: Database) {
   let res: string;
 
   try {

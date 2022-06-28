@@ -12,9 +12,11 @@ import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { getCiteKeys } from './cayw';
 import { processZoteroAnnotationNotes } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
-import { mkMDDir, sanitizeFilePath } from './helpers';
+import { getColorCategory, mkMDDir, sanitizeFilePath } from './helpers';
 import {
+  getAttachmentsFromCiteKey,
   getBibFromCiteKey,
+  getCollectionFromCiteKey,
   getIssueDateFromCiteKey,
   getItemJSONFromCiteKeys,
 } from './jsonRPC';
@@ -74,6 +76,34 @@ function processAnnotation(
   }
 }
 
+function convertNativeAnnotation(annotation: any, attachment: any) {
+  const rect = annotation.annotationPosition.rects[0];
+
+  const annot: Record<string, any> = {
+    date: moment(annotation.dateModified),
+    attachment,
+    annotatedText: annotation.annotationText || '',
+    comment: annotation.annotationComment || '',
+    page: annotation.annotationPosition.pageIndex + 1,
+    id: annotation.key,
+    type: annotation.annotationType,
+    x: rect[0],
+    y: rect[1],
+    color: annotation.annotationColor,
+    colorCategory: getColorCategory(annotation.annotationColor),
+  };
+
+  if (annotation.annotationImagePath) {
+    annot.imageBaseName = path.basename(annotation.annotationImagePath);
+    annot.imageExtension = path
+      .extname(annotation.annotationImagePath)
+      .slice(1);
+    annot.imagePath = annotation.annotationImagePath;
+  }
+
+  return annot;
+}
+
 async function processItem(
   item: any,
   importDate: moment.Moment,
@@ -99,6 +129,12 @@ async function processItem(
 
   try {
     item.date = await getIssueDateFromCiteKey(item.citekey, database);
+  } catch {
+    // We don't particularly care about this
+  }
+
+  try {
+    item.collections = await getCollectionFromCiteKey(item.citekey, database);
   } catch {
     // We don't particularly care about this
   }
@@ -326,6 +362,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
   const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
+  const canExtract = doesEXEExist();
 
   const citeKeys: string[] = await getCiteKeys(database);
 
@@ -391,6 +428,24 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
       }
 
       continue;
+    }
+
+    let mappedAttachments: Record<string, any> = {};
+
+    try {
+      const fullAttachmentData = await getAttachmentsFromCiteKey(
+        itemData[i].citekey,
+        database
+      );
+
+      mappedAttachments = (fullAttachmentData as any[]).reduce<
+        Record<string, any>
+      >((col, a) => {
+        col[a.path] = a;
+        return col;
+      }, {});
+    } catch {
+      //
     }
 
     // Handle the case of an item WITH PDF attachments
@@ -466,9 +521,15 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         existingAnnotations = getExistingAnnotations(existingMarkdown);
       }
 
-      let annots: any;
+      const annots: any[] = [];
 
-      if (doesEXEExist()) {
+      mappedAttachments[attachments[j].path]?.annotations?.forEach(
+        (annot: any) => {
+          annots.push(convertNativeAnnotation(annot, attachments[j]));
+        }
+      );
+
+      if (canExtract) {
         try {
           const res = await extractAnnotations(pdfInputPath, {
             imageBaseName: imageBaseName,
@@ -481,14 +542,21 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
             tesseractPath: settings.pdfExportImageTesseractPath,
             tessDataDir: settings.pdfExportImageTessDataDir,
           });
-          annots = JSON.parse(res);
-          annots.forEach((a: any) => {
+
+          const extracted = JSON.parse(res);
+
+          extracted.forEach((a: any) => {
             processAnnotation(a, attachments[j], imageRelativePath);
           });
-          attachments[j].annotations = annots;
+
+          annots.push(...extracted);
         } catch (e) {
           return false;
         }
+      }
+
+      if (annots.length) {
+        attachments[j].annotations = annots;
       }
 
       const templateData: Record<any, any> = await applyBasicTemplates(
@@ -539,6 +607,7 @@ function getAStyle(settings: ZoteroConnectorSettings) {
 
 export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   const citeKeys: string[] = await getCiteKeys(settings.database);
+  const canExtract = doesEXEExist();
 
   if (!citeKeys.length) return null;
 
@@ -556,17 +625,42 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
     await processItem(itemData[i], importDate, settings.database, style);
   }
 
-  if (doesEXEExist()) {
-    const vaultRoot = getVaultRoot();
+  const vaultRoot = getVaultRoot();
 
-    for (let i = 0, len = itemData.length; i < len; i++) {
-      const attachments = itemData[i].attachments;
-      for (let j = 0, jLen = attachments.length; j < jLen; j++) {
-        const pdfInputPath = attachments[j].path;
-        if (!pdfInputPath?.endsWith('.pdf')) continue;
+  for (let i = 0, len = itemData.length; i < len; i++) {
+    const attachments = itemData[i].attachments;
 
-        let annots: any;
+    let mappedAttachments: Record<string, any> = {};
 
+    try {
+      const fullAttachmentData = await getAttachmentsFromCiteKey(
+        itemData[i].citekey,
+        settings.database
+      );
+
+      mappedAttachments = (fullAttachmentData as any[]).reduce<
+        Record<string, any>
+      >((col, a) => {
+        col[a.path] = a;
+        return col;
+      }, {});
+    } catch (e) {
+      console.error(e);
+    }
+
+    for (let j = 0, jLen = attachments.length; j < jLen; j++) {
+      const pdfInputPath = attachments[j].path;
+      if (!pdfInputPath?.endsWith('.pdf')) continue;
+
+      const annots: any[] = [];
+
+      mappedAttachments[attachments[j].path]?.annotations?.forEach(
+        (annot: any) => {
+          annots.push(convertNativeAnnotation(annot, attachments[j]));
+        }
+      );
+
+      if (canExtract) {
         try {
           const res = await extractAnnotations(pdfInputPath, {
             noWrite: true,
@@ -580,15 +674,21 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
             tesseractPath: settings.pdfExportImageTesseractPath,
             tessDataDir: settings.pdfExportImageTessDataDir,
           });
-          annots = JSON.parse(res);
-          annots.forEach((a: any) => {
+
+          const extracted = JSON.parse(res);
+
+          extracted.forEach((a: any) => {
             processAnnotation(a, attachments[j], 'output_path');
           });
 
-          attachments[j].annotations = annots;
+          annots.push(...extracted);
         } catch (e) {
           return false;
         }
+      }
+
+      if (annots.length) {
+        attachments[j].annotations = annots;
       }
     }
   }
