@@ -89,8 +89,6 @@ function convertNativeAnnotation(
   const annot: Record<string, any> = {
     date: moment(annotation.dateModified),
     attachment,
-    annotatedText: annotation.annotationText || '',
-    comment: annotation.annotationComment || '',
     page: annotation.annotationPosition.pageIndex + 1,
     id: annotation.key,
     type: annotation.annotationType,
@@ -99,6 +97,14 @@ function convertNativeAnnotation(
     color: annotation.annotationColor,
     colorCategory: getColorCategory(annotation.annotationColor),
   };
+
+  if (annotation.annotationText) {
+    annot.annotatedText = annotation.annotationText;
+  }
+
+  if (annotation.annotationComment) {
+    annot.comment = annotation.annotationComment;
+  }
 
   if (annotation.annotationImagePath) {
     const parsed = path.parse(annotation.annotationImagePath);
