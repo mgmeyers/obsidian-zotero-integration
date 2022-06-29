@@ -37,7 +37,7 @@ const paramMap: Record<keyof ExtractParams, string> = {
 
 export async function extractAnnotations(input: string, params: ExtractParams) {
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Extracting annotations...'
   );
   modal.open();

@@ -10,7 +10,7 @@ export async function isZoteroRunning(database: Database, silent?: boolean) {
   let modal: LoadingModal;
   if (!silent) {
     modal = new LoadingModal(
-      (window as any).app,
+      app,
       'Fetching data from Zotero...'
     );
     modal.open();
@@ -60,7 +60,7 @@ export async function getCAYW(format: CitationFormat, database: Database) {
   }
 
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Awaiting item selection from Zotero...'
   );
   modal.open();
@@ -120,7 +120,7 @@ export async function getCAYWJSON(database: Database) {
   }
 
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Awaiting item selection from Zotero...'
   );
   modal.open();

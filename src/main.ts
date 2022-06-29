@@ -189,7 +189,7 @@ export default class ZoteroConnector extends Plugin {
       this.settings.exeVersion !== currentVersion
     ) {
       const modal = new LoadingModal(
-        (window as any).app,
+        app,
         'Updating Obsidian Zotero Integration PDF Utility...'
       );
       modal.open();

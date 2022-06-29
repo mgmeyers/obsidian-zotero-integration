@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { App, FileSystemAdapter } from 'obsidian';
+import { FileSystemAdapter } from 'obsidian';
 
 export function bringAppToFront() {
   require('electron').remote.getCurrentWindow().show();
@@ -14,7 +14,7 @@ export function padNumber(n: number): string {
 
 export function getVaultRoot() {
   return (
-    ((window as any).app as App).vault.adapter as FileSystemAdapter
+    app.vault.adapter as FileSystemAdapter
   ).getBasePath();
 }
 

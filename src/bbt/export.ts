@@ -29,6 +29,7 @@ import {
   removeStartingSlash,
   wrapAnnotationTemplate,
 } from './template.helpers';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
 
 function processNote(note: any) {
   if (note.note) {
@@ -76,7 +77,13 @@ function processAnnotation(
   }
 }
 
-function convertNativeAnnotation(annotation: any, attachment: any) {
+function convertNativeAnnotation(
+  annotation: any,
+  attachment: any,
+  imageOutputPath: string,
+  imageRelativePath: string,
+  copy: boolean = false
+) {
   const rect = annotation.annotationPosition.rects[0];
 
   const annot: Record<string, any> = {
@@ -94,11 +101,26 @@ function convertNativeAnnotation(annotation: any, attachment: any) {
   };
 
   if (annotation.annotationImagePath) {
-    annot.imageBaseName = path.basename(annotation.annotationImagePath);
-    annot.imageExtension = path
-      .extname(annotation.annotationImagePath)
-      .slice(1);
-    annot.imagePath = annotation.annotationImagePath;
+    const parsed = path.parse(annotation.annotationImagePath);
+
+    annot.imageBaseName = `${annotation.key}${parsed.ext}`;
+    annot.imageRelativePath = path.join(imageRelativePath, annot.imageBaseName);
+    annot.imageExtension = parsed.ext.slice(1);
+
+    const imagePath = path.join(imageOutputPath, annot.imageBaseName);
+
+    if (copy) {
+      if (!existsSync(imageOutputPath)) {
+        mkdirSync(imageOutputPath, { recursive: true });
+      }
+
+      copyFileSync(
+        path.join(parsed.root, parsed.dir, annot.imageBaseName),
+        imagePath
+      );
+    }
+
+    annot.imagePath = imagePath;
   }
 
   return annot;
@@ -458,19 +480,6 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         ...itemData[i],
       });
 
-      const imageOutputPath = path.resolve(
-        vaultRoot,
-        exportFormat.imageOutputPathTemplate
-          ? removeStartingSlash(
-              await renderTemplate(
-                sourcePath,
-                exportFormat.imageOutputPathTemplate,
-                pathTemplateData
-              )
-            )
-          : './'
-      );
-
       const imageRelativePath = exportFormat.imageOutputPathTemplate
         ? sanitizeFilePath(
             removeStartingSlash(
@@ -482,6 +491,8 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
             )
           )
         : '';
+
+      const imageOutputPath = path.resolve(vaultRoot, imageRelativePath);
 
       const imageBaseName = exportFormat.imageOutputPathTemplate
         ? sanitizeFilePath(
@@ -525,7 +536,15 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
 
       mappedAttachments[attachments[j].path]?.annotations?.forEach(
         (annot: any) => {
-          annots.push(convertNativeAnnotation(annot, attachments[j]));
+          annots.push(
+            convertNativeAnnotation(
+              annot,
+              attachments[j],
+              imageOutputPath,
+              imageRelativePath,
+              true
+            )
+          );
         }
       );
 
@@ -656,7 +675,14 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
       mappedAttachments[attachments[j].path]?.annotations?.forEach(
         (annot: any) => {
-          annots.push(convertNativeAnnotation(annot, attachments[j]));
+          annots.push(
+            convertNativeAnnotation(
+              annot,
+              attachments[j],
+              path.join(vaultRoot, 'output_path'),
+              'output_path'
+            )
+          );
         }
       );
 

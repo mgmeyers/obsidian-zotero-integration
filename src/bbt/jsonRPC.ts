@@ -12,7 +12,7 @@ export async function getNotesFromCiteKeys(
   let res: string;
 
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Fetching notes from Zotero...'
   );
   modal.open();
@@ -53,7 +53,7 @@ export async function getCollectionFromCiteKey(
   let res: string;
 
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Fetching collections from Zotero...'
   );
   modal.open();
@@ -94,7 +94,7 @@ export async function getCollectionFromCiteKey(
       return {
         key: c.key,
         name: c.name,
-        fullPath: fullPath.reverse(),
+        fullPath: fullPath.reverse().join('/'),
       };
     });
   } catch (e) {
@@ -111,7 +111,7 @@ export async function getAttachmentsFromCiteKey(
   let res: string;
 
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Fetching collections from Zotero...'
   );
   modal.open();
@@ -162,7 +162,7 @@ export async function getBibFromCiteKeys(
 
   let res: string;
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Fetching data from Zotero...'
   );
   modal.open();
@@ -221,7 +221,7 @@ export async function getItemJSONFromCiteKeys(
   let res: string;
 
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Fetching data from Zotero...'
   );
   modal.open();
@@ -262,7 +262,7 @@ export async function getIssueDateFromCiteKey(
   let res: string;
 
   const modal = new LoadingModal(
-    (window as any).app,
+    app,
     'Fetching data from Zotero...'
   );
   modal.open();

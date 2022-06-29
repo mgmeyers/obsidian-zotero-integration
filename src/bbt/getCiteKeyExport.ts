@@ -2,16 +2,7 @@ import { request } from 'obsidian';
 import { Database } from 'src/types';
 import { defaultHeaders, getPort } from './helpers';
 
-export function latexToCiteKeys(ltx: string) {
-  const split = ltx
-    .replace(/^\\cite{/, '')
-    .replace(/}$/, '')
-    .split(/\s*,\s*/g);
-
-  return split;
-}
-
-const translatorId = 'a515a220-6fef-45ea-9842-8025dfebcc8f';
+const translatorId = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
 export async function getCiteKeyExport(
   database: Database,
   groupId: string,
@@ -26,7 +17,11 @@ export async function getCiteKeyExport(
       headers: defaultHeaders,
     });
 
-    return latexToCiteKeys(res);
+    const entries = JSON.parse(res);
+
+    return Array.isArray(entries)
+      ? entries.map((e) => e['citation-key']).filter((k) => !!k)
+      : null;
   } catch (e) {
     return null;
   }
