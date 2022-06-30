@@ -121,7 +121,7 @@ function convertNativeAnnotation(
       }
 
       copyFileSync(
-        path.join(parsed.root, parsed.dir, annot.imageBaseName),
+        path.join(parsed.dir, annot.imageBaseName),
         imagePath
       );
     }
