@@ -67,7 +67,7 @@ export function getLastExport(md: string): moment.Moment {
 }
 
 export function appendExportDate(md: string): string {
-  return md + `\n\n%% Import Date: ${new Date().toISOString()} %%\n`;
+  return md + `\n\n%% Import Date: ${moment().toISOString(true)} %%\n`;
 }
 
 export function getExistingAnnotations(md: string): string {
