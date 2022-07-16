@@ -133,21 +133,37 @@ function concatAnnotations(annots: Array<Record<string, any>>) {
   const output: Array<Record<string, any>> = [];
   const re = /^\+\s*/;
 
+  annots.sort((a, b) => {
+    if (a.page !== b.page) {
+      return a.page - b.page;
+    }
+
+    if (a.x == b.x) {
+      return b.y - a.y;
+    }
+
+    return a.x - b.x;
+  });
+
   annots.forEach((a) => {
     if (typeof a.comment === 'string' && re.test(a.comment)) {
       a.comment = a.comment.replace(re, '');
 
       const last = output[output.length - 1];
 
-      last.annotatedText = last.annotatedText
-        ? last.annotatedText + '...' + a.annotatedText
-        : a.annotatedText;
-      last.comment = last.comment
-        ? last.comment + '...' + a.comment
-        : a.comment;
-    } else {
-      output.push(a);
+      if (last) {
+        last.annotatedText = last.annotatedText
+          ? last.annotatedText + '...' + a.annotatedText
+          : a.annotatedText;
+        last.comment = last.comment
+          ? last.comment + '...' + a.comment
+          : a.comment;
+
+        return;
+      }
     }
+
+    output.push(a);
   });
 
   return output;
@@ -559,7 +575,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         existingAnnotations = getExistingAnnotations(existingMarkdown);
       }
 
-      const annots: any[] = [];
+      let annots: any[] = [];
 
       mappedAttachments[attachments[j].path]?.annotations?.forEach(
         (annot: any) => {
@@ -602,9 +618,11 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
       }
 
       if (annots.length) {
-        attachments[j].annotations = settings.shouldConcat
-          ? concatAnnotations(annots)
-          : annots;
+        if (settings.shouldConcat) {
+          annots = concatAnnotations(annots);
+        }
+
+        attachments[j].annotations = annots;
       }
 
       const templateData: Record<any, any> = await applyBasicTemplates(
@@ -700,7 +718,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       const pdfInputPath = attachments[j].path;
       if (!pdfInputPath?.endsWith('.pdf')) continue;
 
-      const annots: any[] = [];
+      let annots: any[] = [];
 
       mappedAttachments[attachments[j].path]?.annotations?.forEach(
         (annot: any) => {
@@ -743,9 +761,11 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       }
 
       if (annots.length) {
-        attachments[j].annotations = settings.shouldConcat
-          ? concatAnnotations(annots)
-          : annots;
+        if (settings.shouldConcat) {
+          annots = concatAnnotations(annots);
+        }
+
+        attachments[j].annotations = annots;
       }
     }
   }
