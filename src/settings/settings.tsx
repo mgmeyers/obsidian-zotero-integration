@@ -151,7 +151,7 @@ function SettingsComponent({
       </SettingItem>
       <SettingItem
         name="Enable Annotation Concatenation"
-        description="Annotations that begin with '+' will be appended to the previous annotation. Note: Annotation ordering is not always consistent and you may not always acheive the desire concatenation result"
+        description="Annotations extracted from PDFs that begin with '+' will be appended to the previous annotation. Note: Annotation ordering is not always consistent and you may not always acheive the desire concatenation result"
       >
         <div
           onClick={() => {
