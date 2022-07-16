@@ -120,16 +120,37 @@ function convertNativeAnnotation(
         mkdirSync(imageOutputPath, { recursive: true });
       }
 
-      copyFileSync(
-        path.join(parsed.dir, annot.imageBaseName),
-        imagePath
-      );
+      copyFileSync(path.join(parsed.dir, annot.imageBaseName), imagePath);
     }
 
     annot.imagePath = imagePath;
   }
 
   return annot;
+}
+
+function concatAnnotations(annots: Array<Record<string, any>>) {
+  const output: Array<Record<string, any>> = [];
+  const re = /^\+\s*/;
+
+  annots.forEach((a) => {
+    if (typeof a.comment === 'string' && re.test(a.comment)) {
+      a.comment = a.comment.replace(re, '');
+
+      const last = output[output.length - 1];
+
+      last.annotatedText = last.annotatedText
+        ? last.annotatedText + '...' + a.annotatedText
+        : a.annotatedText;
+      last.comment = last.comment
+        ? last.comment + '...' + a.comment
+        : a.comment;
+    } else {
+      output.push(a);
+    }
+  });
+
+  return output;
 }
 
 async function processItem(
@@ -581,7 +602,9 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
       }
 
       if (annots.length) {
-        attachments[j].annotations = annots;
+        attachments[j].annotations = settings.shouldConcat
+          ? concatAnnotations(annots)
+          : annots;
       }
 
       const templateData: Record<any, any> = await applyBasicTemplates(
@@ -720,7 +743,9 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       }
 
       if (annots.length) {
-        attachments[j].annotations = annots;
+        attachments[j].annotations = settings.shouldConcat
+          ? concatAnnotations(annots)
+          : annots;
       }
     }
   }

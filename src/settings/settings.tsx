@@ -46,6 +46,8 @@ function SettingsComponent({
     !!settings.shouldShowCiteSuggest
   );
 
+  const [concat, setConcat] = React.useState(!!settings.shouldConcat);
+
   const updateCite = React.useCallback(
     debounce(
       (index: number, format: CitationFormat) => {
@@ -145,6 +147,20 @@ function SettingsComponent({
           className={`checkbox-container${
             citeSuggestState ? ' is-enabled' : ''
           }`}
+        />
+      </SettingItem>
+      <SettingItem
+        name="Enable Annotation Concatenation"
+        description="Annotations that begin with '+' will be appended to the previous annotation. Note: Annotation ordering is not always consistent and you may not always acheive the desire concatenation result"
+      >
+        <div
+          onClick={() => {
+            setConcat((state) => {
+              updateSetting('shouldConcat', !state);
+              return !state;
+            });
+          }}
+          className={`checkbox-container${concat ? ' is-enabled' : ''}`}
         />
       </SettingItem>
       <SettingItem name="Citation Formats" isHeading />
