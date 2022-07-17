@@ -70,7 +70,7 @@ function processAnnotation(
   if (annotation.imagePath) {
     annotation.imageBaseName = path.basename(annotation.imagePath);
     annotation.imageExtension = path.extname(annotation.imagePath).slice(1);
-    annotation.imageRelativePath = path.join(
+    annotation.imageRelativePath = path.posix.join(
       imageRelativePath,
       annotation.imageBaseName
     );
@@ -110,7 +110,10 @@ function convertNativeAnnotation(
     const parsed = path.parse(annotation.annotationImagePath);
 
     annot.imageBaseName = `${annotation.key}${parsed.ext}`;
-    annot.imageRelativePath = path.join(imageRelativePath, annot.imageBaseName);
+    annot.imageRelativePath = path.posix.join(
+      imageRelativePath,
+      annot.imageBaseName
+    );
     annot.imageExtension = parsed.ext.slice(1);
 
     const imagePath = path.join(imageOutputPath, annot.imageBaseName);
