@@ -133,18 +133,6 @@ function concatAnnotations(annots: Array<Record<string, any>>) {
   const output: Array<Record<string, any>> = [];
   const re = /^\+\s*/;
 
-  annots.sort((a, b) => {
-    if (a.page !== b.page) {
-      return a.page - b.page;
-    }
-
-    if (a.x == b.x) {
-      return b.y - a.y;
-    }
-
-    return a.x - b.x;
-  });
-
   annots.forEach((a) => {
     if (typeof a.comment === 'string' && re.test(a.comment)) {
       a.comment = a.comment.replace(re, '');
@@ -591,6 +579,10 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         }
       );
 
+      if (settings.shouldConcat && annots.length) {
+        annots = concatAnnotations(annots);
+      }
+
       if (canExtract) {
         try {
           const res = await extractAnnotations(pdfInputPath, {
@@ -605,11 +597,15 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
             tessDataDir: settings.pdfExportImageTessDataDir,
           });
 
-          const extracted = JSON.parse(res);
+          let extracted = JSON.parse(res);
 
           extracted.forEach((a: any) => {
             processAnnotation(a, attachments[j], imageRelativePath);
           });
+
+          if (settings.shouldConcat && extracted.length) {
+            extracted = concatAnnotations(extracted);
+          }
 
           annots.push(...extracted);
         } catch (e) {
@@ -618,10 +614,6 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
       }
 
       if (annots.length) {
-        if (settings.shouldConcat) {
-          annots = concatAnnotations(annots);
-        }
-
         attachments[j].annotations = annots;
       }
 
@@ -733,6 +725,10 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
         }
       );
 
+      if (settings.shouldConcat && annots.length) {
+        annots = concatAnnotations(annots);
+      }
+
       if (canExtract) {
         try {
           const res = await extractAnnotations(pdfInputPath, {
@@ -748,11 +744,15 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
             tessDataDir: settings.pdfExportImageTessDataDir,
           });
 
-          const extracted = JSON.parse(res);
+          let extracted = JSON.parse(res);
 
           extracted.forEach((a: any) => {
             processAnnotation(a, attachments[j], 'output_path');
           });
+
+          if (settings.shouldConcat && extracted.length) {
+            extracted = concatAnnotations(extracted);
+          }
 
           annots.push(...extracted);
         } catch (e) {
@@ -761,10 +761,6 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       }
 
       if (annots.length) {
-        if (settings.shouldConcat) {
-          annots = concatAnnotations(annots);
-        }
-
         attachments[j].annotations = annots;
       }
     }
