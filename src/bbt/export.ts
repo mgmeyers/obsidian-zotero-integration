@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { Notice, TFile, htmlToMarkdown, moment } from 'obsidian';
+import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -70,9 +70,8 @@ function processAnnotation(
   if (annotation.imagePath) {
     annotation.imageBaseName = path.basename(annotation.imagePath);
     annotation.imageExtension = path.extname(annotation.imagePath).slice(1);
-    annotation.imageRelativePath = path.posix.join(
-      imageRelativePath,
-      annotation.imageBaseName
+    annotation.imageRelativePath = normalizePath(
+      path.join(imageRelativePath, annotation.imageBaseName)
     );
   }
 }
@@ -110,9 +109,8 @@ function convertNativeAnnotation(
     const parsed = path.parse(annotation.annotationImagePath);
 
     annot.imageBaseName = `${annotation.key}${parsed.ext}`;
-    annot.imageRelativePath = path.posix.join(
-      imageRelativePath,
-      annot.imageBaseName
+    annot.imageRelativePath = normalizePath(
+      path.join(imageRelativePath, annot.imageBaseName)
     );
     annot.imageExtension = parsed.ext.slice(1);
 

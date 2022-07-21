@@ -39,7 +39,10 @@ export function loadCSLOptions(
   } else {
     clearTimeout(loadCSLOptionsDB);
     loadCSLOptionsDB = window.setTimeout(() => {
-      callback(searchCSL(inputValue));
+      callback([
+        { value: inputValue, label: inputValue },
+        ...searchCSL(inputValue),
+      ]);
     }, 150);
   }
 }
