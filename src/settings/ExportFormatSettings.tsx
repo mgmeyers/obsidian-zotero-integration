@@ -42,7 +42,13 @@ export function ExportFormatSettings({
   }, [format.templatePath]);
 
   const defaultStyle = React.useMemo(() => {
-    return cslListRaw.find((item) => item.value === format.cslStyle);
+    if (!format.cslStyle) return undefined;
+
+    const match = cslListRaw.find((item) => item.value === format.cslStyle);
+
+    if (match) return match;
+
+    return { label: format.cslStyle, value: format.cslStyle };
   }, [format.cslStyle]);
 
   const onChangeStr = React.useCallback(
