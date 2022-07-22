@@ -105,7 +105,7 @@ function SettingsComponent({
   );
 
   return (
-    <>
+    <div>
       <SettingItem name="General Settings" isHeading />
       <AssetDownloader
         exeVersion={settings.exeVersion}
@@ -340,7 +340,7 @@ function SettingsComponent({
           defaultValue={settings.pdfExportImageTessDataDir}
         />
       </SettingItem>
-    </>
+    </div>
   );
 }
 

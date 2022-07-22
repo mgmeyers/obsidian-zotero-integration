@@ -89,6 +89,7 @@ function convertNativeAnnotation(
     date: moment(annotation.dateModified),
     attachment,
     page: annotation.annotationPosition.pageIndex + 1,
+    pageLabel: annotation.annotationPageLabel,
     id: annotation.key,
     type: annotation.annotationType,
     x: rect[0],
