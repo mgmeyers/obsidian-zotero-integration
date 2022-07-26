@@ -59,11 +59,25 @@ export function CiteFormatSettings({
         delete newFormat.command;
       }
 
+      if (newFormat.format !== 'template' && newFormat.template) {
+        delete newFormat.template;
+      }
+
       if (newFormat.format !== 'pandoc' && newFormat.brackets) {
         delete newFormat.brackets;
       }
 
       updateFormat(index, newFormat);
+    },
+    [updateFormat, index, format]
+  );
+
+  const onChangeTemplate = React.useCallback(
+    (e) => {
+      updateFormat(index, {
+        ...format,
+        template: e.target.value,
+      });
     },
     [updateFormat, index, format]
   );
@@ -128,9 +142,45 @@ export function CiteFormatSettings({
             <option value="formatted-bibliography">
               Formatted Bibliography
             </option>
+            <option value="template">Template</option>
           </select>
         </div>
       </div>
+
+      {format.format === 'template' && (
+        <div className="zt-format__form">
+          <div className="zt-format__label">Template</div>
+          <div className="zt-format__input-wrapper">
+            <textarea
+              rows={4}
+              onChange={onChangeTemplate}
+              value={format.template}
+            />
+          </div>
+          <div className="zt-format__input-note">
+            Templates have access to data from the Zotero item. The item's first
+            attachement is available under the <pre>attachment</pre> key. Open
+            the data explorer from the command pallet to see available template
+            data. Templates are written using{' '}
+            <a
+              href="https://mozilla.github.io/nunjucks/templating.html#variables"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Nunjucks
+            </a>
+            .{' '}
+            <a
+              href="https://github.com/mgmeyers/obsidian-zotero-integration/blob/main/docs/Templating.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              See the templating documentation here
+            </a>
+            .
+          </div>
+        </div>
+      )}
 
       {['formatted-citation', 'formatted-bibliography'].contains(
         format.format

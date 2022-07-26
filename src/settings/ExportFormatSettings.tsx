@@ -118,7 +118,7 @@ export function ExportFormatSettings({
         <div className="zt-format__input-note">
           The file path of the exported markdown. Supports templating, eg{' '}
           <pre>My Folder/{'{{citekey}}'}.md</pre>. Templates have access to data
-          from the Zotero item and the current attachment.
+          from the Zotero item and its first attachment.
         </div>
       </div>
 
@@ -135,7 +135,7 @@ export function ExportFormatSettings({
         <div className="zt-format__input-note">
           The folder in which images should be saved. Supports templating, eg{' '}
           <pre>Assets/{'{{citekey}}'}/</pre>. Templates have access to data from
-          the Zotero item and the current attachment.
+          the Zotero item and its first attachment.
         </div>
       </div>
 
@@ -154,7 +154,7 @@ export function ExportFormatSettings({
           result in <pre>image-1-x123-y456.jpg</pre> where <pre>1</pre> is the
           page number and <pre>x123</pre> and <pre>y456</pre> are the x and y
           coordinates of rectangle annotation on the page. Supports templating.
-          Templates have access to data from the Zotero item and the current
+          Templates have access to data from the Zotero item and its first
           attachment.
         </div>
       </div>

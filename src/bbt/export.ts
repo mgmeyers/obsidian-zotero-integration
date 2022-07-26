@@ -6,6 +6,7 @@ import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
   Database,
   ExportToMarkdownParams,
+  RenderCiteTemplateParams,
   ZoteroConnectorSettings,
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
@@ -649,6 +650,43 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
   }
 
   return true;
+}
+
+export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
+  const importDate = moment();
+  const { database, format } = params;
+  const citeKeys: string[] = await getCiteKeys(database);
+
+  if (!citeKeys.length) return null;
+
+  let itemData: any[];
+  try {
+    itemData = await getItemJSONFromCiteKeys(citeKeys, database);
+  } catch (e) {
+    return null;
+  }
+
+  if (itemData.length === 0) {
+    return null
+  }
+
+  const output: string[] = [];
+
+  for (let i = 0, len = itemData.length; i < len; i++) {
+    await processItem(itemData[i], importDate, database);
+
+    const attachments = itemData[i].attachments as any[];
+    const firstPDF = attachments.find((a) => !!a.path?.endsWith('.pdf'));
+
+    const templateData = {
+      attachment: firstPDF || attachments[0],
+      ...itemData[i],
+    }
+
+    output.push(await renderTemplate("", format.template, templateData))
+  }
+
+  return output.join(" ");
 }
 
 function getAStyle(settings: ZoteroConnectorSettings) {

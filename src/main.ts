@@ -4,7 +4,7 @@ import './bbt/template.helpers';
 import { Plugin, TFile } from 'obsidian';
 
 import { getCAYW } from './bbt/cayw';
-import { exportToMarkdown } from './bbt/export';
+import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
 import {
   filesFromNotes,
   insertNotesIntoCurrentDoc,
@@ -96,7 +96,7 @@ export default class ZoteroConnector extends Plugin {
       },
     });
 
-    this.registerEditorSuggest(new CiteSuggest(this.app, this))
+    this.registerEditorSuggest(new CiteSuggest(this.app, this));
   }
 
   onunload() {
@@ -116,11 +116,22 @@ export default class ZoteroConnector extends Plugin {
       id: `${citationCommandIDPrefix}${format.name}`,
       name: format.name,
       editorCallback: (editor) => {
-        getCAYW(format, this.settings.database).then((res) => {
-          if (typeof res === 'string') {
-            editor.replaceSelection(res);
-          }
-        });
+        if (format.format === 'template' && format.template.trim()) {
+          renderCiteTemplate({
+            database: this.settings.database,
+            format,
+          }).then((res) => {
+            if (typeof res === 'string') {
+              editor.replaceSelection(res);
+            }
+          });
+        } else {
+          getCAYW(format, this.settings.database).then((res) => {
+            if (typeof res === 'string') {
+              editor.replaceSelection(res);
+            }
+          });
+        }
       },
     });
   }

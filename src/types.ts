@@ -3,7 +3,8 @@ export type Format =
   | 'biblatex'
   | 'pandoc'
   | 'formatted-citation'
-  | 'formatted-bibliography';
+  | 'formatted-bibliography'
+  | 'template';
 
 export interface CitationFormat {
   name: string;
@@ -11,6 +12,7 @@ export interface CitationFormat {
   command?: string;
   brackets?: boolean;
   cslStyle?: string;
+  template?: string;
 }
 
 export type Database = 'Zotero' | 'Juris-M';
@@ -52,6 +54,11 @@ export interface ExportToMarkdownParams {
   settings: ZoteroConnectorSettings;
   database: Database;
   exportFormat: ExportFormat;
+}
+
+export interface RenderCiteTemplateParams {
+  database: Database;
+  format: CitationFormat;
 }
 
 export interface ZoteroConnectorSettings {

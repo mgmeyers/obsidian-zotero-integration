@@ -33,6 +33,10 @@
   align-items: center;
 }
 
+.zt-format__input-wrapper textarea {
+  resize: vertical;
+}
+
 .zt-format__input-wrapper > *:not(.checkbox-container) {
   width: 100% !important;
 }
