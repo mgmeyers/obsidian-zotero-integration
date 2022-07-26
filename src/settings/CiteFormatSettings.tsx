@@ -182,11 +182,15 @@ export function CiteFormatSettings({
         </div>
       )}
 
-      {['formatted-citation', 'formatted-bibliography'].contains(
+      {['formatted-citation', 'formatted-bibliography', 'template'].contains(
         format.format
       ) && (
         <div className="zt-format__form">
-          <div className="zt-format__label">Citation Style</div>
+          <div className="zt-format__label">
+            {format.format === 'template'
+              ? 'Bibliography Style'
+              : 'Citation Style'}
+          </div>
           <div className="zt-format__input-wrapper">
             <AsyncSelect
               noOptionsMessage={NoOptionMessage}

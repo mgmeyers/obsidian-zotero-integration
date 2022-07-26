@@ -673,7 +673,7 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
   const output: string[] = [];
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], importDate, database);
+    await processItem(itemData[i], importDate, database, format.cslStyle);
 
     const attachments = itemData[i].attachments as any[];
     const firstPDF = attachments.find((a) => !!a.path?.endsWith('.pdf'));
