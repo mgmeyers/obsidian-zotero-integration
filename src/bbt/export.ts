@@ -566,6 +566,8 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         existingAnnotations = getExistingAnnotations(existingMarkdown);
       }
 
+      const isFirstImport = lastImportDate.valueOf() === 0;
+
       let annots: any[] = [];
 
       mappedAttachments[attachments[j].path]?.annotations?.forEach(
@@ -625,6 +627,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         {
           ...itemData[i],
           lastImportDate,
+          isFirstImport,
           annotations: annots ? annots : [],
 
           // legacy
@@ -813,6 +816,8 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       );
 
       data.annotations = firstPDF?.annotations ? firstPDF.annotations : [];
+      data.lastImportDate = moment(0);
+      data.isFirstImport = true;
       data.lastExportDate = moment(0);
 
       await applyBasicTemplates('', data);
