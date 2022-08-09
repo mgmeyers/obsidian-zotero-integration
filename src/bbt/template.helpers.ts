@@ -53,14 +53,14 @@ export function getLastExport(md: string): moment.Moment {
   let match = md.match(/%% Import Date: (\S+) %%\n$/);
 
   if (match && match[1]) {
-    return moment(new Date(match[1]));
+    return moment(match[1]);
   }
 
   // Legacy
   match = md.match(/%% Export Date: (\S+) %%\n$/);
 
   if (match && match[1]) {
-    return moment(new Date(match[1]));
+    return moment(match[1]);
   }
 
   return moment(0);
