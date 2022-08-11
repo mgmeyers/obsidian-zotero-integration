@@ -448,12 +448,14 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         annotations: [],
       });
 
-      const markdownPath = sanitizeFilePath(
-        removeStartingSlash(
-          await renderTemplate(
-            sourcePath,
-            exportFormat.outputPathTemplate,
-            templateData
+      const markdownPath = normalizePath(
+        sanitizeFilePath(
+          removeStartingSlash(
+            await renderTemplate(
+              sourcePath,
+              exportFormat.outputPathTemplate,
+              templateData
+            )
           )
         )
       );
@@ -515,20 +517,24 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
       });
 
       const imageRelativePath = exportFormat.imageOutputPathTemplate
-        ? sanitizeFilePath(
-            removeStartingSlash(
-              await renderTemplate(
-                sourcePath,
-                exportFormat.imageOutputPathTemplate,
-                pathTemplateData
+        ? normalizePath(
+            sanitizeFilePath(
+              removeStartingSlash(
+                await renderTemplate(
+                  sourcePath,
+                  exportFormat.imageOutputPathTemplate,
+                  pathTemplateData
+                )
               )
             )
           )
         : '';
 
-      const imageOutputPath = path.resolve(vaultRoot, imageRelativePath);
+      const imageOutputPath = normalizePath(
+        path.resolve(vaultRoot, imageRelativePath)
+      );
 
-      const imageBaseName = exportFormat.imageOutputPathTemplate
+      const imageBaseName = exportFormat.imageBaseNameTemplate
         ? sanitizeFilePath(
             removeStartingSlash(
               await renderTemplate(
@@ -540,12 +546,14 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
           )
         : 'image';
 
-      const markdownPath = sanitizeFilePath(
-        removeStartingSlash(
-          await renderTemplate(
-            sourcePath,
-            exportFormat.outputPathTemplate,
-            pathTemplateData
+      const markdownPath = normalizePath(
+        sanitizeFilePath(
+          removeStartingSlash(
+            await renderTemplate(
+              sourcePath,
+              exportFormat.outputPathTemplate,
+              pathTemplateData
+            )
           )
         )
       );
@@ -670,7 +678,7 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
   }
 
   if (itemData.length === 0) {
-    return null
+    return null;
   }
 
   const output: string[] = [];
@@ -684,12 +692,12 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
     const templateData = {
       attachment: firstPDF || attachments[0],
       ...itemData[i],
-    }
+    };
 
-    output.push(await renderTemplate("", format.template, templateData))
+    output.push(await renderTemplate('', format.template, templateData));
   }
 
-  return output.join(" ");
+  return output.join(' ');
 }
 
 function getAStyle(settings: ZoteroConnectorSettings) {
