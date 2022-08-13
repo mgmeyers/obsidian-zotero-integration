@@ -69,9 +69,11 @@ export function filterBy(
   arr: any[],
   prop: string,
   cmd: FilterByCmd,
-  val: string | moment.Moment
+  ...val: string[] | moment.Moment[]
 ) {
   const getter = getAttrGetter(prop);
+
+  if (val.length === 0) return arr;
 
   return arr.filter((v: any) => {
     let toTest: string = typeof v === 'string' ? v : getter(v);
@@ -79,24 +81,28 @@ export function filterBy(
     if (!toTest) return false;
 
     if (
-      typeof val === 'string' &&
+      typeof val[0] === 'string' &&
       ['startswith', 'endswith', 'contains'].includes(cmd)
     ) {
-      const testVal = val.toLocaleLowerCase();
-
       toTest = toTest.toString().toLocaleLowerCase();
 
-      if (cmd === 'startswith') {
-        return toTest.startsWith(testVal);
-      }
+      return (val as string[]).some((value) => {
+        const testVal = value.toLocaleLowerCase();
 
-      if (cmd === 'endswith') {
-        return toTest.endsWith(testVal);
-      }
+        if (cmd === 'startswith') {
+          return toTest.startsWith(testVal);
+        }
 
-      if (cmd === 'contains') {
-        return toTest.includes(testVal);
-      }
+        if (cmd === 'endswith') {
+          return toTest.endsWith(testVal);
+        }
+
+        if (cmd === 'contains') {
+          return toTest.includes(testVal);
+        }
+
+        return true;
+      });
     }
 
     if (
@@ -104,18 +110,20 @@ export function filterBy(
         cmd
       )
     ) {
-      if (!moment.isMoment(toTest) || !moment.isMoment(val)) return false;
+      return (val as moment.Moment[]).some((value) => {
+        if (!moment.isMoment(toTest) || !moment.isMoment(value)) return false;
 
-      switch (cmd) {
-        case 'dateafter':
-          return toTest.isAfter(val);
-        case 'dateonorafter':
-          return toTest.isSameOrAfter(val);
-        case 'datebefore':
-          return toTest.isBefore(val);
-        case 'dateonorbefore':
-          return toTest.isSameOrBefore(val);
-      }
+        switch (cmd) {
+          case 'dateafter':
+            return toTest.isAfter(value);
+          case 'dateonorafter':
+            return toTest.isSameOrAfter(value);
+          case 'datebefore':
+            return toTest.isBefore(value);
+          case 'dateonorbefore':
+            return toTest.isSameOrBefore(value);
+        }
+      });
     }
 
     return false;
