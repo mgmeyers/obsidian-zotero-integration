@@ -67,6 +67,7 @@ function processAnnotation(
 ) {
   annotation.date = moment(annotation.date);
   annotation.attachment = attachment;
+  annotation.source = 'pdf';
 
   if (annotation.imagePath) {
     annotation.imageBaseName = path.basename(annotation.imagePath);
@@ -97,6 +98,7 @@ function convertNativeAnnotation(
     y: rect[1],
     color: annotation.annotationColor,
     colorCategory: getColorCategory(annotation.annotationColor),
+    source: 'zotero',
   };
 
   if (annotation.annotationText) {
