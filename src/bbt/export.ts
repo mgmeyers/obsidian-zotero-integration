@@ -498,7 +498,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         database
       );
 
-      mappedAttachments = (fullAttachmentData as any[]).reduce<
+      mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
         Record<string, any>
       >((col, a) => {
         col[a.path] = a;
@@ -749,7 +749,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
         settings.database
       );
 
-      mappedAttachments = (fullAttachmentData as any[]).reduce<
+      mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
         Record<string, any>
       >((col, a) => {
         col[a.path] = a;
