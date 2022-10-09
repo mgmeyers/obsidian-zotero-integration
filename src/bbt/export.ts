@@ -532,9 +532,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
           )
         : '';
 
-      const imageOutputPath = normalizePath(
-        path.resolve(vaultRoot, imageRelativePath)
-      );
+      const imageOutputPath = path.resolve(vaultRoot, imageRelativePath);
 
       const imageBaseName = exportFormat.imageBaseNameTemplate
         ? sanitizeFilePath(
