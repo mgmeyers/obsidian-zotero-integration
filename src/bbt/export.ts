@@ -508,7 +508,9 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
       mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
         Record<string, any>
       >((col, a) => {
-        col[a.path] = a;
+        if (a?.path) {
+          col[a.path] = a;
+        }
         return col;
       }, {});
     } catch {
@@ -539,9 +541,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
           )
         : '';
 
-      const imageOutputPath = normalizePath(
-        path.resolve(vaultRoot, imageRelativePath)
-      );
+      const imageOutputPath = path.resolve(vaultRoot, imageRelativePath);
 
       const imageBaseName = exportFormat.imageBaseNameTemplate
         ? sanitizeFilePath(
@@ -759,7 +759,9 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
         Record<string, any>
       >((col, a) => {
-        col[a.path] = a;
+        if (a?.path) {
+          col[a.path] = a;
+        }
         return col;
       }, {});
     } catch (e) {
