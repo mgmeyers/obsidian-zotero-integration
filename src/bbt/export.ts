@@ -85,7 +85,14 @@ function convertNativeAnnotation(
   imageRelativePath: string,
   copy: boolean = false
 ) {
-  const rect = annotation.annotationPosition.rects[0];
+  var rect;
+  // Currently ink annotation aren't properly imported. The location is
+  // for now set to a dummy value.
+  if(annotation.annotationType == "ink") {
+    rect = ["0", "0"];
+  } else {
+    rect = annotation.annotationPosition.rects[0];
+  }
 
   const annot: Record<string, any> = {
     date: moment(annotation.dateModified),
