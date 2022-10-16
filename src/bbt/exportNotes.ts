@@ -18,11 +18,12 @@ export function processZoteroAnnotationNotes(noteStr: string) {
 
       const attachmentKey = json.attachmentURI.split('/').pop();
 
-      annot.createSpan({ text: ' ' });
-      annot.createEl('a', {
+      const isImage = annot instanceof HTMLImageElement
+      annot.insertAdjacentElement(isImage ? 'afterend' : 'afterbegin', createEl('a', {
         text: 'Go to annotation',
         href: `zotero://open-pdf/library/items/${attachmentKey}?page=${json.pageLabel}&annotation=${json.annotationKey}`,
-      });
+      }));
+      annot.insertAdjacentElement(isImage ? 'afterend' : 'afterbegin', createSpan({ text: ' ' }));
     } catch (e) {
       console.error(e);
     }
