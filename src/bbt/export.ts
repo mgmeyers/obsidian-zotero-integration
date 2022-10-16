@@ -85,11 +85,11 @@ function convertNativeAnnotation(
   imageRelativePath: string,
   copy: boolean = false
 ) {
-  var rect;
+  let rect = [];
   // Currently ink annotation aren't properly imported. The location is
   // for now set to a dummy value.
-  if(annotation.annotationType == "ink") {
-    rect = ["0", "0"];
+  if (annotation.annotationType == 'ink') {
+    rect = ['0', '0'];
   } else {
     rect = annotation.annotationPosition.rects[0];
   }
