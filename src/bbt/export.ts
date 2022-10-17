@@ -582,6 +582,8 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
 
       mappedAttachments[attachments[j].path]?.annotations?.forEach(
         (annot: any) => {
+          if (!annot.annotationPosition.rects?.length) return;
+
           annots.push(
             convertNativeAnnotation(
               annot,
@@ -688,11 +690,11 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
   for (let i = 0, len = itemData.length; i < len; i++) {
     await processItem(itemData[i], importDate, database, format.cslStyle);
 
-    const attachments = itemData[i].attachments as any[];
+    const attachments = (itemData[i].attachments as any[]) || [];
     const firstPDF = attachments.find((a) => !!a.path?.endsWith('.pdf'));
 
     const templateData = {
-      attachment: firstPDF || attachments[0],
+      attachment: firstPDF || attachments.length ? attachments[0] : null,
       ...itemData[i],
     };
 
@@ -769,6 +771,8 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
       mappedAttachments[attachments[j].path]?.annotations?.forEach(
         (annot: any) => {
+          if (!annot.annotationPosition.rects?.length) return;
+
           annots.push(
             convertNativeAnnotation(
               annot,

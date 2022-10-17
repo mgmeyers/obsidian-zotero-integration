@@ -18,12 +18,18 @@ export function processZoteroAnnotationNotes(noteStr: string) {
 
       const attachmentKey = json.attachmentURI.split('/').pop();
 
-      const isImage = annot instanceof HTMLImageElement
-      annot.insertAdjacentElement(isImage ? 'afterend' : 'afterbegin', createEl('a', {
-        text: 'Go to annotation',
-        href: `zotero://open-pdf/library/items/${attachmentKey}?page=${json.pageLabel}&annotation=${json.annotationKey}`,
-      }));
-      annot.insertAdjacentElement(isImage ? 'afterend' : 'afterbegin', createSpan({ text: ' ' }));
+      const isImage = annot instanceof HTMLImageElement;
+      annot.insertAdjacentElement(
+        isImage ? 'afterend' : 'afterbegin',
+        createEl('a', {
+          text: 'Go to annotation',
+          href: `zotero://open-pdf/library/items/${attachmentKey}?page=${json.pageLabel}&annotation=${json.annotationKey}`,
+        })
+      );
+      annot.insertAdjacentElement(
+        isImage ? 'afterend' : 'afterbegin',
+        createSpan({ text: ' ' })
+      );
     } catch (e) {
       console.error(e);
     }
@@ -34,7 +40,12 @@ export function processZoteroAnnotationNotes(noteStr: string) {
       const params = (cite as HTMLElement).dataset.citation;
       const json = params ? JSON.parse(decodeURIComponent(params)) : null;
 
-      if (!json) return;
+      if (
+        !json ||
+        !json.citationItems.length ||
+        !json.citationItems[0].uris?.length
+      )
+        return;
 
       const itemKey = json.citationItems[0].uris[0].split('/').pop();
       const citeSpan = cite.querySelector('span');
