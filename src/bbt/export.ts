@@ -131,6 +131,14 @@ function convertNativeAnnotation(
     annot.imagePath = imagePath;
   }
 
+  if (annotation.tags?.length) {
+    annot.tags = annotation.tags;
+    annot.allTags = annotation.tags.map((t: any) => t.tag).join(', ');
+    annot.hashTags = annotation.tags
+      .map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`)
+      .join(', ');
+  }
+
   return annot;
 }
 
