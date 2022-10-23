@@ -90,7 +90,7 @@ export default class ZoteroConnector extends Plugin {
             }
         }
       }
-    });
+    }});
 
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
