@@ -1,7 +1,7 @@
 import './styles.css';
 import './bbt/template.helpers';
 
-import { Plugin, TFile } from 'obsidian';
+import { Plugin, TFile, Events, EventRef } from 'obsidian';
 
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
@@ -17,6 +17,7 @@ import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
 import { CiteSuggest } from './citeSuggest/citeSuggest';
+import { off } from 'process';
 
 const commandPrefix = 'obsidian-zotero-desktop-connector:';
 const citationCommandIDPrefix = 'zdc-';
@@ -39,6 +40,8 @@ interface ViewEvents {
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
   emitter: Emitter<ViewEvents>;
+  private importEvents = new Events();
+  private importEventsRef: EventRef;
 
   async onload() {
     await this.loadSettings();
@@ -54,6 +57,40 @@ export default class ZoteroConnector extends Plugin {
 
     this.settings.exportFormats.forEach((f) => {
       this.addExportCommand(f);
+    });
+
+    // When an import is completed, proceed to open the crated or updated notes if the setting is enabled
+    this.importEventsRef = this.importEvents.on("import-complete", async (createdOrUpdatedMarkdownFilesPaths) => {
+      if(this.settings.openNoteAfterImport) {
+        let pathOfNotesToOpen: string[] = [];
+
+        // Depending on the choice, retreive the paths of the first, the last or all imported notes
+        switch(this.settings.whichNotesToOpenAfterImport) {
+          case 'first-imported-note': {
+            pathOfNotesToOpen.push(createdOrUpdatedMarkdownFilesPaths[0]);
+            break;
+          }
+          case 'last-imported-note': {
+            pathOfNotesToOpen.push(createdOrUpdatedMarkdownFilesPaths[createdOrUpdatedMarkdownFilesPaths.length - 1]);
+            break;
+          }
+          case 'all-imported-notes': {
+            pathOfNotesToOpen.push(...createdOrUpdatedMarkdownFilesPaths);
+          }
+        }
+
+        // For all retrieved paths, open a new tab with the file 
+        for(var path of pathOfNotesToOpen) {
+          let noteExists = await this.app.vault.adapter.exists(path);
+
+          if(noteExists) {
+            let note = this.app.vault.getAbstractFileByPath(path);
+
+            if(note instanceof TFile) {
+              await this.app.workspace.getLeaf(true).openFile(note);
+            }
+        }
+      }
     });
 
     this.registerEvent(
@@ -150,8 +187,9 @@ export default class ZoteroConnector extends Plugin {
         exportToMarkdown({
           settings: this.settings,
           database: this.settings.database,
-          exportFormat: format,
-        });
+          exportFormat: format},
+          this.importEvents,
+        );      
       },
     });
   }

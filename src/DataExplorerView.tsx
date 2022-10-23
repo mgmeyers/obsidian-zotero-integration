@@ -89,6 +89,11 @@ function TemplatePreview({
         setForceRef(Date.now());
       }
     };
+    
+    const onImport = (file: TFile) => {
+      if (!file) return;
+    };
+
 
     const onSettingsUpdate = () => {
       setForceRef(Date.now());

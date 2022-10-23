@@ -41,6 +41,8 @@ function SettingsComponent({
     settings.exportFormats
   );
 
+  const [openNoteAfterImportState, setOpenNoteAfterImport] = React.useState(!!settings.openNoteAfterImport);
+
   const [ocrState, setOCRState] = React.useState(settings.pdfExportImageOCR);
   const [citeSuggestState, setCiteSuggestState] = React.useState(
     !!settings.shouldShowCiteSuggest
@@ -132,6 +134,34 @@ function SettingsComponent({
           placeholder="Example: folder 1/folder 2"
           defaultValue={settings.noteImportFolder}
         />
+      </SettingItem>
+      <SettingItem
+        name="Open the created or updated note(s) after import"
+        description="The crated or updated markdown files resulting from the import will be automatically opened."
+      >
+        <div
+          onClick={() => {
+            setOpenNoteAfterImport((state) => {
+              updateSetting('openNoteAfterImport', !state);
+              return !state;
+            });
+          }}
+          className={`checkbox-container${openNoteAfterImportState ? ' is-enabled' : ''}`}
+        />
+      </SettingItem>
+      <SettingItem 
+        name="Which notes to open after import" 
+        description="Open either the first note imported, the last note imported, or all notes in new tabs.">
+        <select
+          className="dropdown"
+          defaultValue={settings.whichNotesToOpenAfterImport}
+          disabled={!settings.openNoteAfterImport}
+          onChange={(e) => updateSetting('whichNotesToOpenAfterImport', e.target.value)}
+        >
+          <option value="first-imported-note">First imported note</option>
+          <option value="last-imported-note">Last imported note</option>
+          <option value="all-imported-notes">All imported notes</option>
+        </select>
       </SettingItem>
       <SettingItem
         name="Enable Cite Key Autocomplete"
