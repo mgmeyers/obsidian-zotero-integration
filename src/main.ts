@@ -59,7 +59,7 @@ export default class ZoteroConnector extends Plugin {
     });
 
     // When an import is completed, proceed to open the crated or updated notes if the setting is enabled
-    this.importEventsRef = this.importEvents.on("import-complete", async (createdOrUpdatedMarkdownFilesPaths) => {
+    this.importEventsRef = this.importEvents.on("import-complete", (createdOrUpdatedMarkdownFilesPaths) => {
       if(this.settings.openNoteAfterImport) {
         let pathOfNotesToOpen: string[] = [];
 
@@ -75,22 +75,14 @@ export default class ZoteroConnector extends Plugin {
           }
           case 'all-imported-notes': {
             pathOfNotesToOpen.push(...createdOrUpdatedMarkdownFilesPaths);
+            break;
           }
         }
-
-        // For all retrieved paths, open a new tab with the file 
-        for(var path of pathOfNotesToOpen) {
-          let noteExists = await this.app.vault.adapter.exists(path);
-
-          if(noteExists) {
-            let note = this.app.vault.getAbstractFileByPath(path);
-
-            if(note instanceof TFile) {
-              await this.app.workspace.getLeaf(true).openFile(note);
-            }
-        }
+        // Force a 1s delay after importing the files to make sure that notes are created before attempting to open them.
+        // A better solution could surely be found to refresh the vault, but I am not sure how to proceed! 
+        setTimeout(() => this.openNotes(pathOfNotesToOpen), 1000);
       }
-    }});
+    });
 
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
@@ -197,6 +189,17 @@ export default class ZoteroConnector extends Plugin {
     (this.app as any).commands.removeCommand(
       `${commandPrefix}${exportCommandIDPrefix}${format.name}`
     );
+  }
+
+  async openNotes(pathOfNotesToOpen: Array<string>) {
+      for(var path of pathOfNotesToOpen) {
+
+        let note = this.app.vault.getAbstractFileByPath(path);
+
+        if(note instanceof TFile) {
+          await this.app.workspace.getLeaf(true).openFile(note);
+        }
+    }
   }
 
   async loadSettings() {
