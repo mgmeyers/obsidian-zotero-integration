@@ -90,6 +90,13 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
       );
       return '[]';
     }
+    
+    else if (e.message.toLowerCase().includes('type3')) {
+      new Notice(
+        `Error processing annotations: ${e.message}`, 10000
+      );
+      return '[]';
+    }
 
     console.error(e);
     new Notice(`Error processing PDF: ${e.message}`, 10000);
