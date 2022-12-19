@@ -82,8 +82,3 @@ export interface ZoteroConnectorSettings {
   shouldShowCiteSuggest?: boolean;
   shouldConcat?: boolean;
 }
-
-export interface MarkdownFileKeyAndPath {
-  key: string;
-  path?: string;
-}

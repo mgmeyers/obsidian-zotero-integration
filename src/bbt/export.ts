@@ -8,7 +8,6 @@ import {
   ExportToMarkdownParams,
   RenderCiteTemplateParams,
   ZoteroConnectorSettings,
-  MarkdownFileKeyAndPath,
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { getCiteKeyFromAny, getCiteKeys } from './cayw';
@@ -182,6 +181,14 @@ async function processItem(
   // legacy
   item.exportDate = importDate;
   item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
+
+  if (!item.citekey) {
+    item.citekey = citekey;
+  }
+
+  if (!item.citationKey) {
+    item.citationKey = citekey;
+  }
 
   if (item.accessDate) {
     item.accessDate = moment(item.accessDate);
@@ -447,12 +454,10 @@ export async function exportToMarkdown(params: ExportToMarkdownParams, importEve
   // This is an array of an interface defined by a citekey and a path.
   // We first store the citekey in the order of the retrieved item data to save the order input by the user.
   // Further down below, when the Markdown file path has been sanitized, we associate the path to the key.
-  let createdOrUpdatedMarkdownFiles: MarkdownFileKeyAndPath[] = [];
+  const createdOrUpdatedMarkdownFiles: string[] = [];
 
   for (let i = 0, len = itemData.length; i < len; i++) {
     await processItem(itemData[i], importDate, database, exportFormat.cslStyle);
-    // Store the order of the files as they were input
-    createdOrUpdatedMarkdownFiles.push({key: itemData[i].citekey});
   }
 
   const vaultRoot = getVaultRoot();
@@ -463,7 +468,6 @@ export async function exportToMarkdown(params: ExportToMarkdownParams, importEve
   for (let i = 0, len = itemData.length; i < len; i++) {
     const attachments = itemData[i].attachments as any[];
     const hasPDF = attachments.some((a) => a.path?.endsWith('.pdf'));
-    const itemIndex = createdOrUpdatedMarkdownFiles.findIndex((file => file.key == itemData[i].citekey));
 
     // Handle the case of an item with no PDF attachments
     if (!hasPDF) {
@@ -509,8 +513,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams, importEve
         app.vault.create(markdownPath, rendered);
       }
 
-      createdOrUpdatedMarkdownFiles[itemIndex].path = markdownPath;
-      
+      createdOrUpdatedMarkdownFiles.push(markdownPath);
       continue;
     }
 
@@ -685,15 +688,15 @@ export async function exportToMarkdown(params: ExportToMarkdownParams, importEve
         await mkMDDir(markdownPath);
         app.vault.create(markdownPath, rendered);
       }
-      createdOrUpdatedMarkdownFiles[itemIndex].path = markdownPath;
+
+      createdOrUpdatedMarkdownFiles.push(markdownPath);
     }
   }
 
   // If importEvents has been provided, fire an event to state that the import is complete 
   // and send the created or updated markdown files in order of input as an array of paths
   if(importEvents instanceof Events) {
-    const createdOrUpdatedMarkdownFilesPaths = createdOrUpdatedMarkdownFiles.map(({key, path}) => (path));
-    importEvents.trigger('import-complete', createdOrUpdatedMarkdownFilesPaths);
+    importEvents.trigger('import-complete', createdOrUpdatedMarkdownFiles);
   }
 
   return true;
