@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
+import { Notice, TFile, htmlToMarkdown, moment, normalizePath, Events } from 'obsidian';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -8,6 +8,7 @@ import {
   ExportToMarkdownParams,
   RenderCiteTemplateParams,
   ZoteroConnectorSettings,
+  MarkdownFileKeyAndPath,
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { getCiteKeyFromAny, getCiteKeys } from './cayw';
@@ -417,7 +418,7 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
   );
 }
 
-export async function exportToMarkdown(params: ExportToMarkdownParams) {
+export async function exportToMarkdown(params: ExportToMarkdownParams, importEvents?: Events) {
   const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
@@ -434,15 +435,27 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
     return false;
   }
 
+  // Variable to store the paths of the markdown files that will be created on import.
+  // This is an array of an interface defined by a citekey and a path.
+  // We first store the citekey in the order of the retrieved item data to save the order input by the user.
+  // Further down below, when the Markdown file path has been sanitized, we associate the path to the key.
+  let createdOrUpdatedMarkdownFiles: MarkdownFileKeyAndPath[] = [];
+
   for (let i = 0, len = itemData.length; i < len; i++) {
     await processItem(itemData[i], importDate, database, exportFormat.cslStyle);
+    // Store the order of the files as they were input
+    createdOrUpdatedMarkdownFiles.push({key: itemData[i].citekey});
   }
 
   const vaultRoot = getVaultRoot();
 
+  // Store the path of markdown files that will be created/updated 
+  // on import to open them later
+
   for (let i = 0, len = itemData.length; i < len; i++) {
     const attachments = itemData[i].attachments as any[];
     const hasPDF = attachments.some((a) => a.path?.endsWith('.pdf'));
+    const itemIndex = createdOrUpdatedMarkdownFiles.findIndex((file => file.key == itemData[i].citekey));
 
     // Handle the case of an item with no PDF attachments
     if (!hasPDF) {
@@ -488,6 +501,8 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         app.vault.create(markdownPath, rendered);
       }
 
+      createdOrUpdatedMarkdownFiles[itemIndex].path = markdownPath;
+      
       continue;
     }
 
@@ -662,7 +677,15 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
         await mkMDDir(markdownPath);
         app.vault.create(markdownPath, rendered);
       }
+      createdOrUpdatedMarkdownFiles[itemIndex].path = markdownPath;
     }
+  }
+
+  // If importEvents has been provided, fire an event to state that the import is complete 
+  // and send the created or updated markdown files in order of input as an array of paths
+  if(importEvents instanceof Events) {
+    const createdOrUpdatedMarkdownFilesPaths = createdOrUpdatedMarkdownFiles.map(({key, path}) => (path));
+    importEvents.trigger('import-complete', createdOrUpdatedMarkdownFilesPaths);
   }
 
   return true;

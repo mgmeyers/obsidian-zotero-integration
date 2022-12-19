@@ -17,6 +17,8 @@ export interface CitationFormat {
 
 export type Database = 'Zotero' | 'Juris-M';
 
+export type NotesToOpenAfterImport = 'first-imported-note' | 'last-imported-note' | 'all-imported-notes';
+
 export interface CalloutDef {
   type: string;
   prefix: string;
@@ -64,6 +66,8 @@ export interface RenderCiteTemplateParams {
 export interface ZoteroConnectorSettings {
   database: Database;
   noteImportFolder: string;
+  openNoteAfterImport: boolean;
+  whichNotesToOpenAfterImport: NotesToOpenAfterImport;
   citeFormats: CitationFormat[];
   exportFormats: ExportFormat[];
   pdfExportImageDPI?: number;
@@ -77,4 +81,9 @@ export interface ZoteroConnectorSettings {
   settingsVersion?: number;
   shouldShowCiteSuggest?: boolean;
   shouldConcat?: boolean;
+}
+
+export interface MarkdownFileKeyAndPath {
+  key: string;
+  path?: string;
 }
