@@ -6,6 +6,10 @@ import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
 import { LoadingModal } from './LoadingModal';
 
+export function getCiteKeyFromAny(item: any) {
+  return item.citekey || item.citationKey;
+}
+
 export async function isZoteroRunning(database: Database, silent?: boolean) {
   let modal: LoadingModal;
   if (!silent) {
@@ -100,7 +104,7 @@ export async function getCiteKeys(database: Database): Promise<string[]> {
 
     const citeKeys = json
       .map((e: any) => {
-        return e.citekey;
+        return getCiteKeyFromAny(e);
       })
       .filter((e: any) => !!e);
 

@@ -10,7 +10,7 @@ import {
   ZoteroConnectorSettings,
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
-import { getCiteKeys } from './cayw';
+import { getCiteKeyFromAny, getCiteKeys } from './cayw';
 import { processZoteroAnnotationNotes } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
 import { getColorCategory, mkMDDir, sanitizeFilePath } from './helpers';
@@ -168,6 +168,7 @@ async function processItem(
   database: Database,
   cslStyle?: string
 ) {
+  const citekey = getCiteKeyFromAny(item);
   item.importDate = importDate;
   // legacy
   item.exportDate = importDate;
@@ -186,20 +187,20 @@ async function processItem(
   }
 
   try {
-    item.date = await getIssueDateFromCiteKey(item.citekey, database);
+    item.date = await getIssueDateFromCiteKey(citekey, database);
   } catch {
     // We don't particularly care about this
   }
 
   try {
-    item.collections = await getCollectionFromCiteKey(item.citekey, database);
+    item.collections = await getCollectionFromCiteKey(citekey, database);
   } catch {
     // We don't particularly care about this
   }
 
   try {
     item.bibliography = await getBibFromCiteKey(
-      item.citekey,
+      citekey,
       database,
       cslStyle
     );
@@ -494,7 +495,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams) {
 
     try {
       const fullAttachmentData = await getAttachmentsFromCiteKey(
-        itemData[i].citekey,
+        getCiteKeyFromAny(itemData[i]),
         database
       );
 
@@ -747,7 +748,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
     try {
       const fullAttachmentData = await getAttachmentsFromCiteKey(
-        itemData[i].citekey,
+        getCiteKeyFromAny(itemData[i]),
         settings.database
       );
 
