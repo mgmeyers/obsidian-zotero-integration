@@ -1,6 +1,13 @@
 import path from 'path';
 
-import { Notice, TFile, htmlToMarkdown, moment, normalizePath, Events } from 'obsidian';
+import {
+  Notice,
+  TFile,
+  htmlToMarkdown,
+  moment,
+  normalizePath,
+  Events,
+} from 'obsidian';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -20,6 +27,7 @@ import {
   getCollectionFromCiteKey,
   getIssueDateFromCiteKey,
   getItemJSONFromCiteKeys,
+  getItemJSONFromRelations,
 } from './jsonRPC';
 import { PersistExtension, renderTemplate } from './template.env';
 import {
@@ -170,11 +178,37 @@ function concatAnnotations(annots: Array<Record<string, any>>) {
   return output;
 }
 
-async function processItem(
+async function getRelations(
   item: any,
   importDate: moment.Moment,
   database: Database,
   cslStyle?: string
+) {
+  if (!item.relations?.length) return [];
+
+  const libId = item.libraryID;
+  const relatedItems = await getItemJSONFromRelations(
+    libId,
+    item.relations,
+    database
+  );
+
+  for (let i = 0, len = relatedItems.length; i < len; i++) {
+    const item = relatedItems[i];
+    if (getCiteKeyFromAny(item)) {
+      await processItem(item, importDate, database, cslStyle, true);
+    }
+  }
+
+  return relatedItems;
+}
+
+async function processItem(
+  item: any,
+  importDate: moment.Moment,
+  database: Database,
+  cslStyle?: string,
+  skipRelations?: boolean
 ) {
   const citekey = getCiteKeyFromAny(item);
   item.importDate = importDate;
@@ -215,17 +249,17 @@ async function processItem(
   }
 
   try {
-    item.bibliography = await getBibFromCiteKey(
-      citekey,
-      database,
-      cslStyle
-    );
+    item.bibliography = await getBibFromCiteKey(citekey, database, cslStyle);
   } catch {
     item.bibliography = 'Error generating bibliography';
   }
 
   item.notes?.forEach(processNote);
   item.attachments?.forEach(processAttachment);
+
+  if (!skipRelations) {
+    item.relations = await getRelations(item, importDate, database, cslStyle);
+  }
 }
 
 function generateHelpfulTemplateError(e: Error, template: string) {
@@ -433,7 +467,10 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
   );
 }
 
-export async function exportToMarkdown(params: ExportToMarkdownParams, importEvents?: Events) {
+export async function exportToMarkdown(
+  params: ExportToMarkdownParams,
+  importEvents?: Events
+) {
   const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
@@ -462,7 +499,7 @@ export async function exportToMarkdown(params: ExportToMarkdownParams, importEve
 
   const vaultRoot = getVaultRoot();
 
-  // Store the path of markdown files that will be created/updated 
+  // Store the path of markdown files that will be created/updated
   // on import to open them later
 
   for (let i = 0, len = itemData.length; i < len; i++) {
@@ -693,9 +730,9 @@ export async function exportToMarkdown(params: ExportToMarkdownParams, importEve
     }
   }
 
-  // If importEvents has been provided, fire an event to state that the import is complete 
+  // If importEvents has been provided, fire an event to state that the import is complete
   // and send the created or updated markdown files in order of input as an array of paths
-  if(importEvents instanceof Events) {
+  if (importEvents instanceof Events) {
     importEvents.trigger('import-complete', createdOrUpdatedMarkdownFiles);
   }
 
