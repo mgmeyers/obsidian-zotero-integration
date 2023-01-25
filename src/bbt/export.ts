@@ -467,18 +467,20 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
   );
 }
 
-export async function exportToMarkdown(
+export async function batchExportToMarkdown() {
+ doTheActualExport()
+}
+
+export async function doTheActualExport(
+  citeKeys: string[],
   params: ExportToMarkdownParams,
-  importEvents?: Events
+  importEvents?: Events,
 ) {
+
   const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
   const canExtract = doesEXEExist();
-
-  const citeKeys: string[] = await getCiteKeys(database);
-
-  if (!citeKeys.length) return false;
 
   let itemData: any;
   try {
@@ -486,13 +488,13 @@ export async function exportToMarkdown(
   } catch (e) {
     return false;
   }
-
   // Variable to store the paths of the markdown files that will be created on import.
   // This is an array of an interface defined by a citekey and a path.
   // We first store the citekey in the order of the retrieved item data to save the order input by the user.
   // Further down below, when the Markdown file path has been sanitized, we associate the path to the key.
   const createdOrUpdatedMarkdownFiles: string[] = [];
-
+  console.log(itemData)
+  if (!itemData) return false; // Zotero can't find the citekey
   for (let i = 0, len = itemData.length; i < len; i++) {
     await processItem(itemData[i], importDate, database, exportFormat.cslStyle);
   }
@@ -737,6 +739,22 @@ export async function exportToMarkdown(
   }
 
   return true;
+}
+
+export async function exportToMarkdown(
+  params: ExportToMarkdownParams,
+  importEvents?: Events,
+) {
+  const importDate = moment();
+  const { database, exportFormat, settings } = params;
+  const sourcePath = getATemplatePath(params);
+  const canExtract = doesEXEExist();
+  const citeKeys: string[] = await getCiteKeys(database); // I think this opens the zotero connector
+  if (!citeKeys.length) return false;
+
+  doTheActualExport(citeKeys, params, importEvents)
+
+  
 }
 
 export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
