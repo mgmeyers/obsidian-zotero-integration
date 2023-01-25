@@ -1,10 +1,10 @@
 import './styles.css';
 import './bbt/template.helpers';
 
-import { Plugin, TFile, Events, EventRef } from 'obsidian';
+import { Plugin, TFile, TFolder, Events, EventRef, Notice, FuzzySuggestModal, Modal, App, Setting } from 'obsidian';
 
 import { getCAYW } from './bbt/cayw';
-import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
+import { doTheActualExport, exportToMarkdown, renderCiteTemplate } from './bbt/export';
 import {
   filesFromNotes,
   insertNotesIntoCurrentDoc,
@@ -36,6 +36,58 @@ interface ViewEvents {
   fileUpdated: (file: TFile) => void;
 }
 
+class FormatModal extends FuzzySuggestModal<ExportFormat> {
+  items: ExportFormat[]
+  constructor(app: any, items: ExportFormat[], callback: (item: ExportFormat) => void) {
+    super(app)
+    this.items = items
+    this.onChooseItem = callback
+  }
+
+  getItems(): ExportFormat[] {
+    return this.items;
+  }
+
+  getItemText(format: ExportFormat): string {
+    return format.name;
+  }
+}
+
+export class UseSuggestedFormatModal extends Modal {
+  format: ExportFormat
+  useFormat: () => void
+
+  constructor(app: App, format: ExportFormat, useFormat: (useFormat) => void) {
+    super(app);
+    this.format = format
+    this.useFormat = useFormat
+  }
+
+  onOpen() {
+    let { contentEl } = this;
+    contentEl.createEl("h3", {text: "Do you want to use the detected format: "+this.format.name})
+
+    new Setting(contentEl).addButton((btn) =>
+      btn.setButtonText("Yes").setCta().onClick(() => {
+        this.close();
+        this.useFormat(true)
+      })
+    );
+  
+    new Setting(contentEl).addButton((btn) =>
+      btn.setButtonText("No, selected other template").setCta().onClick(() => {
+          this.close();
+          this.useFormat(false)
+      })
+    );
+  }
+
+  onClose() {
+    let { contentEl } = this;
+    contentEl.empty();
+  }
+}
+
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
   emitter: Emitter<ViewEvents>;
@@ -57,6 +109,53 @@ export default class ZoteroConnector extends Plugin {
     this.settings.exportFormats.forEach((f) => {
       this.addExportCommand(f);
     });
+
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, selectedFile) => {  
+        menu.addItem((item) => {
+          item.setTitle("Update from Zotero").setIcon("document").onClick(async () => {
+             // Function to export file
+              const exportFile = (file: any, format: ExportFormat) => {
+                doTheActualExport(
+                  [file.basename],
+                  { settings: this.settings,
+                  database: this.settings.database,
+                  exportFormat: format},
+                  this.importEvents)
+              }
+
+              const exportFileOrFolder = (fileorfolder: any, format: ExportFormat) => {
+                if (selectedFile instanceof TFile) {
+                  exportFile(selectedFile, format)
+                } else if (selectedFile instanceof TFolder) {
+                  selectedFile.children.forEach(file => exportFile(file, format))
+                }
+              }
+
+              const selectFormatAndImport = () => {
+                new FormatModal(this.app, this.settings.exportFormats, (selectedFormat) => {
+                  exportFileOrFolder(selectedFile, selectedFormat)
+                }).open()
+              }
+              const inCorrectPath = this.settings.exportFormats.filter(format => format.outputPathTemplate.contains(selectedFile.name))
+              if(inCorrectPath.length == 1) {
+                new UseSuggestedFormatModal(this.app, inCorrectPath[0], (useFormat) => {
+                  if(!useFormat) {
+                    selectFormatAndImport()
+                  } else {
+                    exportFileOrFolder(selectedFile, inCorrectPath[0])
+                  }
+                }).open()
+              } else {
+                selectFormatAndImport()
+              }
+              
+              new Notice(selectedFile.path);
+            });
+        });
+      })
+    );
+    
 
     // When an import is completed, proceed to open the crated or updated notes if the setting is enabled
     this.importEventsRef = this.importEvents.on("import-complete", (createdOrUpdatedMarkdownFilesPaths) => {
