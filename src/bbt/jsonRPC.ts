@@ -2,12 +2,12 @@ import { Notice, htmlToMarkdown, moment, request } from 'obsidian';
 
 import { padNumber } from '../helpers';
 import { Database } from '../types';
-import { getCiteKeyFromAny } from './cayw';
+import { CiteKey, getCiteKeyFromAny } from './cayw';
 import { defaultHeaders, getPort } from './helpers';
 import { LoadingModal } from './LoadingModal';
 
 export async function getNotesFromCiteKeys(
-  citeKeys: string[],
+  citeKeys: CiteKey[],
   database: Database
 ) {
   let res: string;
@@ -22,7 +22,7 @@ export async function getNotesFromCiteKeys(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.notes',
-        params: [citeKeys],
+        params: [citeKeys.map(k => k.key)],
       }),
       headers: defaultHeaders,
     });
@@ -45,7 +45,7 @@ export async function getNotesFromCiteKeys(
 }
 
 export async function getCollectionFromCiteKey(
-  citeKey: string,
+  citeKey: CiteKey,
   database: Database
 ) {
   let res: string;
@@ -60,7 +60,7 @@ export async function getCollectionFromCiteKey(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.collections',
-        params: [[citeKey], true],
+        params: [[citeKey.key], true],
       }),
       headers: defaultHeaders,
     });
@@ -75,7 +75,7 @@ export async function getCollectionFromCiteKey(
 
   try {
     const result = JSON.parse(res).result;
-    const cols = result[citeKey];
+    const cols = result[citeKey.key];
 
     return cols.map((c: any) => {
       let pointer = c;
@@ -100,7 +100,7 @@ export async function getCollectionFromCiteKey(
 }
 
 export async function getAttachmentsFromCiteKey(
-  citeKey: string,
+  citeKey: CiteKey,
   database: Database
 ) {
   let res: string;
@@ -115,7 +115,7 @@ export async function getAttachmentsFromCiteKey(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.attachments',
-        params: [citeKey],
+        params: [citeKey.key],
       }),
       headers: defaultHeaders,
     });
@@ -138,7 +138,7 @@ export async function getAttachmentsFromCiteKey(
 }
 
 export function getBibFromCiteKey(
-  citeKey: string,
+  citeKey: CiteKey,
   database: Database,
   cslStyle?: string
 ) {
@@ -146,7 +146,7 @@ export function getBibFromCiteKey(
 }
 
 export async function getBibFromCiteKeys(
-  citeKeys: string[],
+  citeKeys: CiteKey[],
   database: Database,
   cslStyle?: string
 ) {
@@ -173,7 +173,7 @@ export async function getBibFromCiteKeys(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.bibliography',
-        params: [citeKeys, params],
+        params: [citeKeys.map(k => k.key), params],
       }),
       headers: defaultHeaders,
     });
@@ -187,7 +187,12 @@ export async function getBibFromCiteKeys(
   modal.close();
 
   try {
-    return htmlToMarkdown(JSON.parse(res).result);
+    const parsed = JSON.parse(res);
+    if (parsed.error) {
+      console.error(`Error retrieving bibliography: ${parsed.error.message}`);
+      return null
+    }
+    return htmlToMarkdown(parsed.result);
   } catch (e) {
     console.error(e);
     console.error(`Response from BBT: ${res}`);
@@ -204,8 +209,9 @@ export async function getBibFromCiteKeys(
 }
 
 export async function getItemJSONFromCiteKeys(
-  citeKeys: string[],
-  database: Database
+  citeKeys: CiteKey[],
+  database: Database,
+  libraryID: number
 ) {
   let res: string;
 
@@ -219,7 +225,7 @@ export async function getItemJSONFromCiteKeys(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.export',
-        params: [citeKeys, '36a3b0b5-bad0-4a04-b79b-441c7cef77db'],
+        params: [citeKeys.map(k => k.key), '36a3b0b5-bad0-4a04-b79b-441c7cef77db', libraryID],
       }),
       headers: defaultHeaders,
     });
@@ -282,7 +288,7 @@ export async function getItemJSONFromRelations(
   modal.close();
 
   const idMap: Record<string, any> = {};
-  const citekeys: string[] = [];
+  const citekeys: CiteKey[] = [];
 
   try {
     const json = JSON.parse(res);
@@ -290,7 +296,7 @@ export async function getItemJSONFromRelations(
     Object.keys(json.result).forEach((k) => {
       const id = k.split(':').pop();
       if (json.result[k]) {
-        citekeys.push(json.result[k]);
+        citekeys.push({ key: json.result[k], library: libraryID });
         idMap[id] = { citekey: json.result[k], uri: uriMap[id] };
       } else {
         idMap[id] = { uri: uriMap[id] };
@@ -302,7 +308,7 @@ export async function getItemJSONFromRelations(
     return null;
   }
 
-  const items: any[] = await getItemJSONFromCiteKeys(citekeys, database);
+  const items: any[] = await getItemJSONFromCiteKeys(citekeys, database, libraryID);
   return idOrder.map((id) => {
     if (idMap[id].citekey) {
       const item = items.find(
@@ -319,8 +325,8 @@ export async function getItemJSONFromRelations(
 }
 
 export async function getIssueDateFromCiteKey(
-  citeKey: string,
-  database: Database
+  citeKey: CiteKey,
+  database: Database,
 ) {
   let res: string;
 
@@ -334,7 +340,7 @@ export async function getIssueDateFromCiteKey(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.export',
-        params: [[citeKey], 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc'],
+        params: [[citeKey.key], 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc', citeKey.library],
       }),
       headers: defaultHeaders,
     });

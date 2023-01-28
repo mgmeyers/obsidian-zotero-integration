@@ -6,8 +6,11 @@ import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
 import { LoadingModal } from './LoadingModal';
 
-export function getCiteKeyFromAny(item: any) {
-  return item.citekey || item.citationKey;
+export function getCiteKeyFromAny(item: any): CiteKey {
+  return {
+    key: item.citekey || item.citationKey,
+    library: item.libraryID,
+  };
 }
 
 export async function isZoteroRunning(database: Database, silent?: boolean) {
@@ -96,7 +99,12 @@ export async function getCAYW(format: CitationFormat, database: Database) {
   }
 }
 
-export async function getCiteKeys(database: Database): Promise<string[]> {
+export interface CiteKey {
+  key: string;
+  library: number;
+}
+
+export async function getCiteKeys(database: Database): Promise<CiteKey[]> {
   try {
     const json = await getCAYWJSON(database);
 
@@ -134,7 +142,7 @@ export async function getCAYWJSON(database: Database) {
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
         database
-      )}/better-bibtex/cayw?format=json`,
+      )}/better-bibtex/cayw?format=translate&translator=36a3b0b5-bad0-4a04-b79b-441c7cef77db&exportNotes=false`,
       headers: defaultHeaders,
     });
 
@@ -142,7 +150,7 @@ export async function getCAYWJSON(database: Database) {
 
     modal.close();
     if (res) {
-      return JSON.parse(res);
+      return JSON.parse(res).items || [];
     } else {
       return null;
     }

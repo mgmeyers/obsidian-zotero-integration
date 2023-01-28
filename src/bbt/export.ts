@@ -476,13 +476,14 @@ export async function exportToMarkdown(
   const sourcePath = getATemplatePath(params);
   const canExtract = doesEXEExist();
 
-  const citeKeys: string[] = await getCiteKeys(database);
+  const citeKeys = await getCiteKeys(database);
 
   if (!citeKeys.length) return false;
 
+  const libraryID = citeKeys[0].library;
   let itemData: any;
   try {
-    itemData = await getItemJSONFromCiteKeys(citeKeys, database);
+    itemData = await getItemJSONFromCiteKeys(citeKeys, database, libraryID);
   } catch (e) {
     return false;
   }
@@ -742,13 +743,14 @@ export async function exportToMarkdown(
 export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
   const importDate = moment();
   const { database, format } = params;
-  const citeKeys: string[] = await getCiteKeys(database);
+  const citeKeys = await getCiteKeys(database);
 
   if (!citeKeys.length) return null;
 
+  const libraryID = citeKeys[0].library;
   let itemData: any[];
   try {
-    itemData = await getItemJSONFromCiteKeys(citeKeys, database);
+    itemData = await getItemJSONFromCiteKeys(citeKeys, database, libraryID);
   } catch (e) {
     return null;
   }
@@ -791,14 +793,15 @@ function getAStyle(settings: ZoteroConnectorSettings) {
 }
 
 export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
-  const citeKeys: string[] = await getCiteKeys(settings.database);
+  const citeKeys = await getCiteKeys(settings.database);
   const canExtract = doesEXEExist();
 
   if (!citeKeys.length) return null;
 
+  const libraryID = citeKeys[0].library;
   let itemData: any;
   try {
-    itemData = await getItemJSONFromCiteKeys(citeKeys, settings.database);
+    itemData = await getItemJSONFromCiteKeys(citeKeys, settings.database, libraryID);
   } catch (e) {
     return null;
   }
