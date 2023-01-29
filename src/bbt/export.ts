@@ -217,11 +217,11 @@ async function processItem(
   item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
 
   if (!item.citekey) {
-    item.citekey = citekey;
+    item.citekey = citekey.key;
   }
 
   if (!item.citationKey) {
-    item.citationKey = citekey;
+    item.citationKey = citekey.key;
   }
 
   if (item.accessDate) {
