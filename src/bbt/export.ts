@@ -216,14 +216,6 @@ async function processItem(
   item.exportDate = importDate;
   item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
 
-  if (!item.citekey) {
-    item.citekey = citekey.key;
-  }
-
-  if (!item.citationKey) {
-    item.citationKey = citekey.key;
-  }
-
   if (item.accessDate) {
     item.accessDate = moment(item.accessDate);
   }
@@ -236,22 +228,32 @@ async function processItem(
     item.dateModified = moment(item.dateModified);
   }
 
-  try {
-    item.date = await getIssueDateFromCiteKey(citekey, database);
-  } catch {
-    // We don't particularly care about this
-  }
+  if (citekey) {
+    if (!item.citekey) {
+      item.citekey = citekey.key;
+    }
+  
+    if (!item.citationKey) {
+      item.citationKey = citekey.key;
+    }
 
-  try {
-    item.collections = await getCollectionFromCiteKey(citekey, database);
-  } catch {
-    // We don't particularly care about this
-  }
+    try {
+      item.date = await getIssueDateFromCiteKey(citekey, database);
+    } catch {
+      // We don't particularly care about this
+    }
+ 
+    try {
+      item.collections = await getCollectionFromCiteKey(citekey, database);
+    } catch {
+      // We don't particularly care about this
+    }
 
-  try {
-    item.bibliography = await getBibFromCiteKey(citekey, database, cslStyle);
-  } catch {
-    item.bibliography = 'Error generating bibliography';
+    try {
+      item.bibliography = await getBibFromCiteKey(citekey, database, cslStyle);
+    } catch {
+      item.bibliography = 'Error generating bibliography';
+    }
   }
 
   item.notes?.forEach(processNote);
@@ -558,19 +560,22 @@ export async function exportToMarkdown(
     let mappedAttachments: Record<string, any> = {};
 
     try {
-      const fullAttachmentData = await getAttachmentsFromCiteKey(
-        getCiteKeyFromAny(itemData[i]),
-        database
-      );
-
-      mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
-        Record<string, any>
-      >((col, a) => {
-        if (a?.path) {
-          col[a.path] = a;
-        }
-        return col;
-      }, {});
+      const citekey = getCiteKeyFromAny(itemData[i]);
+      if (citekey) {
+        const fullAttachmentData = await getAttachmentsFromCiteKey(
+          citekey,
+          database
+        );
+  
+        mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
+          Record<string, any>
+        >((col, a) => {
+          if (a?.path) {
+            col[a.path] = a;
+          }
+          return col;
+        }, {});
+      }
     } catch {
       //
     }
@@ -821,19 +826,22 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
     let mappedAttachments: Record<string, any> = {};
 
     try {
-      const fullAttachmentData = await getAttachmentsFromCiteKey(
-        getCiteKeyFromAny(itemData[i]),
-        settings.database
-      );
-
-      mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
-        Record<string, any>
-      >((col, a) => {
-        if (a?.path) {
-          col[a.path] = a;
-        }
-        return col;
-      }, {});
+      const citekey = getCiteKeyFromAny(itemData[i]);
+      if (citekey) {
+        const fullAttachmentData = await getAttachmentsFromCiteKey(
+          citekey,
+          settings.database
+        );
+  
+        mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
+          Record<string, any>
+        >((col, a) => {
+          if (a?.path) {
+            col[a.path] = a;
+          }
+          return col;
+        }, {});
+      }
     } catch (e) {
       console.error(e);
     }

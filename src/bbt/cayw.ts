@@ -6,7 +6,9 @@ import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
 import { LoadingModal } from './LoadingModal';
 
-export function getCiteKeyFromAny(item: any): CiteKey {
+export function getCiteKeyFromAny(item: any): CiteKey | null {
+  if (!item.citekey && !item.citationKey) return null;
+  
   return {
     key: item.citekey || item.citationKey,
     library: item.libraryID,
