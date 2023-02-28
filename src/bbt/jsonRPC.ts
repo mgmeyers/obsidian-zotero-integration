@@ -316,11 +316,10 @@ export async function getItemJSONFromRelations(
     return null;
   }
 
-  const items: any[] = await getItemJSONFromCiteKeys(
-    citekeys,
-    database,
-    libraryID
-  );
+  const items: any[] = citekeys.length
+    ? await getItemJSONFromCiteKeys(citekeys, database, libraryID)
+    : [];
+
   return idOrder.map((id) => {
     if (idMap[id].citekey) {
       const item = items.find(
