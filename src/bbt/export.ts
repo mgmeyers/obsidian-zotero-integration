@@ -232,7 +232,7 @@ async function processItem(
     if (!item.citekey) {
       item.citekey = citekey.key;
     }
-  
+
     if (!item.citationKey) {
       item.citationKey = citekey.key;
     }
@@ -242,7 +242,7 @@ async function processItem(
     } catch {
       // We don't particularly care about this
     }
- 
+
     try {
       item.collections = await getCollectionFromCiteKey(citekey, database);
     } catch {
@@ -511,7 +511,7 @@ export async function exportToMarkdown(
 
     // Handle the case of an item with no PDF attachments
     if (!hasPDF) {
-      const templateData = await applyBasicTemplates(sourcePath, {
+      const pathTemplateData = await applyBasicTemplates(sourcePath, {
         ...itemData[i],
         annotations: [],
       });
@@ -522,7 +522,7 @@ export async function exportToMarkdown(
             await renderTemplate(
               sourcePath,
               exportFormat.outputPathTemplate,
-              templateData
+              pathTemplateData
             )
           )
         )
@@ -531,12 +531,30 @@ export async function exportToMarkdown(
       const existingMarkdownFile =
         app.vault.getAbstractFileByPath(markdownPath);
       let existingMarkdown = '';
+      let lastImportDate = moment(0);
 
       if (existingMarkdownFile) {
         existingMarkdown = await app.vault.cachedRead(
           existingMarkdownFile as TFile
         );
+
+        lastImportDate = getLastExport(existingMarkdown);
       }
+
+      const isFirstImport = lastImportDate.valueOf() === 0;
+
+      const templateData: Record<any, any> = await applyBasicTemplates(
+        markdownPath,
+        {
+          ...itemData[i],
+          annotations: [],
+
+          lastImportDate,
+          isFirstImport,
+          // legacy
+          lastExportDate: lastImportDate,
+        }
+      );
 
       const rendered = await renderTemplates(
         params,
@@ -566,7 +584,7 @@ export async function exportToMarkdown(
           citekey,
           database
         );
-  
+
         mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
           Record<string, any>
         >((col, a) => {
@@ -708,10 +726,10 @@ export async function exportToMarkdown(
         markdownPath,
         {
           ...itemData[i],
-          lastImportDate,
-          isFirstImport,
           annotations: annots ? annots : [],
 
+          lastImportDate,
+          isFirstImport,
           // legacy
           lastExportDate: lastImportDate,
         }
@@ -806,7 +824,11 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   const libraryID = citeKeys[0].library;
   let itemData: any;
   try {
-    itemData = await getItemJSONFromCiteKeys(citeKeys, settings.database, libraryID);
+    itemData = await getItemJSONFromCiteKeys(
+      citeKeys,
+      settings.database,
+      libraryID
+    );
   } catch (e) {
     return null;
   }
@@ -832,7 +854,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
           citekey,
           settings.database
         );
-  
+
         mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
           Record<string, any>
         >((col, a) => {
