@@ -180,6 +180,18 @@ function SettingsComponent({
         />
       </SettingItem>
       <SettingItem
+        name="Cite Key Autocomplete Insertion Template"
+        description="Template used to insert a cite key on autocompletion. Use Alt+↵ to insert the key using this template."
+      >
+        <input
+          onChange={(e) => updateSetting('citeSuggestTemplate', e.target.value)}
+          type="text"
+          spellCheck="false"
+          placeholder="Example: [[{{citekey}}]]"
+          defaultValue={settings.citeSuggestTemplate}
+        />
+      </SettingItem>
+      <SettingItem
         name="Enable Annotation Concatenation"
         description="Annotations extracted from PDFs that begin with '+' will be appended to the previous annotation. Note: Annotation ordering is not always consistent and you may not always acheive the desire concatenation result"
       >

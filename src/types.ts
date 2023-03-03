@@ -80,5 +80,6 @@ export interface ZoteroConnectorSettings {
   exeVersion?: string;
   settingsVersion?: number;
   shouldShowCiteSuggest?: boolean;
+  citeSuggestTemplate?: string;
   shouldConcat?: boolean;
 }

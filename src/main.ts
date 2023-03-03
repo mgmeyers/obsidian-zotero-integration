@@ -29,6 +29,7 @@ const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   pdfExportImageQuality: 90,
   citeFormats: [],
   exportFormats: [],
+  citeSuggestTemplate: "[[{{citekey}}]]",
 };
 
 interface ViewEvents {
