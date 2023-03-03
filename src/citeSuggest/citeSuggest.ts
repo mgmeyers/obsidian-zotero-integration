@@ -1,3 +1,4 @@
+import nunjucks from 'nunjucks'
 import os from 'os';
 import Fuse from 'fuse.js';
 import {
@@ -28,18 +29,27 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
     this.app = app;
     this.plugin = plugin;
 
-    const isMac = os.platform();
+    const platform = os.platform();
 
     (this as any).scope.register(['Mod'], 'Enter', (evt: KeyboardEvent) => {
       (this as any).suggestions.useSelectedItem(evt);
       return false;
     });
 
+    (this as any).scope.register(['Alt'], 'Enter', (evt: KeyboardEvent) => {
+      (this as any).suggestions.useSelectedItem(evt);
+      return false;
+    });
+
     this.setInstructions([
       {
-        command: isMac === 'darwin' ? 'cmd ↵' : 'ctrl ↵',
+        command: platform === 'darwin' ? '⌘ ↵' : 'ctrl ↵',
         purpose: 'Wrap cite key with brackets',
       },
+      {
+        command: platform === 'darwin' ? '⌥ ↵' : 'alt ↵',
+        purpose: 'Insert using template',
+      }
     ]);
 
     this.fuse = new Fuse([] as string[], {
@@ -137,10 +147,18 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       return;
     }
 
+    let replaceStr = '';
+    if (event.metaKey || event.ctrlKey) {
+      replaceStr = `[@${suggestion.item}]`
+    } else if (event.altKey) {
+      const template = this.plugin.settings.citeSuggestTemplate
+      replaceStr = nunjucks.renderString(template, {'citekey': suggestion.item})
+    } else {
+      replaceStr = `@${suggestion.item}`
+    }
+
     activeView.editor.replaceRange(
-      event.metaKey || event.ctrlKey
-        ? `[@${suggestion.item}]`
-        : `@${suggestion.item}`,
+      replaceStr,
       this.context.start,
       this.context.end
     );
