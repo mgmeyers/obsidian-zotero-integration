@@ -17,7 +17,10 @@ export interface CitationFormat {
 
 export type Database = 'Zotero' | 'Juris-M';
 
-export type NotesToOpenAfterImport = 'first-imported-note' | 'last-imported-note' | 'all-imported-notes';
+export type NotesToOpenAfterImport =
+  | 'first-imported-note'
+  | 'last-imported-note'
+  | 'all-imported-notes';
 
 export interface CalloutDef {
   type: string;
@@ -64,22 +67,23 @@ export interface RenderCiteTemplateParams {
 }
 
 export interface ZoteroConnectorSettings {
+  citeFormats: CitationFormat[];
+  citeSuggestTemplate?: string;
   database: Database;
+  exeVersion?: string;
+  exeOverridePath?: string;
+  exportFormats: ExportFormat[];
   noteImportFolder: string;
   openNoteAfterImport: boolean;
-  whichNotesToOpenAfterImport: NotesToOpenAfterImport;
-  citeFormats: CitationFormat[];
-  exportFormats: ExportFormat[];
   pdfExportImageDPI?: number;
-  pdfExportImageQuality?: number;
   pdfExportImageFormat?: string;
   pdfExportImageOCR?: boolean;
   pdfExportImageOCRLang?: string;
-  pdfExportImageTesseractPath?: string;
+  pdfExportImageQuality?: number;
   pdfExportImageTessDataDir?: string;
-  exeVersion?: string;
+  pdfExportImageTesseractPath?: string;
   settingsVersion?: number;
-  shouldShowCiteSuggest?: boolean;
-  citeSuggestTemplate?: string;
   shouldConcat?: boolean;
+  shouldShowCiteSuggest?: boolean;
+  whichNotesToOpenAfterImport: NotesToOpenAfterImport;
 }

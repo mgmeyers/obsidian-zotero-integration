@@ -1,10 +1,11 @@
 import os from 'os';
 
 import download from 'download';
-import { Notice } from 'obsidian';
+import { Notice, debounce } from 'obsidian';
 import React from 'react';
 
 import {
+  checkEXEVersion,
   doesEXEExist,
   doesLegacyEXEExist,
   getExeRoot,
@@ -74,20 +75,41 @@ export async function downloadAndExtract() {
 }
 
 export function AssetDownloader(props: {
-  exeVersion?: string;
+  settings: ZoteroConnectorSettings;
   updateSetting: (key: keyof ZoteroConnectorSettings, value: any) => void;
 }) {
-  const [exeVersion, setExeVersion] = React.useState(props.exeVersion);
+  const [isUpToDate, setIsUpToDate] = React.useState<boolean | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [exists, setExists] = React.useState(false);
+  const [overridePath, setOverridePath] = React.useState(
+    props.settings.exeOverridePath
+  );
+
+  const setOverride = React.useMemo(
+    () =>
+      debounce(
+        (path: string) => {
+          setOverridePath(path);
+          props.updateSetting('exeOverridePath', path);
+        },
+        150,
+        true
+      ),
+    []
+  );
 
   React.useEffect(() => {
-    if (doesEXEExist()) {
-      setExists(true);
-    } else {
-      setExists(false);
+    const exists = doesEXEExist(overridePath);
+    setExists(exists);
+
+    if (exists) {
+      checkEXEVersion(overridePath)
+        .then((version) => {
+          setIsUpToDate(`v${currentVersion}` === version);
+        })
+        .catch(() => {});
     }
-  }, []);
+  }, [overridePath]);
 
   const handleDownload = React.useCallback(() => {
     setIsLoading(true);
@@ -96,8 +118,7 @@ export function AssetDownloader(props: {
       setIsLoading(false);
 
       if (success) {
-        props.updateSetting('exeVersion', currentVersion);
-        setExeVersion(currentVersion);
+        setIsUpToDate(true);
         setExists(true);
       }
     });
@@ -108,32 +129,90 @@ export function AssetDownloader(props: {
     'This plugin will still work without it, but annotations will not be included in exports.',
   ];
 
-  if (exists && currentVersion === exeVersion) {
+  const overrideDesc = (
+    <>
+      Override the path to the PDF utility. Specify an absolute path to the
+      pdfannots2json executable.{' '}
+      <a
+        href="https://github.com/mgmeyers/pdfannots2json/releases"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Download the executable here.
+      </a>{' '}
+      You may need to provide Obsidian the appropriate OS permissions to access
+      the executable.
+    </>
+  );
+
+  const Override = (
+    <SettingItem name="PDF Utility Path Override" description={overrideDesc}>
+      <input
+        onChange={(e) => setOverride(e.target.value)}
+        type="text"
+        spellCheck="false"
+        value={overridePath}
+      />
+      <div
+        className="clickable-icon setting-editor-extra-setting-button"
+        aria-label="Select the pdfannots2json executable"
+        onClick={() => {
+          const path = require('electron').remote.dialog.showOpenDialogSync({
+            properties: ['openFile'],
+          });
+
+          if (path && path.length) {
+            setOverride(path[0]);
+          }
+        }}
+      >
+        <Icon name="lucide-folder-open" />
+      </div>
+    </SettingItem>
+  );
+
+  if (exists && isUpToDate) {
     return (
-      <SettingItem name="PDF Utility" description={desc.join(' ')}>
-        <div className="zt-asset-success">
-          <div className="zt-asset-success__icon">
-            <Icon name="check-small" />
+      <>
+        <SettingItem name="PDF Utility" description={desc.join(' ')}>
+          <div className="zt-asset-success">
+            <div className="zt-asset-success__icon">
+              <Icon name="check-small" />
+            </div>
+            <div className="zt-asset-success__message">
+              PDF utility is up to date.
+            </div>
           </div>
-          <div className="zt-asset-success__message">
-            PDF utility is up to date.
-          </div>
-        </div>
-      </SettingItem>
+        </SettingItem>
+        {Override}
+      </>
     );
   }
 
-  if (exists) {
-    desc.push('The PDF extraction tool requires updating. Please re-download.');
-  } else {
-    desc.push('Click the button to download.');
-  }
+  const descFrag = (
+    <>
+      {desc.join(' ')}{' '}
+      {exists && (
+        <strong className="mod-warning">
+          The PDF extraction tool requires updating. Please re-download.
+        </strong>
+      )}
+      {!exists && !overridePath && (
+        <strong>Click the button to download.</strong>
+      )}
+    </>
+  );
 
   return (
-    <SettingItem name="PDF Utility" description={desc.join(' ')}>
-      <button disabled={isLoading} onClick={handleDownload}>
-        {isLoading ? 'Downloading...' : 'Download'}
-      </button>
-    </SettingItem>
+    <>
+      <SettingItem name="PDF Utility" description={descFrag}>
+        {!overridePath && (
+          <button disabled={isLoading} onClick={handleDownload}>
+            {isLoading ? 'Downloading...' : 'Download'}
+          </button>
+        )}
+      </SettingItem>
+      {Override}
+    </>
   );
 }

@@ -1,12 +1,13 @@
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
 import {
+  Events,
   Notice,
   TFile,
   htmlToMarkdown,
   moment,
   normalizePath,
-  Events,
 } from 'obsidian';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
@@ -38,7 +39,6 @@ import {
   removeStartingSlash,
   wrapAnnotationTemplate,
 } from './template.helpers';
-import { copyFileSync, existsSync, mkdirSync } from 'fs';
 
 function processNote(note: any) {
   if (note.note) {

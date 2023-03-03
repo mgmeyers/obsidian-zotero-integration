@@ -1,6 +1,5 @@
-import nunjucks from 'nunjucks'
-import os from 'os';
 import Fuse from 'fuse.js';
+import nunjucks from 'nunjucks';
 import {
   App,
   Editor,
@@ -9,10 +8,12 @@ import {
   EditorSuggestContext,
   EditorSuggestTriggerInfo,
   MarkdownView,
+  Platform,
 } from 'obsidian';
-import ZoteroConnector from 'src/main';
+
 import { isZoteroRunning } from 'src/bbt/cayw';
 import { getAllCiteKeys } from 'src/bbt/getCiteKeyExport';
+import ZoteroConnector from 'src/main';
 
 export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
   private plugin: ZoteroConnector;
@@ -29,8 +30,6 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
     this.app = app;
     this.plugin = plugin;
 
-    const platform = os.platform();
-
     (this as any).scope.register(['Mod'], 'Enter', (evt: KeyboardEvent) => {
       (this as any).suggestions.useSelectedItem(evt);
       return false;
@@ -43,13 +42,13 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
 
     this.setInstructions([
       {
-        command: platform === 'darwin' ? '⌘ ↵' : 'ctrl ↵',
+        command: Platform.isMacOS ? '⌘ ↵' : 'ctrl ↵',
         purpose: 'Wrap cite key with brackets',
       },
       {
-        command: platform === 'darwin' ? '⌥ ↵' : 'alt ↵',
+        command: Platform.isMacOS ? '⌥ ↵' : 'alt ↵',
         purpose: 'Insert using template',
-      }
+      },
     ]);
 
     this.fuse = new Fuse([] as string[], {
@@ -149,12 +148,14 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
 
     let replaceStr = '';
     if (event.metaKey || event.ctrlKey) {
-      replaceStr = `[@${suggestion.item}]`
+      replaceStr = `[@${suggestion.item}]`;
     } else if (event.altKey) {
-      const template = this.plugin.settings.citeSuggestTemplate
-      replaceStr = nunjucks.renderString(template, {'citekey': suggestion.item})
+      const template = this.plugin.settings.citeSuggestTemplate;
+      replaceStr = nunjucks.renderString(template, {
+        citekey: suggestion.item,
+      });
     } else {
-      replaceStr = `@${suggestion.item}`
+      replaceStr = `@${suggestion.item}`;
     }
 
     activeView.editor.replaceRange(

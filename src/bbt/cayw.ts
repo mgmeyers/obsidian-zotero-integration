@@ -8,7 +8,7 @@ import { LoadingModal } from './LoadingModal';
 
 export function getCiteKeyFromAny(item: any): CiteKey | null {
   if (!item.citekey && !item.citationKey) return null;
-  
+
   return {
     key: item.citekey || item.citationKey,
     library: item.libraryID,
@@ -18,10 +18,7 @@ export function getCiteKeyFromAny(item: any): CiteKey | null {
 export async function isZoteroRunning(database: Database, silent?: boolean) {
   let modal: LoadingModal;
   if (!silent) {
-    modal = new LoadingModal(
-      app,
-      'Fetching data from Zotero...'
-    );
+    modal = new LoadingModal(app, 'Fetching data from Zotero...');
     modal.open();
   }
   try {
@@ -68,10 +65,7 @@ export async function getCAYW(format: CitationFormat, database: Database) {
     return null;
   }
 
-  const modal = new LoadingModal(
-    app,
-    'Awaiting item selection from Zotero...'
-  );
+  const modal = new LoadingModal(app, 'Awaiting item selection from Zotero...');
   modal.open();
 
   try {
@@ -133,10 +127,7 @@ export async function getCAYWJSON(database: Database) {
     return null;
   }
 
-  const modal = new LoadingModal(
-    app,
-    'Awaiting item selection from Zotero...'
-  );
+  const modal = new LoadingModal(app, 'Awaiting item selection from Zotero...');
   modal.open();
 
   try {

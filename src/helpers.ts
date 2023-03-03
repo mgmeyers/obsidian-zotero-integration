@@ -2,7 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { FileSystemAdapter } from 'obsidian';
+import { execa } from 'execa';
+import { FileSystemAdapter, Notice } from 'obsidian';
 
 export function bringAppToFront() {
   require('electron').remote.getCurrentWindow().show();
@@ -13,9 +14,7 @@ export function padNumber(n: number): string {
 }
 
 export function getVaultRoot() {
-  return (
-    app.vault.adapter as FileSystemAdapter
-  ).getBasePath();
+  return (app.vault.adapter as FileSystemAdapter).getBasePath();
 }
 
 export function getExeRoot() {
@@ -33,7 +32,8 @@ export function getLegacyExeName() {
   return os.platform() === 'win32' ? 'pdf-annots2json.exe' : 'pdf-annots2json';
 }
 
-export function doesEXEExist() {
+export function doesEXEExist(override?: string) {
+  if (override) return fs.existsSync(override);
   return fs.existsSync(path.join(getExeRoot(), getExeName()));
 }
 
@@ -47,4 +47,24 @@ export function removeEXE() {
 
 export function removeLegacyEXE() {
   fs.rmSync(path.join(getExeRoot(), getLegacyExeName()));
+}
+
+export async function checkEXEVersion(override?: string) {
+  try {
+    const result = await execa(
+      override || path.join(getExeRoot(), getExeName()),
+      ['-v']
+    );
+
+    if (result.stderr && !result.stderr.includes('warning')) {
+      new Notice(`Error checking PDF utility version: ${result.stderr}`, 10000);
+      throw new Error(result.stderr);
+    }
+
+    return result.stdout.trim();
+  } catch (e) {
+    console.error(e);
+    new Notice(`Error checking PDF utility version: ${e.message}`, 10000);
+    throw e;
+  }
 }

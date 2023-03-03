@@ -1,7 +1,7 @@
 import './styles.css';
 import './bbt/template.helpers';
 
-import { Plugin, TFile, Events, EventRef } from 'obsidian';
+import { EventRef, Events, Plugin, TFile } from 'obsidian';
 
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
@@ -11,12 +11,12 @@ import {
   noteExportPrompt,
 } from './bbt/exportNotes';
 import { LoadingModal } from './bbt/LoadingModal';
+import { CiteSuggest } from './citeSuggest/citeSuggest';
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { Emitter, createEmitter } from './emitter';
 import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
-import { CiteSuggest } from './citeSuggest/citeSuggest';
 
 const commandPrefix = 'obsidian-zotero-desktop-connector:';
 const citationCommandIDPrefix = 'zdc-';
@@ -29,7 +29,7 @@ const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   pdfExportImageQuality: 90,
   citeFormats: [],
   exportFormats: [],
-  citeSuggestTemplate: "[[{{citekey}}]]",
+  citeSuggestTemplate: '[[{{citekey}}]]',
 };
 
 interface ViewEvents {
@@ -60,30 +60,37 @@ export default class ZoteroConnector extends Plugin {
     });
 
     // When an import is completed, proceed to open the crated or updated notes if the setting is enabled
-    this.importEventsRef = this.importEvents.on("import-complete", (createdOrUpdatedMarkdownFilesPaths) => {
-      if(this.settings.openNoteAfterImport) {
-        let pathOfNotesToOpen: string[] = [];
+    this.importEventsRef = this.importEvents.on(
+      'import-complete',
+      (createdOrUpdatedMarkdownFilesPaths) => {
+        if (this.settings.openNoteAfterImport) {
+          let pathOfNotesToOpen: string[] = [];
 
-        // Depending on the choice, retreive the paths of the first, the last or all imported notes
-        switch(this.settings.whichNotesToOpenAfterImport) {
-          case 'first-imported-note': {
-            pathOfNotesToOpen.push(createdOrUpdatedMarkdownFilesPaths[0]);
-            break;
+          // Depending on the choice, retreive the paths of the first, the last or all imported notes
+          switch (this.settings.whichNotesToOpenAfterImport) {
+            case 'first-imported-note': {
+              pathOfNotesToOpen.push(createdOrUpdatedMarkdownFilesPaths[0]);
+              break;
+            }
+            case 'last-imported-note': {
+              pathOfNotesToOpen.push(
+                createdOrUpdatedMarkdownFilesPaths[
+                  createdOrUpdatedMarkdownFilesPaths.length - 1
+                ]
+              );
+              break;
+            }
+            case 'all-imported-notes': {
+              pathOfNotesToOpen.push(...createdOrUpdatedMarkdownFilesPaths);
+              break;
+            }
           }
-          case 'last-imported-note': {
-            pathOfNotesToOpen.push(createdOrUpdatedMarkdownFilesPaths[createdOrUpdatedMarkdownFilesPaths.length - 1]);
-            break;
-          }
-          case 'all-imported-notes': {
-            pathOfNotesToOpen.push(...createdOrUpdatedMarkdownFilesPaths);
-            break;
-          }
+          // Force a 1s delay after importing the files to make sure that notes are created before attempting to open them.
+          // A better solution could surely be found to refresh the vault, but I am not sure how to proceed!
+          setTimeout(() => this.openNotes(pathOfNotesToOpen), 1000);
         }
-        // Force a 1s delay after importing the files to make sure that notes are created before attempting to open them.
-        // A better solution could surely be found to refresh the vault, but I am not sure how to proceed! 
-        setTimeout(() => this.openNotes(pathOfNotesToOpen), 1000);
       }
-    });
+    );
 
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
@@ -176,12 +183,14 @@ export default class ZoteroConnector extends Plugin {
       id: `${exportCommandIDPrefix}${format.name}`,
       name: format.name,
       callback: () => {
-        exportToMarkdown({
-          settings: this.settings,
-          database: this.settings.database,
-          exportFormat: format},
-          this.importEvents,
-        );      
+        exportToMarkdown(
+          {
+            settings: this.settings,
+            database: this.settings.database,
+            exportFormat: format,
+          },
+          this.importEvents
+        );
       },
     });
   }
@@ -193,13 +202,12 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async openNotes(pathOfNotesToOpen: Array<string>) {
-      for(var path of pathOfNotesToOpen) {
+    for (var path of pathOfNotesToOpen) {
+      let note = this.app.vault.getAbstractFileByPath(path);
 
-        let note = this.app.vault.getAbstractFileByPath(path);
-
-        if(note instanceof TFile) {
-          await this.app.workspace.getLeaf(true).openFile(note);
-        }
+      if (note instanceof TFile) {
+        await this.app.workspace.getLeaf(true).openFile(note);
+      }
     }
   }
 

@@ -36,10 +36,7 @@ const paramMap: Record<keyof ExtractParams, string> = {
 };
 
 export async function extractAnnotations(input: string, params: ExtractParams) {
-  const modal = new LoadingModal(
-    app,
-    'Extracting annotations...'
-  );
+  const modal = new LoadingModal(app, 'Extracting annotations...');
   modal.open();
 
   const args = [input];
@@ -89,12 +86,8 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
         10000
       );
       return '[]';
-    }
-    
-    else if (e.message.toLowerCase().includes('type3')) {
-      new Notice(
-        `Error processing annotations: ${e.message}`, 10000
-      );
+    } else if (e.message.toLowerCase().includes('type3')) {
+      new Notice(`Error processing annotations: ${e.message}`, 10000);
       return '[]';
     }
 

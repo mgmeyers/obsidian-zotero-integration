@@ -1,5 +1,7 @@
 import { request } from 'obsidian';
+
 import { Database } from 'src/types';
+
 import { defaultHeaders, getPort } from './helpers';
 
 const translatorId = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';

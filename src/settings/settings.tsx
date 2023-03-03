@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, debounce } from 'obsidian';
+import { App, Platform, PluginSettingTab, debounce } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -41,7 +41,9 @@ function SettingsComponent({
     settings.exportFormats
   );
 
-  const [openNoteAfterImportState, setOpenNoteAfterImport] = React.useState(!!settings.openNoteAfterImport);
+  const [openNoteAfterImportState, setOpenNoteAfterImport] = React.useState(
+    !!settings.openNoteAfterImport
+  );
 
   const [ocrState, setOCRState] = React.useState(settings.pdfExportImageOCR);
   const [citeSuggestState, setCiteSuggestState] = React.useState(
@@ -109,10 +111,7 @@ function SettingsComponent({
   return (
     <div>
       <SettingItem name="General Settings" isHeading />
-      <AssetDownloader
-        exeVersion={settings.exeVersion}
-        updateSetting={updateSetting}
-      />
+      <AssetDownloader settings={settings} updateSetting={updateSetting} />
       <SettingItem name="Database" description="Supports Zotero and Juris-M">
         <select
           className="dropdown"
@@ -146,17 +145,22 @@ function SettingsComponent({
               return !state;
             });
           }}
-          className={`checkbox-container${openNoteAfterImportState ? ' is-enabled' : ''}`}
+          className={`checkbox-container${
+            openNoteAfterImportState ? ' is-enabled' : ''
+          }`}
         />
       </SettingItem>
-      <SettingItem 
-        name="Which notes to open after import" 
-        description="Open either the first note imported, the last note imported, or all notes in new tabs.">
+      <SettingItem
+        name="Which notes to open after import"
+        description="Open either the first note imported, the last note imported, or all notes in new tabs."
+      >
         <select
           className="dropdown"
           defaultValue={settings.whichNotesToOpenAfterImport}
           disabled={!settings.openNoteAfterImport}
-          onChange={(e) => updateSetting('whichNotesToOpenAfterImport', e.target.value)}
+          onChange={(e) =>
+            updateSetting('whichNotesToOpenAfterImport', e.target.value)
+          }
         >
           <option value="first-imported-note">First imported note</option>
           <option value="last-imported-note">Last imported note</option>
@@ -181,7 +185,9 @@ function SettingsComponent({
       </SettingItem>
       <SettingItem
         name="Cite Key Autocomplete Insertion Template"
-        description="Template used to insert a cite key on autocompletion. Use Alt+↵ to insert the key using this template."
+        description={`Use ${
+          Platform.isMacOS ? '⌥ + ↵' : 'Alt + ↵'
+        } when the autocomplete dialog is displayed to insert the citation key using this template.`}
       >
         <input
           onChange={(e) => updateSetting('citeSuggestTemplate', e.target.value)}

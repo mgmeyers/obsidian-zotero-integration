@@ -89,7 +89,7 @@ function TemplatePreview({
         setForceRef(Date.now());
       }
     };
-    
+
     const onSettingsUpdate = () => {
       setForceRef(Date.now());
     };
