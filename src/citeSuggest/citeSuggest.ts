@@ -152,8 +152,6 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       replaceStr = `[@${suggestion.item}]`
     } else if (event.altKey) {
       const template = this.plugin.settings.citeSuggestTemplate
-      console.log("Template")
-      console.log(template)
       replaceStr = nunjucks.renderString(template, {'citekey': suggestion.item})
     } else {
       replaceStr = `@${suggestion.item}`
