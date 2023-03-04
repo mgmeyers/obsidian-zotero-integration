@@ -173,7 +173,7 @@ export async function getBibFromCiteKeys(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.bibliography',
-        params: [citeKeys.map((k) => k.key), params],
+        params: [citeKeys.map((k) => k.key), params, citeKeys[0].library],
       }),
       headers: defaultHeaders,
     });
