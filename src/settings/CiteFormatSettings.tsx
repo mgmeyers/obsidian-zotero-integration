@@ -158,9 +158,10 @@ export function CiteFormatSettings({
             />
           </div>
           <div className="zt-format__input-note">
-            Templates have access to data from the Zotero item. The item's first
-            attachement is available under the <pre>attachment</pre> key. Open
-            the data explorer from the command pallet to see available template
+            Citation templates have access to a subset of the Zotero item's
+            data. The item's first attachement is available under the{' '}
+            <pre>attachment</pre> key. Annotations are not provided. Open the
+            data explorer from the command pallet to see available template
             data. Templates are written using{' '}
             <a
               href="https://mozilla.github.io/nunjucks/templating.html#variables"
