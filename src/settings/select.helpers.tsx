@@ -38,7 +38,7 @@ export function loadCSLOptions(
     callback([]);
   } else {
     clearTimeout(loadCSLOptionsDB);
-    loadCSLOptionsDB = window.setTimeout(() => {
+    loadCSLOptionsDB = activeWindow.setTimeout(() => {
       callback([
         { value: inputValue, label: inputValue },
         ...searchCSL(inputValue),
@@ -75,7 +75,7 @@ export const buildLoadFileOptions =
       callback([]);
     } else {
       clearTimeout(fileSearchDB);
-      fileSearchDB = window.setTimeout(() => {
+      fileSearchDB = activeWindow.setTimeout(() => {
         callback(
           search.search(inputValue).map((res) => {
             return {

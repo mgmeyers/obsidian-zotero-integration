@@ -477,7 +477,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 
   debouncedSave() {
     clearTimeout(this.dbTimer);
-    this.dbTimer = window.setTimeout(() => {
+    this.dbTimer = activeWindow.setTimeout(() => {
       this.plugin.saveSettings();
     }, 150);
   }

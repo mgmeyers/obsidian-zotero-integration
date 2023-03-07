@@ -1,7 +1,7 @@
 import './styles.css';
 import './bbt/template.helpers';
 
-import { EventRef, Events, Plugin, TFile } from 'obsidian';
+import { Plugin, TFile } from 'obsidian';
 
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
@@ -30,6 +30,8 @@ const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   citeFormats: [],
   exportFormats: [],
   citeSuggestTemplate: '[[{{citekey}}]]',
+  openNoteAfterImport: false,
+  whichNotesToOpenAfterImport: 'first-imported-note',
 };
 
 interface ViewEvents {
@@ -40,8 +42,6 @@ interface ViewEvents {
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
   emitter: Emitter<ViewEvents>;
-  private importEvents = new Events();
-  private importEventsRef: EventRef;
 
   async onload() {
     await this.loadSettings();
@@ -58,39 +58,6 @@ export default class ZoteroConnector extends Plugin {
     this.settings.exportFormats.forEach((f) => {
       this.addExportCommand(f);
     });
-
-    // When an import is completed, proceed to open the crated or updated notes if the setting is enabled
-    this.importEventsRef = this.importEvents.on(
-      'import-complete',
-      (createdOrUpdatedMarkdownFilesPaths) => {
-        if (this.settings.openNoteAfterImport) {
-          let pathOfNotesToOpen: string[] = [];
-
-          // Depending on the choice, retreive the paths of the first, the last or all imported notes
-          switch (this.settings.whichNotesToOpenAfterImport) {
-            case 'first-imported-note': {
-              pathOfNotesToOpen.push(createdOrUpdatedMarkdownFilesPaths[0]);
-              break;
-            }
-            case 'last-imported-note': {
-              pathOfNotesToOpen.push(
-                createdOrUpdatedMarkdownFilesPaths[
-                  createdOrUpdatedMarkdownFilesPaths.length - 1
-                ]
-              );
-              break;
-            }
-            case 'all-imported-notes': {
-              pathOfNotesToOpen.push(...createdOrUpdatedMarkdownFilesPaths);
-              break;
-            }
-          }
-          // Force a 1s delay after importing the files to make sure that notes are created before attempting to open them.
-          // A better solution could surely be found to refresh the vault, but I am not sure how to proceed!
-          setTimeout(() => this.openNotes(pathOfNotesToOpen), 1000);
-        }
-      }
-    );
 
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
@@ -116,11 +83,14 @@ export default class ZoteroConnector extends Plugin {
       id: 'zdc-import-notes',
       name: 'Import notes',
       callback: () => {
-        noteExportPrompt(this.settings.database).then((notes) => {
-          if (notes) {
-            filesFromNotes(this.settings.noteImportFolder, notes);
-          }
-        });
+        noteExportPrompt(this.settings.database)
+          .then((notes) => {
+            if (notes) {
+              return filesFromNotes(this.settings.noteImportFolder, notes);
+            }
+            return [] as string[];
+          })
+          .then((notes) => this.openNotes(notes));
       },
     });
 
@@ -182,14 +152,13 @@ export default class ZoteroConnector extends Plugin {
     this.addCommand({
       id: `${exportCommandIDPrefix}${format.name}`,
       name: format.name,
-      callback: () => {
-        exportToMarkdown(
-          {
+      callback: async () => {
+        this.openNotes(
+          await exportToMarkdown({
             settings: this.settings,
             database: this.settings.database,
             exportFormat: format,
-          },
-          this.importEvents
+          })
         );
       },
     });
@@ -201,9 +170,36 @@ export default class ZoteroConnector extends Plugin {
     );
   }
 
-  async openNotes(pathOfNotesToOpen: Array<string>) {
-    for (var path of pathOfNotesToOpen) {
-      let note = this.app.vault.getAbstractFileByPath(path);
+  async openNotes(createdOrUpdatedMarkdownFilesPaths: string[]) {
+    const pathOfNotesToOpen: string[] = [];
+    if (this.settings.openNoteAfterImport) {
+      // Depending on the choice, retreive the paths of the first, the last or all imported notes
+      switch (this.settings.whichNotesToOpenAfterImport) {
+        case 'first-imported-note': {
+          pathOfNotesToOpen.push(createdOrUpdatedMarkdownFilesPaths[0]);
+          break;
+        }
+        case 'last-imported-note': {
+          pathOfNotesToOpen.push(
+            createdOrUpdatedMarkdownFilesPaths[
+              createdOrUpdatedMarkdownFilesPaths.length - 1
+            ]
+          );
+          break;
+        }
+        case 'all-imported-notes': {
+          pathOfNotesToOpen.push(...createdOrUpdatedMarkdownFilesPaths);
+          break;
+        }
+      }
+    }
+
+    // Force a 1s delay after importing the files to make sure that notes are created before attempting to open them.
+    // A better solution could surely be found to refresh the vault, but I am not sure how to proceed!
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    for (const path of pathOfNotesToOpen) {
+      const note = this.app.vault.getAbstractFileByPath(path);
 
       if (note instanceof TFile) {
         await this.app.workspace.getLeaf(true).openFile(note);
@@ -245,6 +241,7 @@ export default class ZoteroConnector extends Plugin {
 
   async updatePDFUtility() {
     if (
+      !this.settings.exeOverridePath &&
       this.settings.exeVersion &&
       this.settings.exeVersion !== currentVersion
     ) {

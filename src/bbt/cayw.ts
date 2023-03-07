@@ -1,6 +1,6 @@
 import { Notice, request } from 'obsidian';
 
-import { bringAppToFront } from '../helpers';
+import { getCurrentWindow } from '../helpers';
 import { CitationFormat, Database } from '../types';
 import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
@@ -61,6 +61,7 @@ function getQueryParams(format: CitationFormat) {
 }
 
 export async function getCAYW(format: CitationFormat, database: Database) {
+  const win = getCurrentWindow();
   if (!(await isZoteroRunning(database))) {
     return null;
   }
@@ -83,11 +84,11 @@ export async function getCAYW(format: CitationFormat, database: Database) {
       headers: defaultHeaders,
     });
 
-    bringAppToFront();
+    win.show();
     modal.close();
     return res;
   } catch (e) {
-    bringAppToFront();
+    win.show();
     console.error(e);
     modal.close();
     new Notice(`Error processing citation: ${e.message}`, 10000);
@@ -123,6 +124,7 @@ export async function getCiteKeys(database: Database): Promise<CiteKey[]> {
 }
 
 export async function getCAYWJSON(database: Database) {
+  const win = getCurrentWindow();
   if (!(await isZoteroRunning(database))) {
     return null;
   }
@@ -139,7 +141,7 @@ export async function getCAYWJSON(database: Database) {
       headers: defaultHeaders,
     });
 
-    bringAppToFront();
+    win.show();
 
     modal.close();
     if (res) {
@@ -148,7 +150,7 @@ export async function getCAYWJSON(database: Database) {
       return null;
     }
   } catch (e) {
-    bringAppToFront();
+    win.show();
     console.error(e);
     modal.close();
     new Notice(`Error retrieving cite key: ${e.message}`, 10000);

@@ -5,8 +5,8 @@ import path from 'path';
 import { execa } from 'execa';
 import { FileSystemAdapter, Notice } from 'obsidian';
 
-export function bringAppToFront() {
-  require('electron').remote.getCurrentWindow().show();
+export function getCurrentWindow() {
+  return require('electron').remote.BrowserWindow.getFocusedWindow();
 }
 
 export function padNumber(n: number): string {

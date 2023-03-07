@@ -1,4 +1,4 @@
-import { Editor, Notice, htmlToMarkdown } from 'obsidian';
+import { Editor, Notice, TFile, htmlToMarkdown } from 'obsidian';
 
 import { Database } from '../types';
 import { getCiteKeys } from './cayw';
@@ -111,12 +111,17 @@ export async function filesFromNotes(
   notes: Record<string, string>
 ) {
   const keys = Object.keys(notes);
+  const files: TFile[] = [];
 
   for (let i = 0, len = keys.length; i < len; i++) {
-    if (!(await newFile(folder, keys[i], notes[keys[i]]))) {
+    const file = await newFile(folder, keys[i], notes[keys[i]]);
+    if (!file) {
       break;
     }
+    files.push(file);
   }
+
+  return files.map((f) => f.path);
 }
 
 export async function newFile(

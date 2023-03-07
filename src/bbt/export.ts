@@ -1,14 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
-import {
-  Events,
-  Notice,
-  TFile,
-  htmlToMarkdown,
-  moment,
-  normalizePath,
-} from 'obsidian';
+import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -91,6 +84,7 @@ function convertNativeAnnotation(
   attachment: any,
   imageOutputPath: string,
   imageRelativePath: string,
+  imageBaseName: string,
   copy: boolean = false
 ) {
   const rect = annotation.annotationPosition.rects[0];
@@ -120,7 +114,9 @@ function convertNativeAnnotation(
   if (annotation.annotationImagePath) {
     const parsed = path.parse(annotation.annotationImagePath);
 
-    annot.imageBaseName = `${annotation.key}${parsed.ext}`;
+    annot.imageBaseName = `${imageBaseName}-${annot.page}-x${Math.round(
+      annot.x
+    )}-y${Math.round(annot.y)}${parsed.ext}`;
     annot.imageRelativePath = normalizePath(
       path.join(imageRelativePath, annot.imageBaseName)
     );
@@ -133,7 +129,10 @@ function convertNativeAnnotation(
         mkdirSync(imageOutputPath, { recursive: true });
       }
 
-      copyFileSync(path.join(parsed.dir, annot.imageBaseName), imagePath);
+      copyFileSync(
+        path.join(parsed.dir, `${annotation.key}${parsed.ext}`),
+        imagePath
+      );
     }
 
     annot.imagePath = imagePath;
@@ -470,24 +469,22 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
 }
 
 export async function exportToMarkdown(
-  params: ExportToMarkdownParams,
-  importEvents?: Events
-) {
+  params: ExportToMarkdownParams
+): Promise<string[]> {
   const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
   const canExtract = doesEXEExist();
 
   const citeKeys = await getCiteKeys(database);
-
-  if (!citeKeys.length) return false;
+  if (!citeKeys.length) return [];
 
   const libraryID = citeKeys[0].library;
   let itemData: any;
   try {
     itemData = await getItemJSONFromCiteKeys(citeKeys, database, libraryID);
   } catch (e) {
-    return false;
+    return [];
   }
 
   // Variable to store the paths of the markdown files that will be created on import.
@@ -562,7 +559,7 @@ export async function exportToMarkdown(
         ''
       );
 
-      if (!rendered) return false;
+      if (!rendered) return [];
 
       if (existingMarkdown) {
         app.vault.modify(existingMarkdownFile as TFile, rendered);
@@ -678,6 +675,7 @@ export async function exportToMarkdown(
               attachments[j],
               imageOutputPath,
               imageRelativePath,
+              imageBaseName,
               true
             )
           );
@@ -714,7 +712,7 @@ export async function exportToMarkdown(
 
           annots.push(...extracted);
         } catch (e) {
-          return false;
+          return [];
         }
       }
 
@@ -741,7 +739,7 @@ export async function exportToMarkdown(
         existingAnnotations
       );
 
-      if (!rendered) return false;
+      if (!rendered) return [];
 
       if (existingMarkdownFile) {
         app.vault.modify(existingMarkdownFile as TFile, rendered);
@@ -754,13 +752,7 @@ export async function exportToMarkdown(
     }
   }
 
-  // If importEvents has been provided, fire an event to state that the import is complete
-  // and send the created or updated markdown files in order of input as an array of paths
-  if (importEvents instanceof Events) {
-    importEvents.trigger('import-complete', createdOrUpdatedMarkdownFiles);
-  }
-
-  return true;
+  return createdOrUpdatedMarkdownFiles;
 }
 
 export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
@@ -883,6 +875,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
               annot,
               attachments[j],
               path.join(vaultRoot, 'output_path'),
+              'base_name',
               'output_path'
             )
           );
