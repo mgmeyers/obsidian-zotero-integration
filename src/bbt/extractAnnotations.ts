@@ -54,7 +54,11 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
       }
     } else {
       args.push(key);
-      args.push(val.toString());
+      if (val.toString().contains(" ") || (val.toString().startsWith("-") && typeof val === 'string')) {
+        args.push(`\"${val.toString()}\"`);
+      } else {
+        args.push(val.toString());
+      }
     }
   });
 
