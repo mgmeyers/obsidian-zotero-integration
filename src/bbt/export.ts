@@ -11,7 +11,7 @@ import {
   ZoteroConnectorSettings,
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
-import { getCiteKeyFromAny, getCiteKeys } from './cayw';
+import { CiteKey, getCiteKeyFromAny, getCiteKeys } from './cayw';
 import { processZoteroAnnotationNotes } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
 import { getColorCategory, mkMDDir, sanitizeFilePath } from './helpers';
@@ -33,9 +33,11 @@ import {
   wrapAnnotationTemplate,
 } from './template.helpers';
 
-function processNote(note: any) {
+async function processNote(citeKey: CiteKey, note: any) {
   if (note.note) {
-    note.note = htmlToMarkdown(processZoteroAnnotationNotes(note.note));
+    note.note = htmlToMarkdown(
+      await processZoteroAnnotationNotes(citeKey.key, note.note, {})
+    );
   }
   if (note.dateAdded) {
     note.dateAdded = moment(note.dateAdded);
@@ -57,7 +59,10 @@ function processAttachment(attachment: any) {
 
   if (attachment.uri) {
     attachment.itemKey = attachment.uri.split('/').pop();
-    attachment.desktopURI = `zotero://select/library/items/${attachment.itemKey}`;
+    attachment.desktopURI = attachment.uri.replace(
+      'http://zotero.org',
+      'zotero://select'
+    );
   }
 }
 
@@ -213,7 +218,7 @@ async function processItem(
   item.importDate = importDate;
   // legacy
   item.exportDate = importDate;
-  item.desktopURI = `zotero://select/library/items/${item.itemKey}`;
+  item.desktopURI = item.uri?.replace('http://zotero.org', 'zotero://select');
 
   if (item.accessDate) {
     item.accessDate = moment(item.accessDate);
@@ -255,8 +260,17 @@ async function processItem(
     }
   }
 
-  item.notes?.forEach(processNote);
-  item.attachments?.forEach(processAttachment);
+  if (item.notes) {
+    for (const note of item.notes) {
+      await processNote(citekey, note);
+    }
+  }
+
+  if (item.attachments) {
+    for (const attachment of item.attachments) {
+      processAttachment(attachment);
+    }
+  }
 
   if (!skipRelations) {
     item.relations = await getRelations(item, importDate, database, cslStyle);

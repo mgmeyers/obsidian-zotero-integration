@@ -41,7 +41,7 @@ const annotationsTemplate = `
 
 {% for annotation in annots -%}
 	{%- if annotation.annotatedText -%}
-    > “{{annotation.annotatedText}}”{% if annotation.color %} {{annotation.colorCategory}} {{annotation.type | capitalize}} {% else %} {{annotation.type | capitalize}} {% endif %}[Page {{annotation.page}}](zotero://open-pdf/library/items/{{annotation.attachment.itemKey}}?page={{annotation.page}})
+    > “{{annotation.annotatedText}}”{% if annotation.color %} {{annotation.colorCategory}} {{annotation.type | capitalize}} {% else %} {{annotation.type | capitalize}} {% endif %}[Page {{annotation.page}}]({{annotation.attachment.uri.replace("http://zotero.org", "zotero://open-pdf")}}?page={{annotation.page}})
     {%- endif %}
 	{%- if annotation.imageRelativePath -%}
 	> ![[{{annotation.imageRelativePath}}]]

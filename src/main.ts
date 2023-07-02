@@ -1,7 +1,7 @@
 import './styles.css';
 import './bbt/template.helpers';
 
-import { Plugin, TFile } from 'obsidian';
+import { EditableFileView, Events, Plugin, TFile } from 'obsidian';
 
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
@@ -13,7 +13,6 @@ import {
 import { LoadingModal } from './bbt/LoadingModal';
 import { CiteSuggest } from './citeSuggest/citeSuggest';
 import { DataExplorerView, viewType } from './DataExplorerView';
-import { Emitter, createEmitter } from './emitter';
 import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
@@ -34,18 +33,13 @@ const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   whichNotesToOpenAfterImport: 'first-imported-note',
 };
 
-interface ViewEvents {
-  settingsUpdated: () => void;
-  fileUpdated: (file: TFile) => void;
-}
-
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
-  emitter: Emitter<ViewEvents>;
+  emitter: Events;
 
   async onload() {
     await this.loadSettings();
-    this.emitter = createEmitter();
+    this.emitter = new Events();
 
     this.updatePDFUtility();
     this.addSettingTab(new ZoteroConnectorSettingsTab(this.app, this));
@@ -61,8 +55,8 @@ export default class ZoteroConnector extends Plugin {
 
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
-        if (file instanceof TFile && this.emitter.events.fileUpdated?.length) {
-          this.emitter.emit('fileUpdated', file);
+        if (file instanceof TFile) {
+          this.emitter.trigger('fileUpdated', file);
         }
       })
     );
@@ -71,7 +65,10 @@ export default class ZoteroConnector extends Plugin {
       id: 'zdc-insert-notes',
       name: 'Insert notes into current document',
       editorCallback: (editor) => {
-        noteExportPrompt(this.settings.database).then((notes) => {
+        noteExportPrompt(
+          this.settings.database,
+          this.app.workspace.getActiveFile()?.parent.path
+        ).then((notes) => {
           if (notes) {
             insertNotesIntoCurrentDoc(editor, notes);
           }
@@ -83,7 +80,7 @@ export default class ZoteroConnector extends Plugin {
       id: 'zdc-import-notes',
       name: 'Import notes',
       callback: () => {
-        noteExportPrompt(this.settings.database)
+        noteExportPrompt(this.settings.database, this.settings.noteImportFolder)
           .then((notes) => {
             if (notes) {
               return filesFromNotes(this.settings.noteImportFolder, notes);
@@ -198,10 +195,15 @@ export default class ZoteroConnector extends Plugin {
     // A better solution could surely be found to refresh the vault, but I am not sure how to proceed!
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    const leaves = this.app.workspace.getLeavesOfType('markdown');
     for (const path of pathOfNotesToOpen) {
       const note = this.app.vault.getAbstractFileByPath(path);
-
-      if (note instanceof TFile) {
+      const open = leaves.find(
+        (leaf) => (leaf.view as EditableFileView).file === note
+      );
+      if (open) {
+        app.workspace.revealLeaf(open);
+      } else if (note instanceof TFile) {
         await this.app.workspace.getLeaf(true).openFile(note);
       }
     }
@@ -217,9 +219,7 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async saveSettings() {
-    if (this.emitter?.events.settingsUpdated?.length) {
-      this.emitter.emit('settingsUpdated', undefined);
-    }
+    this.emitter.trigger('settingsUpdated');
     await this.saveData(this.settings);
   }
 

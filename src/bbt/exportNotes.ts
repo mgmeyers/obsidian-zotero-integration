@@ -1,39 +1,84 @@
-import { Editor, Notice, TFile, htmlToMarkdown } from 'obsidian';
+import { copyFileSync } from 'fs';
+import path from 'path';
+
+import {
+  Editor,
+  Notice,
+  TAbstractFile,
+  TFile,
+  TFolder,
+  htmlToMarkdown,
+  normalizePath,
+} from 'obsidian';
+
+import { getVaultRoot } from 'src/helpers';
 
 import { Database } from '../types';
 import { getCiteKeys } from './cayw';
-import { getNotesFromCiteKeys } from './jsonRPC';
+import { mkMDDir, sanitizeFilePath } from './helpers';
+import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from './jsonRPC';
+import { removeStartingSlash } from './template.helpers';
 
-export function processZoteroAnnotationNotes(noteStr: string) {
+export async function processZoteroAnnotationNotes(
+  key: string,
+  noteStr: string,
+  attachments: Record<string, any>,
+  destination?: string
+) {
   const parsed = new DOMParser().parseFromString(noteStr, 'text/html');
   const annots = parsed.querySelectorAll('[data-annotation]');
   const cites = parsed.querySelectorAll('[data-citation]');
 
-  annots.forEach((annot) => {
+  for (const annot of Array.from(annots)) {
     try {
       const params = (annot as HTMLElement).dataset.annotation;
       const json = params ? JSON.parse(decodeURIComponent(params)) : null;
 
       if (!json) return;
 
-      const attachmentKey = json.attachmentURI.split('/').pop();
+      const annotationKey = json.annotationKey;
 
       const isImage = annot instanceof HTMLImageElement;
+
+      if (isImage) {
+        const imagePath = attachments[annotationKey];
+
+        if (imagePath) {
+          const parsed = path.parse(imagePath);
+          const destPath = await getAvailablePathForAttachments(
+            parsed.name,
+            parsed.ext.slice(1),
+            destination
+          );
+
+          copyFileSync(
+            path.join(parsed.dir, `${annotationKey}${parsed.ext}`),
+            path.join(getVaultRoot(), destPath)
+          );
+
+          annot.src = destPath;
+        }
+      }
+
       annot.insertAdjacentElement(
-        isImage ? 'afterend' : 'afterbegin',
+        isImage ? 'afterend' : 'beforebegin',
         createEl('a', {
           text: 'Go to annotation',
-          href: `zotero://open-pdf/library/items/${attachmentKey}?page=${json.pageLabel}&annotation=${json.annotationKey}`,
+          href: `${json.attachmentURI.replace(
+            'http://zotero.org',
+            'zotero://open-pdf'
+          )}?page=${json.pageLabel}&annotation=${json.annotationKey}`,
         })
       );
-      annot.insertAdjacentElement(
-        isImage ? 'afterend' : 'afterbegin',
-        createSpan({ text: ' ' })
-      );
+      if (isImage) {
+        annot.insertAdjacentElement('afterend', createEl('br'));
+      } else {
+        annot.insertAdjacentElement('beforebegin', createSpan({ text: ' ' }));
+      }
     } catch (e) {
       console.error(e);
     }
-  });
+  }
 
   cites.forEach((cite) => {
     try {
@@ -47,7 +92,6 @@ export function processZoteroAnnotationNotes(noteStr: string) {
       )
         return;
 
-      const itemKey = json.citationItems[0].uris[0].split('/').pop();
       const citeSpan = cite.querySelector('span');
 
       if (!citeSpan) return;
@@ -57,7 +101,10 @@ export function processZoteroAnnotationNotes(noteStr: string) {
       citeSpan.empty();
       citeSpan.createEl('a', {
         text,
-        href: `zotero://select/library/items/${itemKey}`,
+        href: json.citationItems[0].uris[0].replace(
+          'http://zotero.org',
+          'zotero://select'
+        ),
       });
     } catch (e) {
       console.error(e);
@@ -67,7 +114,10 @@ export function processZoteroAnnotationNotes(noteStr: string) {
   return parsed.body.innerHTML;
 }
 
-export async function noteExportPrompt(database: Database) {
+export async function noteExportPrompt(
+  database: Database,
+  destination?: string
+) {
   const citeKeys = await getCiteKeys(database);
 
   if (!citeKeys.length) return;
@@ -86,17 +136,84 @@ export async function noteExportPrompt(database: Database) {
     return;
   }
 
+  const attachments: Record<string, any> = {};
+
+  for (const key of citeKeys) {
+    const attachment = await getAttachmentsFromCiteKey(key, database);
+
+    if (attachment) {
+      const images: Record<string, string> = {};
+
+      attachment.forEach((a: any) => {
+        a.annotations.forEach((annot: any) => {
+          if (annot.annotationType === 'image') {
+            images[annot.key] = annot.annotationImagePath;
+          }
+        });
+      });
+
+      attachments[key.key] = images;
+    }
+  }
+
   const notesMarkdown: Record<string, string> = {};
 
-  keys.forEach((key) => {
-    notesMarkdown[key] = notes[key]
-      .map((n: string) => {
-        return htmlToMarkdown(processZoteroAnnotationNotes(n));
-      })
-      .join('\n\n');
-  });
+  for (const key of keys) {
+    const processed: string[] = [];
+
+    for (const note of notes[key]) {
+      processed.push(
+        htmlToMarkdown(
+          await processZoteroAnnotationNotes(
+            key,
+            note,
+            attachments[key],
+            destination
+          )
+        )
+      );
+    }
+
+    notesMarkdown[key] = processed.join('\n\n');
+  }
 
   return notesMarkdown;
+}
+
+async function getAvailablePathForAttachments(
+  base: string,
+  extension: string,
+  destination: string
+): Promise<string> {
+  let folderPath = (app.vault as any).getConfig('attachmentFolderPath');
+  const sameFolder = folderPath === '.' || folderPath === './';
+  let subfolder = null;
+  if (folderPath.startsWith('./')) {
+    subfolder = folderPath.slice(2);
+  }
+
+  if (sameFolder) {
+    folderPath = destination ? destination : '';
+  } else if (subfolder) {
+    folderPath = path.join(destination ? destination : '', subfolder);
+  }
+
+  folderPath = normalizePath(folderPath);
+
+  let folder: TAbstractFile = (
+    app.vault as any
+  ).getAbstractFileByPathInsensitive(folderPath);
+
+  if (!folder && subfolder) {
+    await (app.vault as any).createFolder(folderPath);
+    folder = (app.vault as any).getAbstractFileByPathInsensitive(folderPath);
+  }
+
+  if (!(folder instanceof TFolder)) {
+    return `${base}.${extension}`;
+  }
+
+  return `${(folder as any).getParentPrefix() + base}.${extension}`;
 }
 
 export function insertNotesIntoCurrentDoc(
@@ -113,8 +230,8 @@ export async function filesFromNotes(
   const keys = Object.keys(notes);
   const files: TFile[] = [];
 
-  for (let i = 0, len = keys.length; i < len; i++) {
-    const file = await newFile(folder, keys[i], notes[keys[i]]);
+  for (const key of keys) {
+    const file = await newFile(folder, key, notes[key]);
     if (!file) {
       break;
     }
@@ -129,25 +246,24 @@ export async function newFile(
   citeKey: string,
   content: string
 ) {
-  const target = folder.replace(/(?:^\/|\/$)/g, '');
+  const path = normalizePath(
+    sanitizeFilePath(removeStartingSlash(`${folder}/${citeKey}.md`))
+  );
 
-  if (!(await app.vault.adapter.exists(target))) {
-    try {
-      await app.vault.createFolder(target);
-    } catch (e) {
-      console.error(e);
-      new Notice(`Error creating folder "${target}": ${e.message}`, 10000);
-    }
-  }
+  let file = app.vault.getAbstractFileByPath(path) as TFile;
 
   try {
-    return await app.vault.create(`${target}/${citeKey}.md`, content);
+    if (file) {
+      await app.vault.modify(file, content);
+    } else {
+      await mkMDDir(path);
+      file = await app.vault.create(path, content);
+    }
   } catch (e) {
     console.error(e);
-    new Notice(
-      `Error creating file "${target}${citeKey}.md": ${e.message}`,
-      10000
-    );
+    new Notice(`Error creating file "${path}": ${e.message}`, 10000);
     return null;
   }
+
+  return file;
 }
