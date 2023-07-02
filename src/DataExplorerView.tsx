@@ -1,4 +1,10 @@
-import { ItemView, TFile, WorkspaceLeaf, moment } from 'obsidian';
+import {
+  ItemView,
+  TFile,
+  WorkspaceLeaf,
+  moment,
+  normalizePath,
+} from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { JSONTree } from 'react-json-tree';
@@ -124,8 +130,8 @@ function TemplatePreview({
           templateData
         );
 
-        const markdownPath = sanitizeFilePath(
-          removeStartingSlash(renderedPath)
+        const markdownPath = normalizePath(
+          sanitizeFilePath(removeStartingSlash(renderedPath))
         );
 
         const existingMarkdownFile =
