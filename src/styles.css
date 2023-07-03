@@ -166,3 +166,55 @@
 .zt-asset-success__message {
   font-size: 0.9em;
 }
+
+.zt-suggest-title {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-top: var(--size-4-1);
+}
+
+.zt-suggest-loading-wrapper {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  padding: var(--size-4-2) 0;
+}
+
+.zt-suggest-loading, .zt-suggest-loading:before, .zt-suggest-loading:after {
+  border-radius: 999px;
+  width: 1em;
+  height: 1em;
+  animation-fill-mode: both;
+  animation: bblFadInOut 1.6s infinite ease-in-out;
+}
+
+.zt-suggest-loading {
+  display: block;
+  color: var(--text-muted);
+  font-size: 7px;
+  position: relative;
+  animation-delay: -0.16s;
+  top: -1em;
+}
+.zt-suggest-loading:before,
+.zt-suggest-loading:after {
+  content: '';
+  position: absolute;
+}
+.zt-suggest-loading:before {
+  left: -2em;
+  animation-delay: -0.32s;
+}
+.zt-suggest-loading:after {
+  left: 2em;
+}
+
+@keyframes bblFadInOut {
+  0%, 80%, 100% { box-shadow: 0 1em 0 -1.3em }
+  40% { box-shadow: 0 1em 0 0 }
+}

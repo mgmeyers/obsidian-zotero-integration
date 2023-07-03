@@ -9,17 +9,15 @@ import {
   EditorSuggestTriggerInfo,
   MarkdownView,
   Platform,
+  debounce,
 } from 'obsidian';
-import { isZoteroRunning } from 'src/bbt/cayw';
-import { getAllCiteKeys } from 'src/bbt/getCiteKeyExport';
+import { execSearch } from 'src/bbt/jsonRPC';
 import ZoteroConnector from 'src/main';
 
-export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
+export class CiteSuggest extends EditorSuggest<Record<string, any>> {
   private plugin: ZoteroConnector;
   private app: App;
-  private fuse: Fuse<string>;
-  private lastCheck: number = 0;
-  private citeKeys: string[] = [];
+  private fuse: Fuse<Record<string, any>>;
 
   limit: number = 20;
 
@@ -50,97 +48,101 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       },
     ]);
 
-    this.fuse = new Fuse([] as string[], {
+    this.fuse = new Fuse([] as Record<string, any>[], {
       includeMatches: true,
-      threshold: 0.4,
+      threshold: 0.35,
+      keys: [
+        { name: 'citekey', weight: 0.7 },
+        { name: 'title', weight: 0.3 },
+      ],
     });
-
-    this.getCiteKeys();
   }
 
-  getCiteKeys() {
-    // Check at most once every 30 seconds
-    if (Date.now() - this.lastCheck < 30 * 1000) {
-      return;
-    }
+  handleSearch = debounce(async () => {
+    if (this.context === null) return;
 
-    const database = {
+    const context = this.context;
+    const searchResults = await execSearch(context.query, {
       database: this.plugin.settings.database,
       port: this.plugin.settings.port,
-    };
-    isZoteroRunning(database, true)
-      .then((isRunning) => {
-        if (isRunning) {
-          getAllCiteKeys(database)
-            .then((keys) => {
-              this.lastCheck = Date.now();
-              if (
-                keys.length != this.citeKeys.length ||
-                keys.some((value, index) => value !== this.citeKeys[index])
-              ) {
-                this.citeKeys = keys;
-                this.fuse.setCollection(keys);
-              }
-            })
-            .catch((e) => {
-              console.error(e);
-            });
-        }
-      })
-      .catch((e) => {
-        console.error(e);
-      });
-  }
+    });
+
+    if (context !== this.context) return;
+
+    this.fuse.setCollection(searchResults);
+    const results = this.fuse.search(context.query, { limit: this.limit });
+
+    (this as any).showSuggestions(results);
+  }, 200);
 
   getSuggestions(context: EditorSuggestContext) {
     if (!context.query || context.query.includes(' ')) {
       return null;
     }
 
-    const results = this.fuse.search(context.query, { limit: this.limit });
+    this.handleSearch();
 
-    if (results && results.length) {
-      return results;
-    }
-
-    return null;
+    return [{ loading: true }];
   }
 
-  renderSuggestion(suggestion: Fuse.FuseResult<string>, el: HTMLElement): void {
-    const item = suggestion.item;
-
-    if (!suggestion.matches || !suggestion.matches.length) {
-      return el.setText(item);
-    }
-
+  renderSuggestion(
+    suggestion: Fuse.FuseResult<Record<string, any>> | { loading: boolean },
+    el: HTMLElement
+  ): void {
     const frag = createFragment();
 
-    frag.appendText('@');
+    if ((suggestion as { loading: boolean }).loading) {
+      frag.createSpan({cls: 'zt-suggest-loading-wrapper' }).createSpan({ cls: 'zt-suggest-loading' });
+      el.setText(frag);
+      return;
+    }
 
-    let prevIndex = 0;
+    const sugg = suggestion as Fuse.FuseResult<Record<string, any>>;
+    const item = sugg.item;
 
-    suggestion.matches.forEach((m) => {
+    if (!sugg.matches || !sugg.matches.length) {
+      frag.createSpan({ text: `@${item.citekey}` });
+      frag.createSpan({ text: item.title, cls: 'zt-suggest-title' });
+      return el.setText(frag);
+    }
+
+    const citekey = frag.createSpan({ text: '@' });
+    const title = frag.createSpan('zt-suggest-title');
+
+    let prevTitleIndex = 0;
+    let prevCiteIndex = 0;
+
+    sugg.matches.forEach((m) => {
       m.indices.forEach((indices) => {
         const start = indices[0];
         const stop = indices[1] + 1;
 
-        frag.appendText(item.substring(prevIndex, start));
-        frag.append(
+        const target = m.key === 'title' ? title : citekey;
+        const prev = m.key === 'title' ? prevTitleIndex : prevCiteIndex;
+
+        target.appendText(m.value.substring(prev, start));
+        target.append(
           createEl('strong', {
-            text: item.substring(start, stop),
+            text: m.value.substring(start, stop),
           })
         );
-        prevIndex = stop;
+
+        if (m.key === 'title') {
+          prevTitleIndex = stop;
+        } else {
+          prevCiteIndex = stop;
+        }
       });
     });
 
-    frag.appendText(item.substring(prevIndex));
+    title.appendText(item.title.substring(prevTitleIndex));
+    citekey.appendText(item.citekey.substring(prevCiteIndex));
 
     el.setText(frag);
   }
 
   selectSuggestion(
-    suggestion: Fuse.FuseResult<string>,
+    suggestion: Fuse.FuseResult<Record<string, any>>,
     event: KeyboardEvent | MouseEvent
   ): void {
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -150,14 +152,14 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
 
     let replaceStr = '';
     if (event.metaKey || event.ctrlKey) {
-      replaceStr = `[@${suggestion.item}]`;
+      replaceStr = `[@${suggestion.item.citekey}]`;
     } else if (event.altKey) {
       const template = this.plugin.settings.citeSuggestTemplate;
       replaceStr = nunjucks.renderString(template, {
-        citekey: suggestion.item,
+        citekey: suggestion.item.citekey,
       });
     } else {
-      replaceStr = `@${suggestion.item}`;
+      replaceStr = `@${suggestion.item.citekey}`;
     }
 
     activeView.editor.replaceRange(
@@ -207,8 +209,6 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
     if (precedingChar && !/[ .[;-]/.test(precedingChar)) {
       return null;
     }
-
-    this.getCiteKeys();
 
     const query = editor
       .getRange(startPos, cursor)
