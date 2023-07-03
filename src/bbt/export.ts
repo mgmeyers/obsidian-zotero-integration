@@ -4,7 +4,7 @@ import path from 'path';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
-  Database,
+  DatabaseWithPort,
   ExportToMarkdownParams,
   RenderCiteTemplateParams,
   ZoteroConnectorSettings,
@@ -199,7 +199,7 @@ function concatAnnotations(annots: Array<Record<string, any>>) {
 async function getRelations(
   item: any,
   importDate: moment.Moment,
-  database: Database,
+  database: DatabaseWithPort,
   cslStyle?: string
 ) {
   if (!item.relations?.length) return [];
@@ -224,7 +224,7 @@ async function getRelations(
 async function processItem(
   item: any,
   importDate: moment.Moment,
-  database: Database,
+  database: DatabaseWithPort,
   cslStyle?: string,
   skipRelations?: boolean
 ) {
@@ -837,7 +837,8 @@ function getAStyle(settings: ZoteroConnectorSettings) {
 }
 
 export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
-  const citeKeys = await getCiteKeys(settings.database);
+  const database = { database: settings.database, port: settings.port };
+  const citeKeys = await getCiteKeys(database);
   const canExtract = doesEXEExist();
 
   if (!citeKeys.length) return null;
@@ -845,11 +846,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   const libraryID = citeKeys[0].library;
   let itemData: any;
   try {
-    itemData = await getItemJSONFromCiteKeys(
-      citeKeys,
-      settings.database,
-      libraryID
-    );
+    itemData = await getItemJSONFromCiteKeys(citeKeys, database, libraryID);
   } catch (e) {
     return null;
   }
@@ -858,7 +855,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   const style = getAStyle(settings);
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], importDate, settings.database, style);
+    await processItem(itemData[i], importDate, database, style);
   }
 
   const vaultRoot = getVaultRoot();
@@ -873,7 +870,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       if (citekey) {
         const fullAttachmentData = await getAttachmentsFromCiteKey(
           citekey,
-          settings.database
+          database
         );
 
         mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<

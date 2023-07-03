@@ -116,7 +116,10 @@ function TemplatePreview({
 
     const params: ExportToMarkdownParams = {
       settings: plugin.settings,
-      database: plugin.settings.database,
+      database: {
+        database: plugin.settings.database,
+        port: plugin.settings.port,
+      },
       exportFormat: plugin.settings.exportFormats[formatIndex],
     };
 
@@ -212,8 +215,10 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
           <select
             className="dropdown"
             onChange={(e) => {
-              if (e.target.value) {
-                setPreviewFormatIndex(Number(e.target.value));
+              if ((e.target as HTMLSelectElement).value) {
+                setPreviewFormatIndex(
+                  Number((e.target as HTMLSelectElement).value)
+                );
               } else {
                 setPreviewFormatIndex(null);
               }

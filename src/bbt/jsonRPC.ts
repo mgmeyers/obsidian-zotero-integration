@@ -1,14 +1,14 @@
 import { Notice, htmlToMarkdown, moment, request } from 'obsidian';
 
 import { padNumber } from '../helpers';
-import { Database } from '../types';
+import { DatabaseWithPort } from '../types';
 import { LoadingModal } from './LoadingModal';
 import { CiteKey, getCiteKeyFromAny } from './cayw';
 import { defaultHeaders, getPort } from './helpers';
 
 export async function getNotesFromCiteKeys(
   citeKeys: CiteKey[],
-  database: Database
+  database: DatabaseWithPort
 ) {
   let res: string;
 
@@ -18,7 +18,10 @@ export async function getNotesFromCiteKeys(
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.notes',
@@ -46,7 +49,7 @@ export async function getNotesFromCiteKeys(
 
 export async function getCollectionFromCiteKey(
   citeKey: CiteKey,
-  database: Database
+  database: DatabaseWithPort
 ) {
   let res: string;
 
@@ -56,7 +59,10 @@ export async function getCollectionFromCiteKey(
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.collections',
@@ -101,7 +107,7 @@ export async function getCollectionFromCiteKey(
 
 export async function getAttachmentsFromCiteKey(
   citeKey: CiteKey,
-  database: Database
+  database: DatabaseWithPort
 ) {
   let res: string;
 
@@ -111,7 +117,10 @@ export async function getAttachmentsFromCiteKey(
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.attachments',
@@ -139,7 +148,7 @@ export async function getAttachmentsFromCiteKey(
 
 export function getBibFromCiteKey(
   citeKey: CiteKey,
-  database: Database,
+  database: DatabaseWithPort,
   cslStyle?: string
 ) {
   return getBibFromCiteKeys([citeKey], database, cslStyle);
@@ -147,7 +156,7 @@ export function getBibFromCiteKey(
 
 export async function getBibFromCiteKeys(
   citeKeys: CiteKey[],
-  database: Database,
+  database: DatabaseWithPort,
   cslStyle?: string
 ) {
   if (!citeKeys || !citeKeys.length) return null;
@@ -169,7 +178,10 @@ export async function getBibFromCiteKeys(
 
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.bibliography',
@@ -209,7 +221,7 @@ export async function getBibFromCiteKeys(
 
 export async function getItemJSONFromCiteKeys(
   citeKeys: CiteKey[],
-  database: Database,
+  database: DatabaseWithPort,
   libraryID: number
 ) {
   let res: string;
@@ -220,7 +232,10 @@ export async function getItemJSONFromCiteKeys(
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.export',
@@ -258,7 +273,7 @@ export async function getItemJSONFromCiteKeys(
 export async function getItemJSONFromRelations(
   libraryID: number,
   relations: string[],
-  database: Database
+  database: DatabaseWithPort
 ) {
   let res: string;
 
@@ -271,7 +286,10 @@ export async function getItemJSONFromRelations(
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.citationkey',
@@ -337,7 +355,7 @@ export async function getItemJSONFromRelations(
 
 export async function getIssueDateFromCiteKey(
   citeKey: CiteKey,
-  database: Database
+  database: DatabaseWithPort
 ) {
   let res: string;
 
@@ -347,7 +365,10 @@ export async function getIssueDateFromCiteKey(
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.export',
@@ -403,13 +424,16 @@ export async function getIssueDateFromCiteKey(
   }
 }
 
-export async function execSearch(term: string, database: Database) {
+export async function execSearch(term: string, database: DatabaseWithPort) {
   let res: string;
 
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.search',

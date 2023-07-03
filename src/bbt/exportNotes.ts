@@ -10,8 +10,8 @@ import {
 } from 'obsidian';
 import path from 'path';
 import { getVaultRoot } from 'src/helpers';
+import { DatabaseWithPort } from 'src/types';
 
-import { Database } from '../types';
 import { getCiteKeys } from './cayw';
 import { getLocalURI, mkMDDir, sanitizeFilePath } from './helpers';
 import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from './jsonRPC';
@@ -110,7 +110,7 @@ export async function processZoteroAnnotationNotes(
 }
 
 export async function noteExportPrompt(
-  database: Database,
+  database: DatabaseWithPort,
   destination?: string
 ) {
   const citeKeys = await getCiteKeys(database);

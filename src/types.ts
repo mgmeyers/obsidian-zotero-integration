@@ -15,7 +15,11 @@ export interface CitationFormat {
   template?: string;
 }
 
-export type Database = 'Zotero' | 'Juris-M';
+export type Database = 'Zotero' | 'Juris-M' | 'Custom';
+export type DatabaseWithPort = {
+  database: Database;
+  port?: string;
+};
 
 export type NotesToOpenAfterImport =
   | 'first-imported-note'
@@ -57,12 +61,12 @@ export interface ExportFormat {
 
 export interface ExportToMarkdownParams {
   settings: ZoteroConnectorSettings;
-  database: Database;
+  database: DatabaseWithPort;
   exportFormat: ExportFormat;
 }
 
 export interface RenderCiteTemplateParams {
-  database: Database;
+  database: DatabaseWithPort;
   format: CitationFormat;
 }
 
@@ -70,6 +74,7 @@ export interface ZoteroConnectorSettings {
   citeFormats: CitationFormat[];
   citeSuggestTemplate?: string;
   database: Database;
+  port?: string;
   exeVersion?: string;
   exeOverridePath?: string;
   exportFormats: ExportFormat[];

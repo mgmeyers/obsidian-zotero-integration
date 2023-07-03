@@ -1,11 +1,11 @@
 import { request } from 'obsidian';
-import { Database } from 'src/types';
+import { DatabaseWithPort } from 'src/types';
 
 import { defaultHeaders, getPort } from './helpers';
 
 const translatorId = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
 export async function getCiteKeyExport(
-  database: Database,
+  database: DatabaseWithPort,
   groupId: string,
   groupName: string
 ) {
@@ -13,7 +13,8 @@ export async function getCiteKeyExport(
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
-        database
+        database.database,
+        database.port
       )}/better-bibtex/export/library?/${groupId}/${groupName}.${translatorId}`,
       headers: defaultHeaders,
     });
@@ -28,12 +29,15 @@ export async function getCiteKeyExport(
   }
 }
 
-export async function getUserGroups(database: Database) {
+export async function getUserGroups(database: DatabaseWithPort) {
   let res: string;
   try {
     res = await request({
       method: 'POST',
-      url: `http://127.0.0.1:${getPort(database)}/better-bibtex/json-rpc`,
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'user.groups',
@@ -54,7 +58,7 @@ export async function getUserGroups(database: Database) {
   }
 }
 
-export async function getAllCiteKeys(database: Database) {
+export async function getAllCiteKeys(database: DatabaseWithPort) {
   const allKeys: string[] = [];
   const userGroups = await getUserGroups(database);
 

@@ -1,7 +1,7 @@
 import { Notice, request } from 'obsidian';
 
 import { getCurrentWindow } from '../helpers';
-import { CitationFormat, Database } from '../types';
+import { CitationFormat, DatabaseWithPort } from '../types';
 import { LoadingModal } from './LoadingModal';
 import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
@@ -15,7 +15,10 @@ export function getCiteKeyFromAny(item: any): CiteKey | null {
   };
 }
 
-export async function isZoteroRunning(database: Database, silent?: boolean) {
+export async function isZoteroRunning(
+  database: DatabaseWithPort,
+  silent?: boolean
+) {
   let modal: LoadingModal;
   if (!silent) {
     modal = new LoadingModal(app, 'Fetching data from Zotero...');
@@ -25,7 +28,8 @@ export async function isZoteroRunning(database: Database, silent?: boolean) {
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
-        database
+        database.database,
+        database.port
       )}/better-bibtex/cayw?probe=true`,
       headers: defaultHeaders,
     });
@@ -60,7 +64,10 @@ function getQueryParams(format: CitationFormat) {
   }
 }
 
-export async function getCAYW(format: CitationFormat, database: Database) {
+export async function getCAYW(
+  format: CitationFormat,
+  database: DatabaseWithPort
+) {
   const win = getCurrentWindow();
   if (!(await isZoteroRunning(database))) {
     return null;
@@ -79,7 +86,8 @@ export async function getCAYW(format: CitationFormat, database: Database) {
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
-        database
+        database.database,
+        database.port
       )}/better-bibtex/cayw?${getQueryParams(format)}`,
       headers: defaultHeaders,
     });
@@ -101,7 +109,9 @@ export interface CiteKey {
   library: number;
 }
 
-export async function getCiteKeys(database: Database): Promise<CiteKey[]> {
+export async function getCiteKeys(
+  database: DatabaseWithPort
+): Promise<CiteKey[]> {
   try {
     const json = await getCAYWJSON(database);
 
@@ -123,7 +133,7 @@ export async function getCiteKeys(database: Database): Promise<CiteKey[]> {
   }
 }
 
-export async function getCAYWJSON(database: Database) {
+export async function getCAYWJSON(database: DatabaseWithPort) {
   const win = getCurrentWindow();
   if (!(await isZoteroRunning(database))) {
     return null;
@@ -136,7 +146,8 @@ export async function getCAYWJSON(database: Database) {
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
-        database
+        database.database,
+        database.port
       )}/better-bibtex/cayw?format=translate&translator=36a3b0b5-bad0-4a04-b79b-441c7cef77db&exportNotes=false`,
       headers: defaultHeaders,
     });

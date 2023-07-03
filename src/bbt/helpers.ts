@@ -8,8 +8,11 @@ export const defaultHeaders = {
   Connection: 'keep-alive',
 };
 
-export function getPort(database: Database) {
-  return database === 'Zotero' ? '23119' : '24119';
+export function getPort(database: Database, port?: string) {
+  if (database === 'Zotero') return '23119';
+  if (database === 'Juris-M') return '24119';
+  if (!port) return '23119';
+  return port;
 }
 
 export async function mkMDDir(mdPath: string) {

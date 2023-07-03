@@ -64,7 +64,10 @@ export class CiteSuggest extends EditorSuggest<Fuse.FuseResult<string>> {
       return;
     }
 
-    const database = this.plugin.settings.database;
+    const database = {
+      database: this.plugin.settings.database,
+      port: this.plugin.settings.port,
+    };
     isZoteroRunning(database, true)
       .then((isRunning) => {
         if (isRunning) {

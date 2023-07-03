@@ -113,22 +113,51 @@ function SettingsComponent({
   const tessPathRef = React.useRef<HTMLInputElement>(null);
   const tessDataPathRef = React.useRef<HTMLInputElement>(null);
 
+  const [useCustomPort, setUseCustomPort] = React.useState(
+    settings.database === 'Custom'
+  );
+
   return (
     <div>
       <SettingItem name="General Settings" isHeading />
       <AssetDownloader settings={settings} updateSetting={updateSetting} />
-      <SettingItem name="Database" description="Supports Zotero and Juris-M">
+      <SettingItem
+        name="Database"
+        description="Supports Zotero and Juris-M. Alternatively a custom port number can be specified."
+      >
         <select
           className="dropdown"
           defaultValue={settings.database}
-          onChange={(e) =>
-            updateSetting('database', (e.target as HTMLSelectElement).value)
-          }
+          onChange={(e) => {
+            const value = (e.target as HTMLSelectElement).value;
+            updateSetting('database', value);
+            if (value === 'Custom') {
+              setUseCustomPort(true);
+            } else {
+              setUseCustomPort(false);
+            }
+          }}
         >
           <option value="Zotero">Zotero</option>
           <option value="Juris-M">Juris-M</option>
+          <option value="Custom">Custom</option>
         </select>
       </SettingItem>
+      {useCustomPort ? (
+        <SettingItem
+          name="Port number"
+          description="If a custom port number has been set in Zotero, enter it here."
+        >
+          <input
+            onChange={(e) =>
+              updateSetting('port', (e.target as HTMLInputElement).value)
+            }
+            type="number"
+            placeholder="Example: 23119"
+            defaultValue={settings.port}
+          />
+        </SettingItem>
+      ) : null}
       <SettingItem
         name="Note Import Location"
         description="Notes imported from Zotero will be added to this folder in your vault"

@@ -86,8 +86,12 @@ export default class ZoteroConnector extends Plugin {
       id: 'zdc-insert-notes',
       name: 'Insert notes into current document',
       editorCallback: (editor) => {
+        const database = {
+          database: this.settings.database,
+          port: this.settings.port,
+        };
         noteExportPrompt(
-          this.settings.database,
+          database,
           this.app.workspace.getActiveFile()?.parent.path
         ).then((notes) => {
           if (notes) {
@@ -101,7 +105,11 @@ export default class ZoteroConnector extends Plugin {
       id: 'zdc-import-notes',
       name: 'Import notes',
       callback: () => {
-        noteExportPrompt(this.settings.database, this.settings.noteImportFolder)
+        const database = {
+          database: this.settings.database,
+          port: this.settings.port,
+        };
+        noteExportPrompt(database, this.settings.noteImportFolder)
           .then((notes) => {
             if (notes) {
               return filesFromNotes(this.settings.noteImportFolder, notes);
@@ -142,9 +150,13 @@ export default class ZoteroConnector extends Plugin {
       id: `${citationCommandIDPrefix}${format.name}`,
       name: format.name,
       editorCallback: (editor) => {
+        const database = {
+          database: this.settings.database,
+          port: this.settings.port,
+        };
         if (format.format === 'template' && format.template.trim()) {
           renderCiteTemplate({
-            database: this.settings.database,
+            database,
             format,
           }).then((res) => {
             if (typeof res === 'string') {
@@ -152,7 +164,7 @@ export default class ZoteroConnector extends Plugin {
             }
           });
         } else {
-          getCAYW(format, this.settings.database).then((res) => {
+          getCAYW(format, database).then((res) => {
             if (typeof res === 'string') {
               editor.replaceSelection(res);
             }
@@ -173,10 +185,14 @@ export default class ZoteroConnector extends Plugin {
       id: `${exportCommandIDPrefix}${format.name}`,
       name: format.name,
       callback: async () => {
+        const database = {
+          database: this.settings.database,
+          port: this.settings.port,
+        };
         this.openNotes(
           await exportToMarkdown({
             settings: this.settings,
-            database: this.settings.database,
+            database,
             exportFormat: format,
           })
         );
