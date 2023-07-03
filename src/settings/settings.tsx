@@ -116,7 +116,9 @@ function SettingsComponent({
         <select
           className="dropdown"
           defaultValue={settings.database}
-          onChange={(e) => updateSetting('database', e.target.value)}
+          onChange={(e) =>
+            updateSetting('database', (e.target as HTMLSelectElement).value)
+          }
         >
           <option value="Zotero">Zotero</option>
           <option value="Juris-M">Juris-M</option>
@@ -127,9 +129,14 @@ function SettingsComponent({
         description="Notes imported from Zotero will be added to this folder in your vault"
       >
         <input
-          onChange={(e) => updateSetting('noteImportFolder', e.target.value)}
+          onChange={(e) =>
+            updateSetting(
+              'noteImportFolder',
+              (e.target as HTMLInputElement).value
+            )
+          }
           type="text"
-          spellCheck="false"
+          spellCheck={false}
           placeholder="Example: folder 1/folder 2"
           defaultValue={settings.noteImportFolder}
         />
@@ -159,7 +166,10 @@ function SettingsComponent({
           defaultValue={settings.whichNotesToOpenAfterImport}
           disabled={!settings.openNoteAfterImport}
           onChange={(e) =>
-            updateSetting('whichNotesToOpenAfterImport', e.target.value)
+            updateSetting(
+              'whichNotesToOpenAfterImport',
+              (e.target as HTMLSelectElement).value
+            )
           }
         >
           <option value="first-imported-note">First imported note</option>
@@ -190,9 +200,14 @@ function SettingsComponent({
         } when the autocomplete dialog is displayed to insert the citation key using this template.`}
       >
         <input
-          onChange={(e) => updateSetting('citeSuggestTemplate', e.target.value)}
+          onChange={(e) =>
+            updateSetting(
+              'citeSuggestTemplate',
+              (e.target as HTMLInputElement).value
+            )
+          }
           type="text"
-          spellCheck="false"
+          spellCheck={false}
           placeholder="Example: [[{{citekey}}]]"
           defaultValue={settings.citeSuggestTemplate}
         />
@@ -257,7 +272,10 @@ function SettingsComponent({
           className="dropdown"
           defaultValue={settings.pdfExportImageFormat}
           onChange={(e) =>
-            updateSetting('pdfExportImageFormat', e.target.value)
+            updateSetting(
+              'pdfExportImageFormat',
+              (e.target as HTMLSelectElement).value
+            )
           }
         >
           <option value="jpg">jpg</option>
@@ -269,20 +287,26 @@ function SettingsComponent({
           min="0"
           max="100"
           onChange={(e) =>
-            updateSetting('pdfExportImageQuality', Number(e.target.value))
+            updateSetting(
+              'pdfExportImageQuality',
+              Number((e.target as HTMLInputElement).value)
+            )
           }
           type="number"
-          defaultValue={settings.pdfExportImageQuality}
+          defaultValue={settings.pdfExportImageQuality.toString()}
         />
       </SettingItem>
       <SettingItem name="Image DPI">
         <input
           min="0"
           onChange={(e) =>
-            updateSetting('pdfExportImageDPI', Number(e.target.value))
+            updateSetting(
+              'pdfExportImageDPI',
+              Number((e.target as HTMLInputElement).value)
+            )
           }
           type="number"
-          defaultValue={settings.pdfExportImageDPI}
+          defaultValue={settings.pdfExportImageDPI.toString()}
         />
       </SettingItem>
       <SettingItem
@@ -336,7 +360,10 @@ function SettingsComponent({
       >
         <input
           onChange={(e) =>
-            updateSetting('pdfExportImageTesseractPath', e.target.value)
+            updateSetting(
+              'pdfExportImageTesseractPath',
+              (e.target as HTMLInputElement).value
+            )
           }
           type="text"
           defaultValue={settings.pdfExportImageTesseractPath}
@@ -370,7 +397,10 @@ function SettingsComponent({
       >
         <input
           onChange={(e) =>
-            updateSetting('pdfExportImageOCRLang', e.target.value)
+            updateSetting(
+              'pdfExportImageOCRLang',
+              (e.target as HTMLInputElement).value
+            )
           }
           type="text"
           defaultValue={settings.pdfExportImageOCRLang}
@@ -382,7 +412,10 @@ function SettingsComponent({
       >
         <input
           onChange={(e) =>
-            updateSetting('pdfExportImageTessDataDir', e.target.value)
+            updateSetting(
+              'pdfExportImageTessDataDir',
+              (e.target as HTMLInputElement).value
+            )
           }
           type="text"
           defaultValue={settings.pdfExportImageTessDataDir}

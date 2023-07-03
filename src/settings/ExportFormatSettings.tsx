@@ -3,8 +3,8 @@ import { SingleValue } from 'react-select';
 import AsyncSelect from 'react-select/async';
 
 import { ExportFormat } from '../types';
-import { cslListRaw } from './cslList';
 import { Icon } from './Icon';
+import { cslListRaw } from './cslList';
 import {
   NoFileOptionMessage,
   NoOptionMessage,
@@ -53,10 +53,11 @@ export function ExportFormatSettings({
 
   const onChangeStr = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      const key = e.target.dataset.key as keyof ExportFormat;
+      const key = (e.target as HTMLInputElement).dataset
+        .key as keyof ExportFormat;
       updateFormat(index, {
         ...format,
-        [key]: e.target.value,
+        [key]: (e.target as HTMLInputElement).value,
       });
     },
     [updateFormat, index, format]

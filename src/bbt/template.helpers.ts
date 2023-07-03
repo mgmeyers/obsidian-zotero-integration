@@ -1,5 +1,4 @@
 import { Notice, TFile, moment } from 'obsidian';
-
 import { ExportToMarkdownParams } from 'src/types';
 
 export function loadTemplate(

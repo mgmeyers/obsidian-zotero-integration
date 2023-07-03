@@ -1,6 +1,4 @@
 import { copyFileSync } from 'fs';
-import path from 'path';
-
 import {
   Editor,
   Notice,
@@ -10,12 +8,12 @@ import {
   htmlToMarkdown,
   normalizePath,
 } from 'obsidian';
-
+import path from 'path';
 import { getVaultRoot } from 'src/helpers';
 
 import { Database } from '../types';
 import { getCiteKeys } from './cayw';
-import { mkMDDir, sanitizeFilePath } from './helpers';
+import { getLocalURI, mkMDDir, sanitizeFilePath } from './helpers';
 import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from './jsonRPC';
 import { removeStartingSlash } from './template.helpers';
 
@@ -64,10 +62,10 @@ export async function processZoteroAnnotationNotes(
         isImage ? 'afterend' : 'beforebegin',
         createEl('a', {
           text: 'Go to annotation',
-          href: `${json.attachmentURI.replace(
-            'http://zotero.org',
-            'zotero://open-pdf'
-          )}?page=${json.pageLabel}&annotation=${json.annotationKey}`,
+          href: getLocalURI('open-pdf', json.attachmentURI, {
+            page: json.pageLabel,
+            annotation: json.annotationKey,
+          }),
         })
       );
       if (isImage) {
@@ -101,10 +99,7 @@ export async function processZoteroAnnotationNotes(
       citeSpan.empty();
       citeSpan.createEl('a', {
         text,
-        href: json.citationItems[0].uris[0].replace(
-          'http://zotero.org',
-          'zotero://select'
-        ),
+        href: getLocalURI('select', json.citationItems[0].uris[0]),
       });
     } catch (e) {
       console.error(e);
@@ -145,7 +140,7 @@ export async function noteExportPrompt(
       const images: Record<string, string> = {};
 
       attachment.forEach((a: any) => {
-        a.annotations.forEach((annot: any) => {
+        a.annotations?.forEach((annot: any) => {
           if (annot.annotationType === 'image') {
             images[annot.key] = annot.annotationImagePath;
           }

@@ -1,5 +1,4 @@
 import path from 'path';
-
 import { Database } from 'src/types';
 
 export const defaultHeaders = {
@@ -122,4 +121,48 @@ export function getColorCategory(hex: string) {
     return 'Magenta';
   }
   return 'Red';
+}
+
+/**
+ * Open a PDF at a given page (or try to)
+ *
+ * zotero://open-pdf/library/items/[itemKey]?page=[page]
+ * zotero://open-pdf/groups/[groupID]/items/[itemKey]?page=[page]
+ *
+ * Also supports ZotFile format:
+ * zotero://open-pdf/[libraryID]_[key]/[page]
+ */
+
+/**
+ * Select an item
+ *
+ * zotero://select/library/items/[itemKey]
+ * zotero://select/groups/[groupID]/items/[itemKey]
+ *
+ * Deprecated:
+ *
+ * zotero://select/[type]/0_ABCD1234
+ * zotero://select/[type]/1234 (not consistent across synced machines)
+ */
+export function getLocalURI(
+  ext: 'select' | 'open-pdf',
+  uri: string,
+  params?: Record<string, string>
+) {
+  const itemId = uri.split('/').pop();
+  const prefix = `zotero://${ext}`;
+  let url = '';
+
+  if (/group/.test(uri)) {
+    url = uri.replace('http://zotero.org', prefix);
+  } else {
+    url = `${prefix}/library/items/${itemId}`;
+  }
+
+  if (params) {
+    const p = new URLSearchParams(params);
+    url += `?${p}`;
+  }
+
+  return url;
 }

@@ -1,9 +1,7 @@
-import os from 'os';
-
 import download from 'download';
 import { Notice, debounce } from 'obsidian';
+import os from 'os';
 import React from 'react';
-
 import {
   checkEXEVersion,
   doesEXEExist,
@@ -148,9 +146,9 @@ export function AssetDownloader(props: {
   const Override = (
     <SettingItem name="PDF Utility Path Override" description={overrideDesc}>
       <input
-        onChange={(e) => setOverride(e.target.value)}
+        onChange={(e) => setOverride((e.target as HTMLInputElement).value)}
         type="text"
-        spellCheck="false"
+        spellCheck={false}
         value={overridePath}
       />
       <div

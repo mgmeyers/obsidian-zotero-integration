@@ -10,7 +10,6 @@ import {
   MarkdownView,
   Platform,
 } from 'obsidian';
-
 import { isZoteroRunning } from 'src/bbt/cayw';
 import { getAllCiteKeys } from 'src/bbt/getCiteKeyExport';
 import ZoteroConnector from 'src/main';

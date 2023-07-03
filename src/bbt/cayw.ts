@@ -2,9 +2,9 @@ import { Notice, request } from 'obsidian';
 
 import { getCurrentWindow } from '../helpers';
 import { CitationFormat, Database } from '../types';
+import { LoadingModal } from './LoadingModal';
 import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
-import { LoadingModal } from './LoadingModal';
 
 export function getCiteKeyFromAny(item: any): CiteKey | null {
   if (!item.citekey && !item.citationKey) return null;

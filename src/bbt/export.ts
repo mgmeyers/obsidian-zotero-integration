@@ -1,7 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
-import path from 'path';
-
 import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
+import path from 'path';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -14,7 +13,12 @@ import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { CiteKey, getCiteKeyFromAny, getCiteKeys } from './cayw';
 import { processZoteroAnnotationNotes } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
-import { getColorCategory, mkMDDir, sanitizeFilePath } from './helpers';
+import {
+  getColorCategory,
+  getLocalURI,
+  mkMDDir,
+  sanitizeFilePath,
+} from './helpers';
 import {
   getAttachmentsFromCiteKey,
   getBibFromCiteKey,
@@ -59,10 +63,12 @@ function processAttachment(attachment: any) {
 
   if (attachment.uri) {
     attachment.itemKey = attachment.uri.split('/').pop();
-    attachment.desktopURI = attachment.uri.replace(
-      'http://zotero.org',
-      'zotero://select'
-    );
+    attachment.desktopURI =
+      attachment.select || getLocalURI('select', attachment.uri);
+
+    if (attachment.path?.endsWith('.pdf')) {
+      attachment.pdfURI = getLocalURI('open-pdf', attachment.uri);
+    }
   }
 }
 
@@ -82,6 +88,10 @@ function processAnnotation(
       path.join(imageRelativePath, annotation.imageBaseName)
     );
   }
+
+  annotation.desktopURI = getLocalURI('open-pdf', attachment.uri, {
+    page: annotation.pageLabel,
+  });
 }
 
 function convertNativeAnnotation(
@@ -105,6 +115,10 @@ function convertNativeAnnotation(
     y: rect[1],
     color: annotation.annotationColor,
     colorCategory: getColorCategory(annotation.annotationColor),
+    desktopURI: getLocalURI('open-pdf', attachment.uri, {
+      page: annotation.annotationPageLabel,
+      annotation: annotation.key,
+    }),
     source: 'zotero',
   };
 
@@ -218,7 +232,8 @@ async function processItem(
   item.importDate = importDate;
   // legacy
   item.exportDate = importDate;
-  item.desktopURI = item.uri?.replace('http://zotero.org', 'zotero://select');
+  item.desktopURI =
+    item.select || getLocalURI('select', item.uri, item.itemKey);
 
   if (item.accessDate) {
     item.accessDate = moment(item.accessDate);

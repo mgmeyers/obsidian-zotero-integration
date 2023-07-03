@@ -1,8 +1,9 @@
+import { ComponentChild } from 'preact';
 import React from 'react';
 
 interface ItemInfo {
   name?: string;
-  description?: string | React.ReactNode;
+  description?: string | ComponentChild;
   isHeading?: boolean;
 }
 

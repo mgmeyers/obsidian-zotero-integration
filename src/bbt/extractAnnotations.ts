@@ -1,8 +1,6 @@
-import path from 'path';
-
 import { execa } from 'execa';
 import { Notice } from 'obsidian';
-
+import path from 'path';
 import { getExeName, getExeRoot } from 'src/helpers';
 
 import { LoadingModal } from './LoadingModal';

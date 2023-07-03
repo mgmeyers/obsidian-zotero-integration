@@ -1,8 +1,7 @@
-import './styles.css';
-import './bbt/template.helpers';
-
 import { EditableFileView, Events, Plugin, TFile } from 'obsidian';
 
+import { DataExplorerView, viewType } from './DataExplorerView';
+import { LoadingModal } from './bbt/LoadingModal';
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
 import {
@@ -10,11 +9,11 @@ import {
   insertNotesIntoCurrentDoc,
   noteExportPrompt,
 } from './bbt/exportNotes';
-import { LoadingModal } from './bbt/LoadingModal';
+import './bbt/template.helpers';
 import { CiteSuggest } from './citeSuggest/citeSuggest';
-import { DataExplorerView, viewType } from './DataExplorerView';
 import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
+import './styles.css';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
 
 const commandPrefix = 'obsidian-zotero-desktop-connector:';

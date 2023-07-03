@@ -13,7 +13,11 @@
     "moduleResolution": "node",
     "noImplicitAny": true,
     "skipLibCheck": true,
-    "target": "es2018"
+    "target": "es2018",
+    "paths": {
+      "react": ["./node_modules/preact/compat/"],
+      "react-dom": ["./node_modules/preact/compat/"]
+    }
   },
   "include": ["./src/**/*.ts", "./src/**/*.tsx"]
 }

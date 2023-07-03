@@ -1,5 +1,4 @@
 import { request } from 'obsidian';
-
 import { Database } from 'src/types';
 
 import { defaultHeaders, getPort } from './helpers';

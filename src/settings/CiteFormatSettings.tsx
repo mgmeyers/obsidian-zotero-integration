@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { SingleValue } from 'react-select';
 import AsyncSelect from 'react-select/async';
 
 import { CitationFormat, Format } from '../types';
-import { cslListRaw } from './cslList';
 import { Icon } from './Icon';
+import { cslListRaw } from './cslList';
 import {
   NoOptionMessage,
   customSelectStyles,
@@ -35,25 +35,26 @@ export function CiteFormatSettings({
   }, [format.cslStyle]);
 
   const onChangeName = React.useCallback(
-    (e) => {
+    (e: ChangeEvent) => {
       updateFormat(index, {
         ...format,
-        name: e.target.value,
+        name: (e.target as HTMLInputElement).value,
       });
     },
     [updateFormat, index, format]
   );
 
   const onChangeFormat = React.useCallback(
-    (e) => {
+    (e: ChangeEvent) => {
+      const value = (e.target as HTMLSelectElement).value;
       const newFormat = {
         ...format,
-        format: e.target.value as Format,
+        format: value as Format,
       };
 
-      if (e.target.value === 'latex') {
+      if (value === 'latex') {
         newFormat.command = 'cite';
-      } else if (e.target.value === 'biblatex') {
+      } else if (value === 'biblatex') {
         newFormat.command = 'autocite';
       } else if (newFormat.command) {
         delete newFormat.command;
@@ -73,10 +74,10 @@ export function CiteFormatSettings({
   );
 
   const onChangeTemplate = React.useCallback(
-    (e) => {
+    (e: ChangeEvent) => {
       updateFormat(index, {
         ...format,
-        template: e.target.value,
+        template: (e.target as HTMLInputElement).value,
       });
     },
     [updateFormat, index, format]
@@ -93,10 +94,10 @@ export function CiteFormatSettings({
   );
 
   const onChangeCommand = React.useCallback(
-    (e) => {
+    (e: ChangeEvent) => {
       updateFormat(index, {
         ...format,
-        command: e.target.value,
+        command: (e.target as HTMLInputElement).value,
       });
     },
     [updateFormat, index, format]

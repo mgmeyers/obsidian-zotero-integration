@@ -1,9 +1,8 @@
+import { execa } from 'execa';
 import fs from 'fs';
+import { FileSystemAdapter, Notice } from 'obsidian';
 import os from 'os';
 import path from 'path';
-
-import { execa } from 'execa';
-import { FileSystemAdapter, Notice } from 'obsidian';
 
 export function getCurrentWindow() {
   return require('electron').remote.BrowserWindow.getFocusedWindow();

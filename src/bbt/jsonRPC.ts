@@ -2,9 +2,9 @@ import { Notice, htmlToMarkdown, moment, request } from 'obsidian';
 
 import { padNumber } from '../helpers';
 import { Database } from '../types';
+import { LoadingModal } from './LoadingModal';
 import { CiteKey, getCiteKeyFromAny } from './cayw';
 import { defaultHeaders, getPort } from './helpers';
-import { LoadingModal } from './LoadingModal';
 
 export async function getNotesFromCiteKeys(
   citeKeys: CiteKey[],
