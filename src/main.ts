@@ -1,4 +1,5 @@
 import { EditableFileView, Events, Plugin, TFile } from 'obsidian';
+import { shellPath } from 'shell-path';
 
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { LoadingModal } from './bbt/LoadingModal';
@@ -31,6 +32,27 @@ const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   openNoteAfterImport: false,
   whichNotesToOpenAfterImport: 'first-imported-note',
 };
+
+async function fixPath() {
+  if (process.platform === 'win32') {
+    return;
+  }
+
+  try {
+    const path = await shellPath();
+
+    process.env.PATH =
+      path ||
+      [
+        './node_modules/.bin',
+        '/.nodebrew/current/bin',
+        '/usr/local/bin',
+        process.env.PATH,
+      ].join(':');
+  } catch (e) {
+    console.error(e);
+  }
+}
 
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
@@ -99,6 +121,8 @@ export default class ZoteroConnector extends Plugin {
     });
 
     this.registerEditorSuggest(new CiteSuggest(this.app, this));
+
+    fixPath();
   }
 
   onunload() {

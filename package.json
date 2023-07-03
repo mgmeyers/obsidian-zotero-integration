@@ -25,6 +25,7 @@
     "@types/jest": "29.5.2",
     "@types/node": "20.3.3",
     "@types/nunjucks": "3.2.3",
+    "@types/which": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "5.61.0",
     "@typescript-eslint/parser": "5.61.0",
     "babel-jest": "29.5.0",
@@ -55,6 +56,8 @@
     "react": "npm:@preact/compat",
     "react-dom": "npm:@preact/compat",
     "react-json-tree": "0.18.0",
-    "react-select": "5.7.3"
+    "react-select": "5.7.3",
+    "shell-path": "^3.0.0",
+    "which": "^3.0.1"
   }
 }

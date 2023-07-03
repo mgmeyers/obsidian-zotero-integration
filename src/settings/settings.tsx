@@ -1,6 +1,7 @@
-import { App, Platform, PluginSettingTab, debounce } from 'obsidian';
+import { App, Notice, Platform, PluginSettingTab, debounce } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import which from 'which';
 
 import ZoteroConnector from '../main';
 import {
@@ -11,6 +12,7 @@ import {
 import { AssetDownloader } from './AssetDownloader';
 import { CiteFormatSettings } from './CiteFormatSettings';
 import { ExportFormatSettings } from './ExportFormatSettings';
+import { Icon } from './Icon';
 import { SettingItem } from './SettingItem';
 
 interface SettingsComponentProps {
@@ -107,6 +109,9 @@ function SettingsComponent({
     },
     [removeExportFormat]
   );
+
+  const tessPathRef = React.useRef<HTMLInputElement>(null);
+  const tessDataPathRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <div>
@@ -359,6 +364,7 @@ function SettingsComponent({
         }
       >
         <input
+          ref={tessPathRef}
           onChange={(e) =>
             updateSetting(
               'pdfExportImageTesseractPath',
@@ -368,6 +374,30 @@ function SettingsComponent({
           type="text"
           defaultValue={settings.pdfExportImageTesseractPath}
         />
+        <div
+          className="clickable-icon setting-editor-extra-setting-button"
+          aria-label="Attempt to find tesseract automatically"
+          onClick={async () => {
+            try {
+              const pathToTesseract = await which('tesseract');
+              if (pathToTesseract) {
+                tessPathRef.current.value = pathToTesseract;
+                updateSetting('pdfExportImageTesseractPath', pathToTesseract);
+              } else {
+                new Notice(
+                  'Unable to find tesseract on your system. If it is installed, please manually enter a path.'
+                );
+              }
+            } catch (e) {
+              new Notice(
+                'Unable to find tesseract on your system. If it is installed, please manually enter a path.'
+              );
+              console.error(e);
+            }
+          }}
+        >
+          <Icon name="magnifying-glass" />
+        </div>
       </SettingItem>
       <SettingItem
         name="Image OCR Language"
@@ -408,9 +438,10 @@ function SettingsComponent({
       </SettingItem>
       <SettingItem
         name="Tesseract data directory"
-        description="Optional: supply an absolute path to the directory where tesseract's language files reside."
+        description="Optional: supply an absolute path to the directory where tesseract's language files reside. This folder should include *.traineddata files for your selected languages."
       >
         <input
+          ref={tessDataPathRef}
           onChange={(e) =>
             updateSetting(
               'pdfExportImageTessDataDir',
@@ -420,6 +451,22 @@ function SettingsComponent({
           type="text"
           defaultValue={settings.pdfExportImageTessDataDir}
         />
+        <div
+          className="clickable-icon setting-editor-extra-setting-button"
+          aria-label="Select the tesseract data directory"
+          onClick={() => {
+            const path = require('electron').remote.dialog.showOpenDialogSync({
+              properties: ['openDirectory'],
+            });
+
+            if (path && path.length) {
+              tessDataPathRef.current.value = path[0];
+              updateSetting('pdfExportImageTessDataDir', path[0]);
+            }
+          }}
+        >
+          <Icon name="lucide-folder-open" />
+        </div>
       </SettingItem>
     </div>
   );
