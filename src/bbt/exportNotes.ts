@@ -49,10 +49,18 @@ export async function processZoteroAnnotationNotes(
             destination
           );
 
-          copyFileSync(
-            path.join(parsed.dir, `${annotationKey}${parsed.ext}`),
-            path.join(getVaultRoot(), destPath)
-          );
+          try {
+            copyFileSync(
+              path.join(parsed.dir, `${annotationKey}${parsed.ext}`),
+              path.join(getVaultRoot(), destPath)
+            );
+          } catch (e) {
+            new Notice(
+              'Error: unable to copy annotation image from Zotero into your vault',
+              7000
+            );
+            console.error(e);
+          }
 
           annot.src = destPath;
         }

@@ -148,10 +148,18 @@ function convertNativeAnnotation(
         mkdirSync(imageOutputPath, { recursive: true });
       }
 
-      copyFileSync(
-        path.join(parsed.dir, `${annotation.key}${parsed.ext}`),
-        imagePath
-      );
+      try {
+        copyFileSync(
+          path.join(parsed.dir, `${annotation.key}${parsed.ext}`),
+          imagePath
+        );
+      } catch (e) {
+        new Notice(
+          'Error: unable to copy annotation image from Zotero into your vault',
+          7000
+        );
+        console.error(e);
+      }
     }
 
     annot.imagePath = imagePath;
