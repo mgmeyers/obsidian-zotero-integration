@@ -98,7 +98,7 @@ export class CiteSuggest extends EditorSuggest<
       !(await isZoteroRunning({
         database: this.plugin.settings.database,
         port: this.plugin.settings.port,
-      }))
+      }, true))
     ) {
       return null;
     }
