@@ -10,7 +10,6 @@ import {
   insertNotesIntoCurrentDoc,
   noteExportPrompt,
 } from './bbt/exportNotes';
-import { getAllCiteKeys } from './bbt/getCiteKeyExport';
 import './bbt/template.helpers';
 import { CiteSuggest } from './citeSuggest/citeSuggest';
 import {
@@ -27,6 +26,7 @@ import { TooltipManager } from './pandocReference/tooltip';
 import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
+import { getAllCiteKeys } from './bbt/jsonRPC';
 
 const commandPrefix = 'obsidian-zotero-desktop-connector:';
 const citationCommandIDPrefix = 'zdc-';
@@ -95,14 +95,6 @@ export default class ZoteroConnector extends Plugin {
       this.addExportCommand(f);
     });
 
-    this.registerEvent(
-      this.app.vault.on('modify', (file) => {
-        if (file instanceof TFile) {
-          this.emitter.trigger('fileUpdated', file);
-        }
-      })
-    );
-
     this.addCommand({
       id: 'zdc-insert-notes',
       name: 'Insert notes into current document',
@@ -145,7 +137,40 @@ export default class ZoteroConnector extends Plugin {
       id: 'show-zotero-debug-view',
       name: 'Data explorer',
       callback: () => {
-        this.activateView();
+        this.activateDataExplorer();
+      },
+    });
+
+    this.addCommand({
+      id: 'show-reference-list-view',
+      name: 'Show pandoc references',
+      checkCallback: (checking: boolean) => {
+        if (checking) {
+          return this.view === null;
+        }
+        this.activateReferenceList();
+      },
+    });
+
+    this.registerEvent(
+      this.app.vault.on('modify', (file) => {
+        if (file instanceof TFile) {
+          this.emitter.trigger('fileUpdated', file);
+        }
+      })
+    );
+
+    this.addCommand({
+      id: 'update-cite-keys',
+      name: 'Refresh cite key list',
+      callback: async () => {
+        const modal = new LoadingModal(app, 'Fetching data from Zotero...');
+        modal.open();
+        await getAllCiteKeys(
+          { database: this.settings.database, port: this.settings.port },
+          true
+        );
+        modal.close();
       },
     });
 
@@ -164,32 +189,7 @@ export default class ZoteroConnector extends Plugin {
       !!this.settings.shouldShowCitekeyTooltips
     );
 
-    this.addCommand({
-      id: 'show-reference-list-view',
-      name: 'Show pandoc references',
-      checkCallback: (checking: boolean) => {
-        if (checking) {
-          return this.view === null;
-        }
-        this.initLeaf();
-      },
-    });
-
     app.workspace.trigger('parse-style-settings');
-
-    this.addCommand({
-      id: 'update-cite-keys',
-      name: 'Refresh cite key list',
-      callback: async () => {
-        const modal = new LoadingModal(app, 'Fetching data from Zotero...');
-        modal.open();
-        await getAllCiteKeys(
-          { database: this.settings.database, port: this.settings.port },
-          true
-        );
-        modal.close();
-      },
-    });
 
     fixPath();
 
@@ -199,15 +199,6 @@ export default class ZoteroConnector extends Plugin {
         port: this.settings.port,
       });
     }
-  }
-
-  initLeaf(): void {
-    if (this.view) {
-      return;
-    }
-    this.app.workspace.getRightLeaf(false).setViewState({
-      type: RLViewType,
-    });
   }
 
   onunload() {
@@ -339,12 +330,12 @@ export default class ZoteroConnector extends Plugin {
     await this.saveData(this.settings);
   }
 
-  deactivateView() {
+  deactivateDataExplorer() {
     this.app.workspace.detachLeavesOfType(viewType);
   }
 
-  async activateView() {
-    this.deactivateView();
+  async activateDataExplorer() {
+    this.deactivateDataExplorer();
     const leaf = this.app.workspace.createLeafBySplit(
       this.app.workspace.activeLeaf,
       'vertical'
@@ -353,6 +344,19 @@ export default class ZoteroConnector extends Plugin {
     await leaf.setViewState({
       type: viewType,
     });
+  }
+
+  activateReferenceList(): void {
+    if (this.view) {
+      return;
+    }
+    this.app.workspace.getRightLeaf(false).setViewState({
+      type: RLViewType,
+    });
+  }
+
+  deactivateReferenceList() {
+    this.app.workspace.detachLeavesOfType(RLViewType);
   }
 
   async updatePDFUtility() {

@@ -12,7 +12,7 @@ import {
   debounce,
 } from 'obsidian';
 import { isZoteroRunning } from 'src/bbt/cayw';
-import { getAllCiteKeys } from 'src/bbt/getCiteKeyExport';
+import { getAllCiteKeys } from 'src/bbt/jsonRPC';
 import ZoteroConnector from 'src/main';
 import { CiteKeyExport } from 'src/types';
 

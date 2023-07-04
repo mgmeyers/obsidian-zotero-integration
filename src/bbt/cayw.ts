@@ -17,6 +17,7 @@ export function getCiteKeyFromAny(item: any): CiteKey | null {
 
 let cachedIsRunning = false;
 let lastCheck = 0;
+
 export async function isZoteroRunning(
   database: DatabaseWithPort,
   silent?: boolean

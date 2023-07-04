@@ -1,7 +1,6 @@
 import { LRUCache } from 'lru-cache';
 import { TFile } from 'obsidian';
-import { getAllCiteKeys } from 'src/bbt/getCiteKeyExport';
-import { getBibFromCiteKeys } from 'src/bbt/jsonRPC';
+import { getAllCiteKeys, getBibFromCiteKeys } from 'src/bbt/jsonRPC';
 import ZoteroConnector from 'src/main';
 
 import { areSetsEqual, extractCiteKeys } from './helpers';

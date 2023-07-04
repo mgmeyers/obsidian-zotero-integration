@@ -1,5 +1,6 @@
 import { LRUCache } from 'lru-cache';
 import { TFile } from 'obsidian';
+import { isZoteroRunning } from 'src/bbt/cayw';
 import { getBibFromCiteKey, getLibForCiteKey } from 'src/bbt/jsonRPC';
 import ZoteroConnector from 'src/main';
 
@@ -102,8 +103,15 @@ export class TooltipManager {
       return this.populateTooltip(this.cache.get(citekey), rect, citekey);
     }
 
+    if (!(await isZoteroRunning(database, true))) {
+      return this.populateTooltip(null, rect, citekey, true);
+    }
+
     const libraryID = await getLibForCiteKey(citekey, database);
     if (!this.tooltip) return;
+    if (libraryID === null) {
+      return this.populateTooltip(null, rect, citekey);
+    }
 
     const content = await getBibFromCiteKey(
       { key: citekey, library: libraryID },
@@ -114,7 +122,9 @@ export class TooltipManager {
     );
 
     if (!this.tooltip) return;
-    if (!content) return this.hideTooltip();
+    if (!content) {
+      return this.populateTooltip(null, rect, citekey);
+    }
 
     const parser = new DOMParser();
     const html = parser.parseFromString(content, 'text/html');
@@ -124,7 +134,7 @@ export class TooltipManager {
     this.populateTooltip(bib, rect, citekey);
   }
 
-  populateTooltip(bib: HTMLElement, rect: DOMRect, citekey: string) {
+  populateTooltip(bib: HTMLElement, rect: DOMRect, citekey: string, notRunning?: boolean) {
     const { tooltip } = this;
     tooltip.empty();
 
@@ -137,7 +147,7 @@ export class TooltipManager {
     } else {
       tooltip.addClass('is-missing');
       tooltip.createEl('em', {
-        text: 'No citation found for ' + citekey,
+        text: notRunning ? 'Cannot connect to Zotero' : 'No citation found for ' + citekey,
       });
     }
 
