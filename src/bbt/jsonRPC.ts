@@ -146,24 +146,91 @@ export async function getAttachmentsFromCiteKey(
   }
 }
 
+let cachedLibs: any[] = null;
+const cachedCiteKeys: Map<string, number> = new Map();
+
+export async function getLibForCiteKey(
+  citeKey: string,
+  database: DatabaseWithPort
+) {
+  if (cachedCiteKeys.has(citeKey)) return cachedCiteKeys.get(citeKey);
+  try {
+    const searchResults = await execSearch(citeKey, database);
+    if (!searchResults || searchResults.length === 0) {
+      return null;
+    }
+
+    const match = searchResults.find((res: any) => res.citekey === citeKey);
+    if (!match) return null;
+
+    if (cachedLibs) {
+      const lib = cachedLibs.find((p: any) => p.name === match.library);
+      if (lib) {
+        cachedCiteKeys.set(citeKey, lib.id);
+        return lib.id;
+      }
+
+      return null;
+    }
+
+    const res = await request({
+      method: 'POST',
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'user.groups',
+      }),
+      headers: defaultHeaders,
+    });
+
+    const parsed = JSON.parse(res);
+    if (parsed.result?.length > 0) {
+      cachedLibs = parsed.result;
+      const lib = cachedLibs.find((p: any) => p.name === match.library);
+
+      if (lib) {
+        cachedCiteKeys.set(citeKey, lib.id);
+        return lib.id;
+      }
+
+      return null;
+    }
+  } catch (e) {
+    console.error(e);
+    new Notice(`Error retrieving library id: ${e.message}`, 10000);
+  }
+
+  return null;
+}
+
 export function getBibFromCiteKey(
   citeKey: CiteKey,
   database: DatabaseWithPort,
-  cslStyle?: string
+  cslStyle?: string,
+  format?: string,
+  silent?: boolean
 ) {
-  return getBibFromCiteKeys([citeKey], database, cslStyle);
+  return getBibFromCiteKeys([citeKey], database, cslStyle, format, silent);
 }
 
 export async function getBibFromCiteKeys(
   citeKeys: CiteKey[],
   database: DatabaseWithPort,
-  cslStyle?: string
+  cslStyle?: string,
+  format?: string,
+  silent?: boolean
 ) {
   if (!citeKeys || !citeKeys.length) return null;
 
   let res: string;
-  const modal = new LoadingModal(app, 'Fetching data from Zotero...');
-  modal.open();
+  let modal: LoadingModal;
+  if (!silent) {
+    modal = new LoadingModal(app, 'Fetching data from Zotero...');
+    modal.open();
+  }
 
   try {
     const params: Record<string, any> = {
@@ -191,19 +258,19 @@ export async function getBibFromCiteKeys(
     });
   } catch (e) {
     console.error(e);
-    modal.close();
+    !silent && modal.close();
     new Notice(`Error retrieving formatted bibliography: ${e.message}`, 10000);
     return null;
   }
 
-  modal.close();
+  !silent && modal.close();
 
   try {
     const parsed = JSON.parse(res);
     if (parsed.error?.message) {
       throw new Error(parsed.error.message);
     }
-    return htmlToMarkdown(parsed.result);
+    return format === 'html' ? parsed.result : htmlToMarkdown(parsed.result);
   } catch (e) {
     console.error(e);
     console.error(`Response from BBT: ${res}`);
@@ -426,7 +493,6 @@ export async function getIssueDateFromCiteKey(
 
 export async function execSearch(term: string, database: DatabaseWithPort) {
   let res: string;
-
   try {
     res = await request({
       method: 'POST',

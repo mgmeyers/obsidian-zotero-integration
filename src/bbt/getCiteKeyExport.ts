@@ -1,6 +1,7 @@
 import { request } from 'obsidian';
-import { DatabaseWithPort } from 'src/types';
+import { CiteKeyExport, DatabaseWithPort } from 'src/types';
 
+import { isZoteroRunning } from './cayw';
 import { defaultHeaders, getPort } from './helpers';
 
 const translatorId = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
@@ -22,7 +23,27 @@ export async function getCiteKeyExport(
     const entries = JSON.parse(res);
 
     return Array.isArray(entries)
-      ? entries.map((e) => e['citation-key']).filter((k) => !!k)
+      ? entries
+          .map((e) => {
+            const out: Record<string, any> = {
+              libraryID: Number(groupId),
+            };
+
+            if (e['citation-key']) {
+              out.citekey = e['citation-key'];
+            } else {
+              return null;
+            }
+
+            if (e['title']) {
+              out.title = e['title'];
+            } else {
+              return null;
+            }
+
+            return out as { libraryID: number; citekey: string; title: string };
+          })
+          .filter((k) => !!k)
       : null;
   } catch (e) {
     return null;
@@ -58,11 +79,27 @@ export async function getUserGroups(database: DatabaseWithPort) {
   }
 }
 
-export async function getAllCiteKeys(database: DatabaseWithPort) {
-  const allKeys: string[] = [];
+let cachedKeys: CiteKeyExport[] = [];
+let lastCheck = 0;
+
+export async function getAllCiteKeys(
+  database: DatabaseWithPort,
+  force?: boolean
+) {
+  if (!force && cachedKeys.length && Date.now() - lastCheck < 1000 * 60 * 60) {
+    return { citekeys: cachedKeys, fromCache: true };
+  }
+
+  if (!(await isZoteroRunning(database, true))) {
+    return { citekeys: cachedKeys, fromCache: true };
+  }
+
+  const allKeys: CiteKeyExport[] = [];
   const userGroups = await getUserGroups(database);
 
-  if (!userGroups) return allKeys;
+  if (!userGroups) {
+    return { citekeys: cachedKeys, fromCache: true };
+  }
 
   for (const group of userGroups) {
     const keys = await getCiteKeyExport(database, group.id, group.name);
@@ -72,5 +109,8 @@ export async function getAllCiteKeys(database: DatabaseWithPort) {
     }
   }
 
-  return allKeys;
+  cachedKeys = allKeys;
+  lastCheck = Date.now();
+
+  return { citekeys: allKeys, fromCache: false };
 }

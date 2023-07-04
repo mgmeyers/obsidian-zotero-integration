@@ -11,13 +11,21 @@ import {
   Platform,
   debounce,
 } from 'obsidian';
-import { execSearch } from 'src/bbt/jsonRPC';
+import { isZoteroRunning } from 'src/bbt/cayw';
+import { getAllCiteKeys } from 'src/bbt/getCiteKeyExport';
 import ZoteroConnector from 'src/main';
+import { CiteKeyExport } from 'src/types';
 
-export class CiteSuggest extends EditorSuggest<Record<string, any>> {
+interface Loading {
+  loading: boolean;
+}
+
+export class CiteSuggest extends EditorSuggest<
+  Fuse.FuseResult<CiteKeyExport> | Loading
+> {
   private plugin: ZoteroConnector;
   private app: App;
-  private fuse: Fuse<Record<string, any>>;
+  private fuse: Fuse<CiteKeyExport>;
 
   limit: number = 20;
 
@@ -48,7 +56,7 @@ export class CiteSuggest extends EditorSuggest<Record<string, any>> {
       },
     ]);
 
-    this.fuse = new Fuse([] as Record<string, any>[], {
+    this.fuse = new Fuse([] as CiteKeyExport[], {
       includeMatches: true,
       threshold: 0.35,
       keys: [
@@ -58,46 +66,65 @@ export class CiteSuggest extends EditorSuggest<Record<string, any>> {
     });
   }
 
-  handleSearch = debounce(async () => {
-    if (this.context === null) return;
+  haveSearchableItems = false;
+  handleSearch = debounce(
+    async () => {
+      const context = this.context;
+      if (context === null) return;
 
-    const context = this.context;
-    const searchResults = await execSearch(context.query, {
-      database: this.plugin.settings.database,
-      port: this.plugin.settings.port,
-    });
+      const { citekeys, fromCache } = await getAllCiteKeys({
+        database: this.plugin.settings.database,
+        port: this.plugin.settings.port,
+      });
+      if (context !== this.context) return;
 
-    if (context !== this.context) return;
+      if (!fromCache || !this.haveSearchableItems) {
+        this.fuse.setCollection(citekeys);
+        this.haveSearchableItems = true;
+        const results = this.fuse.search(context.query, { limit: this.limit });
+        (this as any).showSuggestions(results);
+      }
+    },
+    200,
+    true
+  );
 
-    this.fuse.setCollection(searchResults);
-    const results = this.fuse.search(context.query, { limit: this.limit });
-
-    (this as any).showSuggestions(results);
-  }, 200);
-
-  getSuggestions(context: EditorSuggestContext) {
+  async getSuggestions(context: EditorSuggestContext) {
     if (!context.query || context.query.includes(' ')) {
+      return null;
+    }
+
+    if (
+      !(await isZoteroRunning({
+        database: this.plugin.settings.database,
+        port: this.plugin.settings.port,
+      }))
+    ) {
       return null;
     }
 
     this.handleSearch();
 
-    return [{ loading: true }];
+    return this.haveSearchableItems
+      ? this.fuse.search(context.query, { limit: this.limit })
+      : [{ loading: true }];
   }
 
   renderSuggestion(
-    suggestion: Fuse.FuseResult<Record<string, any>> | { loading: boolean },
+    suggestion: Fuse.FuseResult<CiteKeyExport> | Loading,
     el: HTMLElement
   ): void {
     const frag = createFragment();
 
     if ((suggestion as { loading: boolean }).loading) {
-      frag.createSpan({cls: 'zt-suggest-loading-wrapper' }).createSpan({ cls: 'zt-suggest-loading' });
+      frag
+        .createSpan({ cls: 'zt-suggest-loading-wrapper' })
+        .createSpan({ cls: 'zt-suggest-loading' });
       el.setText(frag);
       return;
     }
 
-    const sugg = suggestion as Fuse.FuseResult<Record<string, any>>;
+    const sugg = suggestion as Fuse.FuseResult<CiteKeyExport>;
     const item = sugg.item;
 
     if (!sugg.matches || !sugg.matches.length) {
@@ -142,7 +169,7 @@ export class CiteSuggest extends EditorSuggest<Record<string, any>> {
   }
 
   selectSuggestion(
-    suggestion: Fuse.FuseResult<Record<string, any>>,
+    suggestion: Fuse.FuseResult<CiteKeyExport>,
     event: KeyboardEvent | MouseEvent
   ): void {
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);

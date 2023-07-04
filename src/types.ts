@@ -91,4 +91,16 @@ export interface ZoteroConnectorSettings {
   shouldConcat?: boolean;
   shouldShowCiteSuggest?: boolean;
   whichNotesToOpenAfterImport: NotesToOpenAfterImport;
+
+  // Refrence list settings
+  shouldShowCitekeyTooltips?: boolean;
+  citekeyTooltipDelay?: number;
+  citekeyReferenceHideLinks?: boolean;
+  citekeyReferenceCslStyle?: string;
+}
+
+export interface CiteKeyExport {
+  libraryID: number;
+  citekey: string;
+  title: string;
 }

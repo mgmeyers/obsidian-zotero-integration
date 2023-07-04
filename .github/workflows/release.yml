@@ -43,7 +43,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/main.js
+          asset_path: ./main.js
           asset_name: main.js
           asset_content_type: text/javascript
       # Upload the manifest.json
@@ -54,7 +54,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/manifest.json
+          asset_path: ./manifest.json
           asset_name: manifest.json
           asset_content_type: application/json
       # Upload the style.css
@@ -65,6 +65,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/styles.css
+          asset_path: ./styles.css
           asset_name: styles.css
           asset_content_type: text/css

@@ -15,10 +15,16 @@ export function getCiteKeyFromAny(item: any): CiteKey | null {
   };
 }
 
+let cachedIsRunning = false;
+let lastCheck = 0;
 export async function isZoteroRunning(
   database: DatabaseWithPort,
   silent?: boolean
 ) {
+  if (cachedIsRunning && Date.now() - lastCheck < 1000 * 60) {
+    return cachedIsRunning;
+  }
+
   let modal: LoadingModal;
   if (!silent) {
     modal = new LoadingModal(app, 'Fetching data from Zotero...');
@@ -35,7 +41,9 @@ export async function isZoteroRunning(
     });
 
     modal?.close();
-    return res === 'ready';
+    cachedIsRunning = res === 'ready';
+    lastCheck = Date.now();
+    return cachedIsRunning;
   } catch (e) {
     modal?.close();
     !silent &&

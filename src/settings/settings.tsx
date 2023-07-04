@@ -1,6 +1,8 @@
 import { App, Notice, Platform, PluginSettingTab, debounce } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { SingleValue } from 'react-select';
+import AsyncSelect from 'react-select/async';
 import which from 'which';
 
 import ZoteroConnector from '../main';
@@ -14,6 +16,12 @@ import { CiteFormatSettings } from './CiteFormatSettings';
 import { ExportFormatSettings } from './ExportFormatSettings';
 import { Icon } from './Icon';
 import { SettingItem } from './SettingItem';
+import { cslListRaw } from './cslList';
+import {
+  NoOptionMessage,
+  customSelectStyles,
+  loadCSLOptions,
+} from './select.helpers';
 
 interface SettingsComponentProps {
   settings: ZoteroConnectorSettings;
@@ -45,6 +53,34 @@ function SettingsComponent({
 
   const [openNoteAfterImportState, setOpenNoteAfterImport] = React.useState(
     !!settings.openNoteAfterImport
+  );
+
+  const [shouldShowCitekeyTooltips, setShouldShowCitekeyTooltips] =
+    React.useState(!!settings.shouldShowCitekeyTooltips);
+
+  const [citekeyReferenceHideLinks, setCitekeyReferenceHideLinks] =
+    React.useState(!!settings.citekeyReferenceHideLinks);
+
+  const defaultPandocStyle = React.useMemo(() => {
+    if (!settings.citekeyReferenceCslStyle) return undefined;
+
+    const match = cslListRaw.find(
+      (item) => item.value === settings.citekeyReferenceCslStyle
+    );
+
+    if (match) return match;
+
+    return {
+      label: settings.citekeyReferenceCslStyle,
+      value: settings.citekeyReferenceCslStyle,
+    };
+  }, [settings.citekeyReferenceCslStyle]);
+
+  const onChangeCSLStyle = React.useCallback(
+    (e: SingleValue<{ value: string; label: string }>) => {
+      updateSetting('citekeyReferenceCslStyle', e?.value);
+    },
+    [updateSetting]
   );
 
   const [ocrState, setOCRState] = React.useState(settings.pdfExportImageOCR);
@@ -177,7 +213,7 @@ function SettingsComponent({
       </SettingItem>
       <SettingItem
         name="Open the created or updated note(s) after import"
-        description="The crated or updated markdown files resulting from the import will be automatically opened."
+        description="The created or updated markdown files resulting from the import will be automatically opened."
       >
         <div
           onClick={() => {
@@ -497,6 +533,69 @@ function SettingsComponent({
           <Icon name="lucide-folder-open" />
         </div>
       </SettingItem>
+
+      <SettingItem
+        name="Pandoc reference settings"
+        description="Display tooltips and a reference list for pandoc citations. Note: the pandoc reference list plugin must be disabled."
+        isHeading
+      />
+      <SettingItem name="Pandoc reference output style">
+        <AsyncSelect
+          noOptionsMessage={NoOptionMessage}
+          placeholder="Search..."
+          cacheOptions
+          defaultValue={defaultPandocStyle}
+          className="zt-multiselect"
+          loadOptions={loadCSLOptions}
+          isClearable
+          onChange={onChangeCSLStyle}
+          styles={customSelectStyles}
+        />
+      </SettingItem>
+      <SettingItem name="Display citation tooltips">
+        <div
+          onClick={() => {
+            setShouldShowCitekeyTooltips((state) => {
+              updateSetting('shouldShowCitekeyTooltips', !state);
+              return !state;
+            });
+          }}
+          className={`checkbox-container${
+            shouldShowCitekeyTooltips ? ' is-enabled' : ''
+          }`}
+        />
+      </SettingItem>
+      <SettingItem
+        name="Tooltip delay"
+        description="Set the amount of time (in milliseconds) to wait before displaying tooltips."
+      >
+        <input
+          onChange={(e) =>
+            updateSetting(
+              'citekeyTooltipDelay',
+              Number((e.target as HTMLInputElement).value)
+            )
+          }
+          type="number"
+          defaultValue={(settings.citekeyTooltipDelay ?? 500).toString()}
+        />
+      </SettingItem>
+      <SettingItem
+        name="Hide links in references"
+        description="Replace links with icons to save space."
+      >
+        <div
+          onClick={() => {
+            setCitekeyReferenceHideLinks((state) => {
+              updateSetting('citekeyReferenceHideLinks', !state);
+              return !state;
+            });
+          }}
+          className={`checkbox-container${
+            citekeyReferenceHideLinks ? ' is-enabled' : ''
+          }`}
+        />
+      </SettingItem>
     </div>
   );
 }
@@ -582,6 +681,10 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
   ) => {
     this.plugin.settings[key] = value;
     this.debouncedSave();
+
+    if (key === 'shouldShowCitekeyTooltips') {
+      document.body.toggleClass('pwc-tooltips', !!value);
+    }
   };
 
   debouncedSave() {

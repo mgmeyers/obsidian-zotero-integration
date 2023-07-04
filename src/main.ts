@@ -10,11 +10,22 @@ import {
   insertNotesIntoCurrentDoc,
   noteExportPrompt,
 } from './bbt/exportNotes';
+import { getAllCiteKeys } from './bbt/getCiteKeyExport';
 import './bbt/template.helpers';
 import { CiteSuggest } from './citeSuggest/citeSuggest';
+import {
+  viewType as RLViewType,
+  ReferenceListView,
+} from './pandocReference/ReferenceListView';
+import {
+  citeKeyCacheField,
+  citeKeyPlugin,
+  viewManagerField,
+} from './pandocReference/editorExtension';
+import { processCiteKeys } from './pandocReference/markdownPostprocessor';
+import { TooltipManager } from './pandocReference/tooltip';
 import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
-import './styles.css';
 import { CitationFormat, ExportFormat, ZoteroConnectorSettings } from './types';
 
 const commandPrefix = 'obsidian-zotero-desktop-connector:';
@@ -57,6 +68,15 @@ async function fixPath() {
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
   emitter: Events;
+  tooltipManager: TooltipManager;
+
+  get view() {
+    const leaves = app.workspace.getLeavesOfType(RLViewType);
+    if (!leaves?.length) {
+      return null;
+    }
+    return leaves[0].view as ReferenceListView;
+  }
 
   async onload() {
     await this.loadSettings();
@@ -65,6 +85,7 @@ export default class ZoteroConnector extends Plugin {
     this.updatePDFUtility();
     this.addSettingTab(new ZoteroConnectorSettingsTab(this.app, this));
     this.registerView(viewType, (leaf) => new DataExplorerView(this, leaf));
+    this.registerView(RLViewType, (leaf) => new ReferenceListView(this, leaf));
 
     this.settings.citeFormats.forEach((f) => {
       this.addFormatCommand(f);
@@ -129,8 +150,64 @@ export default class ZoteroConnector extends Plugin {
     });
 
     this.registerEditorSuggest(new CiteSuggest(this.app, this));
+    this.registerMarkdownPostProcessor(processCiteKeys(this));
+    this.registerEditorExtension([
+      viewManagerField.init(() => this.view?.viewManager || null),
+      citeKeyCacheField,
+      citeKeyPlugin,
+    ]);
+
+    this.tooltipManager = new TooltipManager(this);
+
+    document.body.toggleClass(
+      'pwc-tooltips',
+      !!this.settings.shouldShowCitekeyTooltips
+    );
+
+    this.addCommand({
+      id: 'show-reference-list-view',
+      name: 'Show pandoc references',
+      checkCallback: (checking: boolean) => {
+        if (checking) {
+          return this.view === null;
+        }
+        this.initLeaf();
+      },
+    });
+
+    app.workspace.trigger('parse-style-settings');
+
+    this.addCommand({
+      id: 'update-cite-keys',
+      name: 'Refresh cite key list',
+      callback: async () => {
+        const modal = new LoadingModal(app, 'Fetching data from Zotero...');
+        modal.open();
+        await getAllCiteKeys(
+          { database: this.settings.database, port: this.settings.port },
+          true
+        );
+        modal.close();
+      },
+    });
 
     fixPath();
+
+    if (this.settings.shouldShowCiteSuggest) {
+      getAllCiteKeys({
+        database: this.settings.database,
+        port: this.settings.port,
+      });
+    }
+  }
+
+  initLeaf(): void {
+    if (this.view) {
+      return;
+    }
+    this.app.workspace.getRightLeaf(false).setViewState({
+      type: RLViewType,
+    });
   }
 
   onunload() {

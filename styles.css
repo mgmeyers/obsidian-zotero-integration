@@ -1,0 +1,448 @@
+/* @settings
+
+name: Zotero Integration Reference List
+id: zotero-pandoc-reference-list
+settings:
+  - 
+    id: pwc-font-size
+    title: Sidebar reference list font size
+    type: variable-number-slider
+    default: 14
+    format: px
+    min: 8
+    max: 24
+    step: 1
+  - 
+    id: pwc-tooltip-font-size
+    title: Tooltip citation font size
+    type: variable-number-slider
+    default: 14
+    format: px
+    min: 8
+    max: 24
+    step: 1
+  - 
+    id: pwc-citation-color
+    title: Citation color
+    type: variable-themed-color
+    format: hex
+    default-light: '#2e3338'
+    default-dark: '#dcddde'
+  - 
+    id: pwc-citation-underline-color
+    title: Citation underline color
+    type: variable-themed-color
+    format: hex
+    default-light: '#705dcf'
+    default-dark: '#7f6df2'
+  - 
+    id: pwc-citation-formatting-color
+    title: Citation formatting color
+    description: Changes the color of brackets and semicolons
+    type: variable-themed-color
+    format: hex
+    default-light: '#2e3338'
+    default-dark: '#dcddde'
+  - 
+    id: pwc-citation-extra-color
+    title: 'Citation "extra" color'
+    description: 'Changes the color text within a citation, eg. "pp. 22-24"'
+    type: variable-themed-color
+    format: hex
+    default-light: '#2e3338'
+    default-dark: '#dcddde'
+*/
+
+.zt-format {
+  border: 1px solid var(--background-modifier-border);
+  padding: 1rem;
+  background-color: var(--background-primary);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.zt-format__form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 1rem;
+  max-width: 600px;
+}
+
+.zt-format__form:last-child {
+  margin-bottom: 0;
+}
+
+.zt-format__label {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.is-deprecated .zt-format__label {
+  color: var(--text-error);
+}
+
+.zt-format__input-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.zt-format__input-wrapper textarea {
+  resize: vertical;
+}
+
+.zt-format__input-wrapper > *:not(.checkbox-container) {
+  width: 100% !important;
+}
+
+.is-deprecated .zt-format__input-wrapper button {
+  width: auto !important;
+  flex-grow: 0;
+  flex-shrink: 0;
+  margin-left: 5px;
+}
+
+.zt-format__delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 7px 9px;
+  margin-left: 10px;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.zt-json-viewer {
+  font-size: 13px;
+}
+
+.zt-json-viewer .react-json-view {
+  padding: 1em;
+  border-radius: 10px;
+  margin-top: 1em;
+  overflow: auto;
+  font-family: var(--font-monospace) !important;
+}
+
+.zt-json-viewer__btns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.zt-json-viewer__btns label {
+  display: block;
+  font-weight: bold;
+  padding-top: 1em;
+}
+
+.zt-json-viewer__btns select {
+  font-size: 1em;
+}
+
+.zt-json-viewer__btns button {
+  font-size: 1em;
+  margin-right: 5px;
+}
+
+.zt-json-viewer__preview,
+.zt-json-viewer__data {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 1em;
+  margin-top: 1em;
+}
+
+.zt-json-viewer__preview.error {
+  background-color: #ff000011;
+  font-family: var(--font-monospace);
+}
+
+.zt-json-viewer__preview pre {
+  overflow: auto;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.zt-json-viewer__preview pre,
+.zt-json-viewer__preview code {
+  font-family: inherit;
+}
+
+.zt-json-viewer__preview:not(.error) pre {
+  font-family: var(--font-text, --font-default, --default-font);
+  max-height: 70vh;
+  min-height: 400px;
+}
+
+.zt-multiselect {
+  width: 300px;
+  text-align: left;
+}
+
+.zt-multiselect input {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.zt-format__input-note {
+  font-style: italic;
+  font-size: 0.9em;
+  padding-top: 10px;
+  margin-bottom: 10px;
+}
+
+.zt-setting-item pre,
+.zt-format__input-note pre {
+  display: inline-block;
+  margin: 0;
+  padding: 0 6px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 4px;
+}
+
+.zt-asset-success {
+  text-align: left;
+  display: flex;
+}
+
+.zt-asset-success__icon {
+  color: var(--interactive-success);
+  font-size: 24px;
+  margin-right: 5px;
+}
+
+.zt-asset-success__icon svg {
+  width: 1em !important;
+  height: 1em !important;
+}
+
+.zt-asset-success__message {
+  font-size: 0.9em;
+}
+
+.zt-suggest-title {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-top: var(--size-4-1);
+}
+
+.zt-suggest-loading-wrapper {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  padding: var(--size-4-2) 0;
+}
+
+.zt-suggest-loading, .zt-suggest-loading:before, .zt-suggest-loading:after {
+  border-radius: 999px;
+  width: 1em;
+  height: 1em;
+  animation-fill-mode: both;
+  animation: bblFadInOut 1.6s infinite ease-in-out;
+}
+
+.zt-suggest-loading {
+  display: block;
+  color: var(--text-muted);
+  font-size: 7px;
+  position: relative;
+  animation-delay: -0.16s;
+  top: -1em;
+}
+.zt-suggest-loading:before,
+.zt-suggest-loading:after {
+  content: '';
+  position: absolute;
+}
+.zt-suggest-loading:before {
+  left: -2em;
+  animation-delay: -0.32s;
+}
+.zt-suggest-loading:after {
+  left: 2em;
+}
+
+@keyframes bblFadInOut {
+  0%, 80%, 100% { box-shadow: 0 1em 0 -1.3em }
+  40% { box-shadow: 0 1em 0 0 }
+}
+
+/* --------- */
+
+body {
+  --pwc-font-size: 14px;
+  --pwc-tooltip-font-size: 14px;
+  --pwc-citation-underline-color: var(--text-accent);
+  --pwc-citation-underline-color-missing: transparent;
+  --pwc-citation-extra-color: var(--text-normal);
+  --pwc-citation-formatting-color: var(--text-normal);
+  --pwc-citation-color: var(--text-normal);
+  --pwc-citation-color-missing: var(--text-normal);
+}
+
+.pwc-reference-list {
+  padding-bottom: 2rem;
+}
+
+.pwc-reference-list__title {
+  font-size: var(--pwc-font-size);
+  font-weight: bold;
+  padding: 0 5px;
+  display: flex;
+}
+
+.pwc-reference-list__title-text {
+  width: 100%;
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+}
+
+.pwc-reference-list__title-text .zt-suggest-loading-wrapper {
+  margin: 0 1.7em;
+  padding: 0;
+}
+
+.pwc-copy-list {
+  flex-shrink: 0;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.pwc-copy-list:hover {
+  color: var(--text-accent);
+}
+
+.pwc-no-content {
+  font-size: var(--pwc-font-size);
+  padding: 0 5px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.pwc-btn-wrapper {
+  padding-top: var(--size-4-3);
+  display: flex;
+  justify-content: center;
+}
+
+.pwc-reference-list .csl-entry {
+  font-size: var(--pwc-font-size);
+  word-wrap: break-word;
+  padding: 1em 5px;
+  cursor: pointer;
+}
+
+.pwc-reference-list .csl-entry:not(:last-child) {
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.pwc-reference-list a.footnote-ref {
+  vertical-align: super;
+}
+
+.pwc-reference-list em,
+.pwc-reference-list em em em,
+.pwc-reference-list em em em em em {
+  font-style: italic;
+}
+
+.pwc-reference-list em em,
+.pwc-reference-list em em em em {
+  font-style: normal;
+}
+.pwc-reference-list code {
+  white-space: pre-wrap;
+}
+
+.pwc-reference-list span.smallcaps {
+  font-variant: small-caps;
+}
+
+.pwc-reference-list span.underline {
+  text-decoration: underline;
+}
+
+.pwc-reference-list q {
+  quotes: '“' '”' '‘' '’';
+}
+
+.pwc-reference-list div.column {
+  display: inline-block;
+  vertical-align: top;
+  width: 50%;
+}
+
+.pwc-tooltip.collapsed-links a,
+.pwc-reference-list.collapsed-links a {
+  font-size: 0;
+}
+
+.pwc-tooltip.collapsed-links a::after,
+.pwc-reference-list.collapsed-links a::after {
+  font-size: var(--pwc-font-size);
+  content: ' ';
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+
+  background-color: var(--text-accent);
+
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath d='M8.465 11.293c1.133-1.133 3.109-1.133 4.242 0l.707.707 1.414-1.414-.707-.707c-.943-.944-2.199-1.465-3.535-1.465s-2.592.521-3.535 1.465L4.929 12a5.008 5.008 0 0 0 0 7.071 4.983 4.983 0 0 0 3.535 1.462A4.982 4.982 0 0 0 12 19.071l.707-.707-1.414-1.414-.707.707a3.007 3.007 0 0 1-4.243 0 3.005 3.005 0 0 1 0-4.243l2.122-2.121z'%3E%3C/path%3E%3Cpath d='m12 4.929-.707.707 1.414 1.414.707-.707a3.007 3.007 0 0 1 4.243 0 3.005 3.005 0 0 1 0 4.243l-2.122 2.121c-1.133 1.133-3.109 1.133-4.242 0L10.586 12l-1.414 1.414.707.707c.943.944 2.199 1.465 3.535 1.465s2.592-.521 3.535-1.465L19.071 12a5.008 5.008 0 0 0 0-7.071 5.006 5.006 0 0 0-7.071 0z'%3E%3C/path%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath d='M8.465 11.293c1.133-1.133 3.109-1.133 4.242 0l.707.707 1.414-1.414-.707-.707c-.943-.944-2.199-1.465-3.535-1.465s-2.592.521-3.535 1.465L4.929 12a5.008 5.008 0 0 0 0 7.071 4.983 4.983 0 0 0 3.535 1.462A4.982 4.982 0 0 0 12 19.071l.707-.707-1.414-1.414-.707.707a3.007 3.007 0 0 1-4.243 0 3.005 3.005 0 0 1 0-4.243l2.122-2.121z'%3E%3C/path%3E%3Cpath d='m12 4.929-.707.707 1.414 1.414.707-.707a3.007 3.007 0 0 1 4.243 0 3.005 3.005 0 0 1 0 4.243l-2.122 2.121c-1.133 1.133-3.109 1.133-4.242 0L10.586 12l-1.414 1.414.707.707c.943.944 2.199 1.465 3.535 1.465s2.592-.521 3.535-1.465L19.071 12a5.008 5.008 0 0 0 0-7.071 5.006 5.006 0 0 0-7.071 0z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.pwc-tooltip {
+  word-wrap: break-word;
+  position: fixed;
+  font-family: var(--font-interface);
+  font-size: var(--pwc-tooltip-font-size);
+  padding: 10px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  width: 300px;
+  line-height: 1.4;
+  z-index: var(--layer-popover);
+  overflow: hidden;
+}
+
+.cm-hmd-barelink {
+  text-decoration: none;
+}
+
+:not(a, .cm-hmd-internal-link, .cm-link-alias) > .pandoc-citation {
+  color: var(--pwc-citation-color);
+}
+
+:not(.cm-formatting-link) > .cm-pandoc-citation-formatting {
+  color: var(--pwc-citation-formatting-color);
+}
+
+:not(.cm-hmd-internal-link, .cm-link-alias) > .cm-pandoc-citation-extra {
+  color: var(--pwc-citation-extra-color);
+}
+
+.pwc-tooltips :not(.cm-link-alias) > .pandoc-citation {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--pwc-citation-underline-color);
+}
+
+.pwc-success {
+  color: var(--interactive-success);
+}
+
+.pwc-error {
+  color: var(--text-error);
+}
