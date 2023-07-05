@@ -416,19 +416,19 @@ body {
   overflow: hidden;
 }
 
-.cm-hmd-barelink {
+.pwc-tooltips .cm-hmd-barelink {
   text-decoration: none;
 }
 
-:not(a, .cm-hmd-internal-link, .cm-link-alias) > .pandoc-citation {
+.pwc-tooltips :not(a, .cm-hmd-internal-link, .cm-link-alias) > .pandoc-citation {
   color: var(--pwc-citation-color);
 }
 
-:not(.cm-formatting-link) > .cm-pandoc-citation-formatting {
+.pwc-tooltips :not(.cm-formatting-link) > .cm-pandoc-citation-formatting {
   color: var(--pwc-citation-formatting-color);
 }
 
-:not(.cm-hmd-internal-link, .cm-link-alias) > .cm-pandoc-citation-extra {
+.pwc-tooltips :not(.cm-hmd-internal-link, .cm-link-alias) > .cm-pandoc-citation-extra {
   color: var(--pwc-citation-extra-color);
 }
 
