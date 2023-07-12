@@ -5,6 +5,7 @@ import { CitationFormat, DatabaseWithPort } from '../types';
 import { LoadingModal } from './LoadingModal';
 import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
+import { ZQueue } from './queue';
 
 export function getCiteKeyFromAny(item: any): CiteKey | null {
   if (!item.citekey && !item.citationKey) return null;
@@ -22,7 +23,7 @@ export async function isZoteroRunning(
   database: DatabaseWithPort,
   silent?: boolean
 ) {
-  if (cachedIsRunning && Date.now() - lastCheck < 1000 * 60) {
+  if (cachedIsRunning && Date.now() - lastCheck < 1000 * 30) {
     return cachedIsRunning;
   }
 
@@ -31,7 +32,9 @@ export async function isZoteroRunning(
     modal = new LoadingModal(app, 'Fetching data from Zotero...');
     modal.open();
   }
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
@@ -44,6 +47,7 @@ export async function isZoteroRunning(
     modal?.close();
     cachedIsRunning = res === 'ready';
     lastCheck = Date.now();
+    ZQueue.end(qid);
     return cachedIsRunning;
   } catch (e) {
     modal?.close();
@@ -52,6 +56,7 @@ export async function isZoteroRunning(
         'Cannot connect to Zotero. Please ensure it is running and the Better BibTeX plugin is installed',
         10000
       );
+    ZQueue.end(qid);
     return false;
   }
 }
@@ -85,6 +90,7 @@ export async function getCAYW(
   const modal = new LoadingModal(app, 'Awaiting item selection from Zotero...');
   modal.open();
 
+  const qid = Symbol();
   try {
     if (format.format === 'formatted-bibliography') {
       modal.close();
@@ -92,6 +98,7 @@ export async function getCAYW(
       return await getBibFromCiteKeys(citeKeys, database, format.cslStyle);
     }
 
+    await ZQueue.wait(qid);
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
@@ -103,12 +110,14 @@ export async function getCAYW(
 
     win.show();
     modal.close();
+    ZQueue.end(qid);
     return res;
   } catch (e) {
     win.show();
     console.error(e);
     modal.close();
     new Notice(`Error processing citation: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 }
@@ -151,7 +160,9 @@ export async function getCAYWJSON(database: DatabaseWithPort) {
   const modal = new LoadingModal(app, 'Awaiting item selection from Zotero...');
   modal.open();
 
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
@@ -164,6 +175,7 @@ export async function getCAYWJSON(database: DatabaseWithPort) {
     win.show();
 
     modal.close();
+    ZQueue.end(qid);
     if (res) {
       return JSON.parse(res).items || [];
     } else {
@@ -174,6 +186,7 @@ export async function getCAYWJSON(database: DatabaseWithPort) {
     console.error(e);
     modal.close();
     new Notice(`Error retrieving cite key: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 }

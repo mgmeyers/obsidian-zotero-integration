@@ -6,9 +6,41 @@ import { StylesConfig } from 'react-select';
 import { cslList } from './cslList';
 
 export const customSelectStyles: StylesConfig = {
+  input: (provided) => {
+    return {
+      ...provided,
+      color: 'var(--text-normal)',
+    };
+  },
+  singleValue: (provided) => {
+    return {
+      ...provided,
+      color: 'var(--text-normal)',
+    };
+  },
+  menu: (provided) => {
+    return {
+      ...provided,
+      backgroundColor: 'var(--background-modifier-form-field)',
+      color: 'var(--text-normal)',
+    };
+  },
+  option: (provided, { isFocused, isSelected }) => {
+    return {
+      ...provided,
+      backgroundColor: isFocused
+        ? `var(--interactive-accent)`
+        : isSelected
+        ? `var(--background-modifier-hover)`
+        : undefined,
+      color: isFocused ? `var(--text-on-accent)` : 'var(--text-normal)',
+    };
+  },
   control: (provided, state) => {
     return {
       ...provided,
+      backgroundColor: 'var(--background-modifier-form-field)',
+      color: 'var(--text-normal)',
       borderColor: state.isFocused
         ? 'var(--interactive-accent)'
         : 'var(--background-modifier-border)',

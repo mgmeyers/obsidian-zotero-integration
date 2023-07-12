@@ -5,6 +5,7 @@ import { CiteKeyExport, DatabaseWithPort } from '../types';
 import { LoadingModal } from './LoadingModal';
 import { CiteKey, getCiteKeyFromAny, isZoteroRunning } from './cayw';
 import { defaultHeaders, getPort } from './helpers';
+import { ZQueue } from './queue';
 
 export async function getNotesFromCiteKeys(
   citeKeys: CiteKey[],
@@ -15,7 +16,9 @@ export async function getNotesFromCiteKeys(
   const modal = new LoadingModal(app, 'Fetching notes from Zotero...');
   modal.open();
 
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -33,9 +36,11 @@ export async function getNotesFromCiteKeys(
     console.error(e);
     modal.close();
     new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   modal.close();
 
   try {
@@ -56,7 +61,9 @@ export async function getCollectionFromCiteKey(
   const modal = new LoadingModal(app, 'Fetching collections from Zotero...');
   modal.open();
 
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -74,9 +81,11 @@ export async function getCollectionFromCiteKey(
     console.error(e);
     modal.close();
     new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   modal.close();
 
   try {
@@ -114,7 +123,9 @@ export async function getAttachmentsFromCiteKey(
   const modal = new LoadingModal(app, 'Fetching collections from Zotero...');
   modal.open();
 
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -132,9 +143,11 @@ export async function getAttachmentsFromCiteKey(
     console.error(e);
     modal.close();
     new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   modal.close();
 
   try {
@@ -154,6 +167,7 @@ export async function getLibForCiteKey(
   database: DatabaseWithPort
 ) {
   if (cachedCiteKeys.has(citeKey)) return cachedCiteKeys.get(citeKey);
+  const qid = Symbol();
   try {
     const searchResults = await execSearch(citeKey, database);
     if (!searchResults || searchResults.length === 0) {
@@ -173,6 +187,7 @@ export async function getLibForCiteKey(
       return null;
     }
 
+    await ZQueue.wait(qid);
     const res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -185,6 +200,7 @@ export async function getLibForCiteKey(
       }),
       headers: defaultHeaders,
     });
+    ZQueue.end(qid);
 
     const parsed = JSON.parse(res);
     if (parsed.result?.length > 0) {
@@ -201,6 +217,7 @@ export async function getLibForCiteKey(
   } catch (e) {
     console.error(e);
     new Notice(`Error retrieving library id: ${e.message}`, 10000);
+    ZQueue.end(qid);
   }
 
   return null;
@@ -232,6 +249,7 @@ export async function getBibFromCiteKeys(
     modal.open();
   }
 
+  const qid = Symbol();
   try {
     const params: Record<string, any> = {
       quickCopy: true,
@@ -243,6 +261,7 @@ export async function getBibFromCiteKeys(
       params.id = cslStyle;
     }
 
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -260,9 +279,11 @@ export async function getBibFromCiteKeys(
     console.error(e);
     !silent && modal.close();
     new Notice(`Error retrieving formatted bibliography: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   !silent && modal.close();
 
   try {
@@ -296,7 +317,9 @@ export async function getItemJSONFromCiteKeys(
   const modal = new LoadingModal(app, 'Fetching data from Zotero...');
   modal.open();
 
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -318,9 +341,11 @@ export async function getItemJSONFromCiteKeys(
     console.error(e);
     modal.close();
     new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   modal.close();
 
   try {
@@ -350,7 +375,9 @@ export async function getItemJSONFromRelations(
   const uriMap: Record<string, string> = {};
   const idOrder: string[] = [];
 
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -375,9 +402,11 @@ export async function getItemJSONFromRelations(
     console.error(e);
     modal.close();
     new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   modal.close();
 
   const idMap: Record<string, any> = {};
@@ -429,7 +458,9 @@ export async function getIssueDateFromCiteKey(
   const modal = new LoadingModal(app, 'Fetching data from Zotero...');
   modal.open();
 
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -451,9 +482,11 @@ export async function getIssueDateFromCiteKey(
     console.error(e);
     modal.close();
     new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   modal.close();
 
   try {
@@ -493,7 +526,9 @@ export async function getIssueDateFromCiteKey(
 
 export async function execSearch(term: string, database: DatabaseWithPort) {
   let res: string;
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -510,9 +545,11 @@ export async function execSearch(term: string, database: DatabaseWithPort) {
   } catch (e) {
     console.error(e);
     new Notice(`Error searching: ${e.message}`, 10000);
+    ZQueue.end(qid);
     return null;
   }
 
+  ZQueue.end(qid);
   try {
     return JSON.parse(res).result;
   } catch (e) {
@@ -522,14 +559,15 @@ export async function execSearch(term: string, database: DatabaseWithPort) {
   }
 }
 
-
 const translatorId = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
 export async function getCiteKeyExport(
   database: DatabaseWithPort,
   groupId: string,
   groupName: string
 ) {
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     const res = await request({
       method: 'GET',
       url: `http://127.0.0.1:${getPort(
@@ -538,6 +576,7 @@ export async function getCiteKeyExport(
       )}/better-bibtex/export/library?/${groupId}/${groupName}.${translatorId}`,
       headers: defaultHeaders,
     });
+    ZQueue.end(qid);
 
     const entries = JSON.parse(res);
 
@@ -565,13 +604,16 @@ export async function getCiteKeyExport(
           .filter((k) => !!k)
       : null;
   } catch (e) {
+    ZQueue.end(qid);
     return null;
   }
 }
 
 export async function getUserGroups(database: DatabaseWithPort) {
   let res: string;
+  const qid = Symbol();
   try {
+    await ZQueue.wait(qid);
     res = await request({
       method: 'POST',
       url: `http://127.0.0.1:${getPort(
@@ -587,8 +629,10 @@ export async function getUserGroups(database: DatabaseWithPort) {
     });
   } catch (e) {
     console.error(e);
+    ZQueue.end(qid);
     return null;
   }
+  ZQueue.end(qid);
 
   try {
     return JSON.parse(res).result;
@@ -605,7 +649,7 @@ export async function getAllCiteKeys(
   database: DatabaseWithPort,
   force?: boolean
 ) {
-  if (!force && cachedKeys.length && Date.now() - lastCheck < 1000 * 60 * 60) {
+  if (!force && cachedKeys.length && Date.now() - lastCheck < 1000 * 60) {
     return { citekeys: cachedKeys, fromCache: true };
   }
 

@@ -89,14 +89,7 @@ export interface ZoteroConnectorSettings {
   pdfExportImageTesseractPath?: string;
   settingsVersion?: number;
   shouldConcat?: boolean;
-  shouldShowCiteSuggest?: boolean;
   whichNotesToOpenAfterImport: NotesToOpenAfterImport;
-
-  // Refrence list settings
-  shouldShowCitekeyTooltips?: boolean;
-  citekeyTooltipDelay?: number;
-  citekeyReferenceHideLinks?: boolean;
-  citekeyReferenceCslStyle?: string;
 }
 
 export interface CiteKeyExport {
