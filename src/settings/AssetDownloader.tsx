@@ -6,9 +6,12 @@ import {
   checkEXEVersion,
   doesEXEExist,
   doesLegacyEXEExist,
+  doesLegacyEXEExist2,
   getExeRoot,
   removeEXE,
   removeLegacyEXE,
+  removeLegacyEXE2,
+  scopeExe,
 } from 'src/helpers';
 import { ZoteroConnectorSettings } from 'src/types';
 
@@ -16,6 +19,7 @@ import { Icon } from './Icon';
 import { SettingItem } from './SettingItem';
 
 export const currentVersion = '1.0.15';
+export const internalVersion = 1;
 
 const options: Record<string, Record<string, string>> = {
   darwin: {
@@ -50,6 +54,10 @@ export async function downloadAndExtract() {
   if (!url) return false;
 
   try {
+    if (doesLegacyEXEExist2()) {
+      removeLegacyEXE2();
+    }
+
     if (doesLegacyEXEExist()) {
       removeLegacyEXE();
     }
@@ -61,6 +69,8 @@ export async function downloadAndExtract() {
     await download(url, getExeRoot(), {
       extract: true,
     });
+
+    scopeExe();
   } catch (e) {
     console.error(e);
     new Notice(

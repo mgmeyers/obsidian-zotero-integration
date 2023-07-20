@@ -725,17 +725,21 @@ export async function exportToMarkdown(
 
       if (canExtract) {
         try {
-          const res = await extractAnnotations(pdfInputPath, {
-            imageBaseName: imageBaseName,
-            imageDPI: settings.pdfExportImageDPI,
-            imageFormat: settings.pdfExportImageFormat,
-            imageOutputPath: imageOutputPath,
-            imageQuality: settings.pdfExportImageQuality,
-            attemptOCR: settings.pdfExportImageOCR,
-            ocrLang: settings.pdfExportImageOCRLang,
-            tesseractPath: settings.pdfExportImageTesseractPath,
-            tessDataDir: settings.pdfExportImageTessDataDir,
-          });
+          const res = await extractAnnotations(
+            pdfInputPath,
+            {
+              imageBaseName: imageBaseName,
+              imageDPI: settings.pdfExportImageDPI,
+              imageFormat: settings.pdfExportImageFormat,
+              imageOutputPath: imageOutputPath,
+              imageQuality: settings.pdfExportImageQuality,
+              attemptOCR: settings.pdfExportImageOCR,
+              ocrLang: settings.pdfExportImageOCRLang,
+              tesseractPath: settings.pdfExportImageTesseractPath,
+              tessDataDir: settings.pdfExportImageTessDataDir,
+            },
+            settings.exeOverridePath
+          );
 
           let extracted = JSON.parse(res);
 
@@ -922,18 +926,22 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
       if (canExtract) {
         try {
-          const res = await extractAnnotations(pdfInputPath, {
-            noWrite: true,
-            imageBaseName: 'base_name',
-            imageDPI: settings.pdfExportImageDPI,
-            imageFormat: settings.pdfExportImageFormat,
-            imageOutputPath: path.join(vaultRoot, 'output_path'),
-            imageQuality: settings.pdfExportImageQuality,
-            attemptOCR: settings.pdfExportImageOCR,
-            ocrLang: settings.pdfExportImageOCRLang,
-            tesseractPath: settings.pdfExportImageTesseractPath,
-            tessDataDir: settings.pdfExportImageTessDataDir,
-          });
+          const res = await extractAnnotations(
+            pdfInputPath,
+            {
+              noWrite: true,
+              imageBaseName: 'base_name',
+              imageDPI: settings.pdfExportImageDPI,
+              imageFormat: settings.pdfExportImageFormat,
+              imageOutputPath: path.join(vaultRoot, 'output_path'),
+              imageQuality: settings.pdfExportImageQuality,
+              attemptOCR: settings.pdfExportImageOCR,
+              ocrLang: settings.pdfExportImageOCRLang,
+              tesseractPath: settings.pdfExportImageTesseractPath,
+              tessDataDir: settings.pdfExportImageTessDataDir,
+            },
+            settings.exeOverridePath
+          );
 
           let extracted = JSON.parse(res);
 

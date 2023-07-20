@@ -1,7 +1,7 @@
 import { execa } from 'execa';
 import { Notice } from 'obsidian';
 import path from 'path';
-import { getExeName, getExeRoot } from 'src/helpers';
+import { ensureExecutableSync, getExeName, getExeRoot } from 'src/helpers';
 
 import { LoadingModal } from './LoadingModal';
 
@@ -33,7 +33,11 @@ const paramMap: Record<keyof ExtractParams, string> = {
   tessDataDir: '--tess-data-dir',
 };
 
-export async function extractAnnotations(input: string, params: ExtractParams) {
+export async function extractAnnotations(
+  input: string,
+  params: ExtractParams,
+  overridePath?: string
+) {
   const modal = new LoadingModal(app, 'Extracting annotations...');
   modal.open();
 
@@ -61,7 +65,17 @@ export async function extractAnnotations(input: string, params: ExtractParams) {
   });
 
   try {
-    const result = await execa(path.join(getExeRoot(), getExeName()), args);
+    const isExecutable = ensureExecutableSync(overridePath);
+
+    if (!isExecutable) {
+      new Notice(`Error: PDF utility is not executable`, 10000);
+      return '[]';
+    }
+
+    const result = await execa(
+      overridePath || path.join(getExeRoot(), getExeName()),
+      args
+    );
 
     modal.close();
 

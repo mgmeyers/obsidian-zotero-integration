@@ -12,7 +12,11 @@ import {
   noteExportPrompt,
 } from './bbt/exportNotes';
 import './bbt/template.helpers';
-import { currentVersion, downloadAndExtract } from './settings/AssetDownloader';
+import {
+  currentVersion,
+  downloadAndExtract,
+  internalVersion,
+} from './settings/AssetDownloader';
 import { ZoteroConnectorSettingsTab } from './settings/settings';
 import {
   CitationFormat,
@@ -284,10 +288,13 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async updatePDFUtility() {
+    const { exeOverridePath, _exeInternalVersion, exeVersion } = this.settings;
+    if (exeOverridePath || !exeVersion) return;
+
     if (
-      !this.settings.exeOverridePath &&
-      this.settings.exeVersion &&
-      this.settings.exeVersion !== currentVersion
+      exeVersion !== currentVersion ||
+      !_exeInternalVersion ||
+      _exeInternalVersion !== internalVersion
     ) {
       const modal = new LoadingModal(
         app,
@@ -300,6 +307,7 @@ export default class ZoteroConnector extends Plugin {
 
         if (success) {
           this.settings.exeVersion = currentVersion;
+          this.settings._exeInternalVersion = internalVersion;
           this.saveSettings();
         }
       } catch {
