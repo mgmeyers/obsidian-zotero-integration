@@ -117,7 +117,7 @@ export function getColorCategory(hex: string) {
   if (h < 263) {
     return 'Blue';
   }
-  if (h < 280) {
+  if (h < 255) {
     return 'Purple';
   }
   if (h < 335) {
