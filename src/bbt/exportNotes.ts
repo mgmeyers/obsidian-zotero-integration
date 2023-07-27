@@ -1,4 +1,4 @@
-import { copyFileSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import {
   Editor,
   Notice,
@@ -44,16 +44,30 @@ export async function processZoteroAnnotationNotes(
         if (imagePath) {
           const parsed = path.parse(imagePath);
           const destPath = await getAvailablePathForAttachments(
-            parsed.name,
+            annotationKey,
             parsed.ext.slice(1),
             destination
           );
 
+          const output = path.parse(path.join(getVaultRoot(), destPath));
+          const imageOutputPath = output.dir;
+
+          if (!existsSync(imageOutputPath)) {
+            mkdirSync(imageOutputPath, { recursive: true });
+          }
+
+          let input = path.join(parsed.dir, `${annotationKey}${parsed.ext}`);
+
           try {
-            copyFileSync(
-              path.join(parsed.dir, `${annotationKey}${parsed.ext}`),
-              path.join(getVaultRoot(), destPath)
-            );
+            if (!existsSync(input)) {
+              const origInput = input;
+              input = imagePath;
+              if (!existsSync(input)) {
+                throw new Error('Cannot find annotation image: ' + origInput);
+              }
+            }
+
+            copyFileSync(input, path.join(getVaultRoot(), destPath));
           } catch (e) {
             new Notice(
               'Error: unable to copy annotation image from Zotero into your vault',
