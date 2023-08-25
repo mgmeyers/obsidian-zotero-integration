@@ -3,7 +3,6 @@ import {
   TFile,
   WorkspaceLeaf,
   moment,
-  normalizePath,
 } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -11,14 +10,10 @@ import { JSONTree } from 'react-json-tree';
 
 import {
   dataExplorerPrompt,
-  getATemplatePath,
   renderTemplates,
 } from './bbt/export';
-import { sanitizeFilePath } from './bbt/helpers';
-import { PersistExtension, renderTemplate } from './bbt/template.env';
+import { PersistExtension } from './bbt/template.env';
 import {
-  getLastExport,
-  removeStartingSlash,
   sanitizeObsidianPath,
 } from './bbt/template.helpers';
 import ZoteroConnector from './main';
@@ -124,32 +119,9 @@ function TemplatePreview({
     };
 
     const render = async () => {
-      const sourcePath = getATemplatePath(params);
-
       try {
-        const renderedPath = await renderTemplate(
-          sourcePath,
-          params.exportFormat.outputPathTemplate,
-          templateData
-        );
-
-        const markdownPath = normalizePath(
-          sanitizeFilePath(removeStartingSlash(renderedPath))
-        );
-
-        const existingMarkdownFile =
-          app.vault.getAbstractFileByPath(markdownPath);
-
-        let existingMarkdown = '';
-        let lastImportDate = moment(0);
-
-        if (existingMarkdownFile) {
-          existingMarkdown = await app.vault.cachedRead(
-            existingMarkdownFile as TFile
-          );
-
-          lastImportDate = getLastExport(existingMarkdown);
-        }
+        const existingMarkdown = '';
+        const lastImportDate = moment(0);
 
         const output = await renderTemplates(
           params,
