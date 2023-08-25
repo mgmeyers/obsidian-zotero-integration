@@ -1,1 +1,1 @@
-07bba3b Ensure data explorer updates when template and template data change
+bc531e5 Don't set lastImportDate when previeing template
