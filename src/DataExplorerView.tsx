@@ -174,7 +174,7 @@ function TemplatePreview({
     };
 
     render();
-  }, [formatIndex, forceRef]);
+  }, [formatIndex, forceRef, templateData]);
 
   if (!template && !templateError) return null;
 

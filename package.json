@@ -1,6 +1,6 @@
 {
   "name": "obsidian-sample-plugin",
-  "version": "0.12.0",
+  "version": "3.0.7",
   "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
   "main": "main.js",
   "scripts": {
@@ -11,7 +11,10 @@
     "lint:fix": "eslint ./src/**/* --fix",
     "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",
     "clean": "yarn prettier && yarn lint:fix",
-    "test": "jest"
+    "test": "jest",
+    "rlnotes": "git log $(git describe --tags --abbrev=0)..HEAD --oneline > release-notes.md && git add release-notes.md",
+		"bump": "node version-bump.mjs && git add manifest.json versions.json && yarn rlnotes",
+		"release": "git commit -m $npm_package_version && git tag $npm_package_version && git push && git push --tags"
   },
   "keywords": [],
   "author": "",
