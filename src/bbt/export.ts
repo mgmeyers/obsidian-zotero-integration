@@ -512,14 +512,15 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
 }
 
 export async function exportToMarkdown(
-  params: ExportToMarkdownParams
+  params: ExportToMarkdownParams,
+  explicitCiteKeys?: CiteKey[],
 ): Promise<string[]> {
   const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
   const canExtract = doesEXEExist();
 
-  const citeKeys = await getCiteKeys(database);
+  const citeKeys = explicitCiteKeys ? explicitCiteKeys : await getCiteKeys(database);
   if (!citeKeys.length) return [];
 
   const libraryID = citeKeys[0].library;
