@@ -8,7 +8,7 @@ You can find the documentation for this plugin [here](https://github.com/mgmeyer
 
 Please insure your Obsidian installer version is at least `v0.13.24`. If not, try reinstalling obsidian.
 
-## Help, I get an error when creating a citation or biliography!
+## Help, I get an error when creating a citation or bibliography!
 
 Please ensure you have selected a quick copy style in Zotero:
 
