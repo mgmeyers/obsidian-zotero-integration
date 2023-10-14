@@ -1,7 +1,7 @@
-import { ItemView, TFile, WorkspaceLeaf, moment } from 'obsidian';
+import { ItemView, Menu, TFile, WorkspaceLeaf, moment } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { JSONTree } from 'react-json-tree';
+import { JSONTree, LabelRenderer, ValueRenderer } from 'react-json-tree';
 
 import { dataExplorerPrompt, renderTemplates } from './bbt/export';
 import { PersistExtension } from './bbt/template.env';
@@ -216,20 +216,8 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
                   data={data}
                   sortObjectKeys={(a: string, b: string) => a.localeCompare(b)}
                   isCustomNode={(v) => v instanceof moment}
-                  valueRenderer={(v) => {
-                    if (v instanceof moment) {
-                      return `moment(${(v as moment.Moment).toLocaleString()})`;
-                    }
-
-                    if (typeof v === 'string' && v.length > 800) {
-                      return v.slice(0, 800) + '...';
-                    }
-
-                    return v;
-                  }}
-                  labelRenderer={(keyPath: (string | number)[]) => {
-                    return keyPath.length === 1 ? 'Template Data' : keyPath[0];
-                  }}
+                  valueRenderer={valueRenderer}
+                  labelRenderer={labelRenderer}
                   theme={
                     document.body.hasClass('theme-dark')
                       ? tomorrowDark
@@ -282,3 +270,89 @@ export class DataExplorerView extends ItemView {
     this.unmountJsonViewer();
   }
 }
+
+/**
+ * The following has been copied & modified from:
+ * https://github.com/PKM-er/obsidian-zotlit/tree/dcd41794fd96f92c1866e870821aeb128507b339/app/obsidian/src/components/item-details
+ */
+
+const labelRenderer: LabelRenderer = (keyPathWithRoot, nodeType) => {
+  const isRoot = keyPathWithRoot.length === 1;
+  const keyPath = keyPathWithRoot.slice(0, -1);
+  const path = getKeyName(keyPath);
+  const handler = (evt: MouseEvent) => {
+    const menu = new Menu().addItem((i) =>
+      i
+        .setIcon('lucide-copy')
+        .setTitle('Copy template path')
+        .onClick(() => {
+          navigator.clipboard.writeText(`{{${path}}}`);
+        })
+    );
+
+    if (nodeType === 'Array') {
+      menu.addItem((i) =>
+        i
+          .setIcon('lucide-copy')
+          .setTitle('Copy template for loop')
+          .onClick(() => {
+            navigator.clipboard.writeText(
+              `{% for item in ${path} %}\n{% item %}\n{% endfor %}`
+            );
+          })
+      );
+    }
+    evt.preventDefault();
+    menu.showAtMouseEvent(evt);
+  };
+
+  return (
+    <span onContextMenu={isRoot ? undefined : handler}>
+      {isRoot ? 'Template Data' : keyPathWithRoot[0]}
+    </span>
+  );
+};
+
+const getKeyName = (keyPath: (string | number)[]) =>
+  keyPath.map(toPropName).reverse().join('');
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers
+const identifiers = /^[$_\p{ID_Start}][$\u200c\u200d\p{ID_Continue}]*$/u;
+const toPropName = (
+  key: string | number,
+  i: number,
+  arr: Array<string | number>
+) => {
+  if (typeof key === 'number') return `[${key}]`;
+  if (identifiers.test(key)) return i === arr.length - 1 ? `${key}` : `.${key}`;
+  return `[${JSON.stringify(key)}]`;
+};
+
+// matches #RGB, #RGBA, #RRGGBB, #RRGGBBAA
+const hex = /^#(?:[\dA-F]{3}){1,2}$|^#(?:[\dA-F]{4}){1,2}$/i;
+
+export const valueRenderer: ValueRenderer = (valueAsString, value) => {
+  if (value instanceof moment) {
+    return <>📅 {(value as moment.Moment).format('l LTS')}</>;
+  }
+
+  if (typeof value === 'string' && hex.test(value)) {
+    return (
+      <>
+        <span
+          style={{
+            backgroundColor: value,
+          }}
+          className="zt-color-chip"
+        ></span>
+        {value}
+      </>
+    );
+  }
+
+  if (typeof value === 'string' && value.length > 800) {
+    return value.slice(0, 800) + '...';
+  }
+
+  return valueAsString;
+};
