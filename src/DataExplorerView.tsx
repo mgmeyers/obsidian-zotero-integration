@@ -1,21 +1,11 @@
-import {
-  ItemView,
-  TFile,
-  WorkspaceLeaf,
-  moment,
-} from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf, moment } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { JSONTree } from 'react-json-tree';
 
-import {
-  dataExplorerPrompt,
-  renderTemplates,
-} from './bbt/export';
+import { dataExplorerPrompt, renderTemplates } from './bbt/export';
 import { PersistExtension } from './bbt/template.env';
-import {
-  sanitizeObsidianPath,
-} from './bbt/template.helpers';
+import { sanitizeObsidianPath } from './bbt/template.helpers';
 import ZoteroConnector from './main';
 import { ExportFormat, ExportToMarkdownParams } from './types';
 

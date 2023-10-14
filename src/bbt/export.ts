@@ -371,16 +371,16 @@ export async function renderTemplates(
   }
 
   let main = '';
+  let hasPersist = false;
 
   if (template) {
     try {
-      main = template
-        ? await renderTemplate(
-            params.exportFormat.templatePath,
-            template,
-            templateData
-          )
-        : '';
+      main = await renderTemplate(
+        params.exportFormat.templatePath,
+        template,
+        templateData
+      );
+      hasPersist = PersistExtension.re.test(main);
     } catch (e) {
       if (shouldThrow) {
         throw errorToHelpfulError(
@@ -398,7 +398,7 @@ export async function renderTemplates(
       }
     }
 
-    return appendExportDate(main);
+    return hasPersist ? appendExportDate(main) : main;
   }
 
   // Legacy templates
@@ -513,14 +513,16 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
 
 export async function exportToMarkdown(
   params: ExportToMarkdownParams,
-  explicitCiteKeys?: CiteKey[],
+  explicitCiteKeys?: CiteKey[]
 ): Promise<string[]> {
   const importDate = moment();
   const { database, exportFormat, settings } = params;
   const sourcePath = getATemplatePath(params);
   const canExtract = doesEXEExist();
 
-  const citeKeys = explicitCiteKeys ? explicitCiteKeys : await getCiteKeys(database);
+  const citeKeys = explicitCiteKeys
+    ? explicitCiteKeys
+    : await getCiteKeys(database);
   if (!citeKeys.length) return [];
 
   const libraryID = citeKeys[0].library;

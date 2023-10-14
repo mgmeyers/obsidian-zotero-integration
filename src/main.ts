@@ -216,7 +216,7 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async runImport(name: string, citekey: string, library: number = 1) {
-    const format = this.settings.exportFormats.find(f => f.name === name);
+    const format = this.settings.exportFormats.find((f) => f.name === name);
 
     if (!format) {
       throw new Error(`Error: Import format "${name}" not found`);
@@ -229,11 +229,14 @@ export default class ZoteroConnector extends Plugin {
 
     if (citekey.startsWith('@')) citekey = citekey.substring(1);
 
-    await exportToMarkdown({
-      settings: this.settings,
-      database,
-      exportFormat: format,
-    }, [{ key: citekey, library }]);
+    await exportToMarkdown(
+      {
+        settings: this.settings,
+        database,
+        exportFormat: format,
+      },
+      [{ key: citekey, library }]
+    );
   }
 
   async openNotes(createdOrUpdatedMarkdownFilesPaths: string[]) {
