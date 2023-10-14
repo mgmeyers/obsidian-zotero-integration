@@ -1,58 +1,3 @@
-/* @settings
-
-name: Zotero Integration Reference List
-id: zotero-pandoc-reference-list
-settings:
-  - 
-    id: pwc-font-size
-    title: Sidebar reference list font size
-    type: variable-number-slider
-    default: 14
-    format: px
-    min: 8
-    max: 24
-    step: 1
-  - 
-    id: pwc-tooltip-font-size
-    title: Tooltip citation font size
-    type: variable-number-slider
-    default: 14
-    format: px
-    min: 8
-    max: 24
-    step: 1
-  - 
-    id: pwc-citation-color
-    title: Citation color
-    type: variable-themed-color
-    format: hex
-    default-light: '#2e3338'
-    default-dark: '#dcddde'
-  - 
-    id: pwc-citation-underline-color
-    title: Citation underline color
-    type: variable-themed-color
-    format: hex
-    default-light: '#705dcf'
-    default-dark: '#7f6df2'
-  - 
-    id: pwc-citation-formatting-color
-    title: Citation formatting color
-    description: Changes the color of brackets and semicolons
-    type: variable-themed-color
-    format: hex
-    default-light: '#2e3338'
-    default-dark: '#dcddde'
-  - 
-    id: pwc-citation-extra-color
-    title: 'Citation "extra" color'
-    description: 'Changes the color text within a citation, eg. "pp. 22-24"'
-    type: variable-themed-color
-    format: hex
-    default-light: '#2e3338'
-    default-dark: '#dcddde'
-*/
-
 .zt-format {
   border: 1px solid var(--background-modifier-border);
   padding: 1rem;
@@ -270,6 +215,15 @@ settings:
 }
 .zt-suggest-loading:after {
   left: 2em;
+}
+
+.zt-color-chip {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  margin-right: var(--size-4-1);
 }
 
 @keyframes bblFadInOut {
