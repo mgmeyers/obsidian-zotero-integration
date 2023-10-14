@@ -174,7 +174,7 @@ export class PersistExtension implements Extension {
       retained = context.ctx._retained[id];
     }
 
-    const trimmed = (body() as string).replace(/^\n/, '');
+    const trimmed = (body() as string).replace(/^\r?\n/, '');
 
     return new nunjucks.runtime.SafeString(
       `%% begin ${id} %%${retained}${trimmed}%% end ${id} %%`
