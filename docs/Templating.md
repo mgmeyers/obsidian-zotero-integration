@@ -123,7 +123,10 @@ This can be used to create a section for notes:
 ## {{title}}
 
 ### Notes
-{% persist "notes" %}
+{% persist "notes" %}{% if isFirstImport %}
+- [ ] first thing
+- [ ] second thing
+{% endif %}things to add each time you import
 {% endpersist %}
 ```
 
@@ -134,10 +137,24 @@ Which will create a markdown file that looks like:
 
 ### Notes
 %% begin notes %%
+- [ ] first thing
+- [ ] second thing
+things to add each time you import
 %% end notes %%
 ```
 
 Any content added between `%% begin notes %%` and `%% end notes %%` will not be overwritten.
+
+Content between `{% if isFirstImport %}` and `{% endif %}` will not be overwritten. But `things to add each time you import` will be appended to the end of the notes section each time you import as follows:
+
+```markdown
+- [ ] first thing
+- [ ] second thing
+things to add each time you import
+things to add each time you import
+things to add each time you import
+...
+```
 
 You can also use this to import only the annotations that were added since the last import.
 
