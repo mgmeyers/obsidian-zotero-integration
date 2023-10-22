@@ -380,7 +380,7 @@ export async function renderTemplates(
         template,
         templateData
       );
-      hasPersist = PersistExtension.re.test(main);
+      hasPersist = PersistExtension.hasPersist(main);
     } catch (e) {
       if (shouldThrow) {
         throw errorToHelpfulError(

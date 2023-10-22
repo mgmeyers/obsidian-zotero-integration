@@ -174,7 +174,8 @@ export class PersistExtension implements Extension {
       retained = context.ctx._retained[id];
     }
 
-    const trimmed = (body() as string).replace(/^\r?\n/, '');
+    let trimmed = body() as string;
+    if (retained) trimmed = trimmed.trimStart();
 
     return new nunjucks.runtime.SafeString(
       `%% begin ${id} %%${retained}${trimmed}%% end ${id} %%`
@@ -182,13 +183,17 @@ export class PersistExtension implements Extension {
   }
 
   static re = /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/gi;
+  static hasPersist(str: string) {
+    this.re.lastIndex = 0;
+    return this.re.test(str);
+  }
   static prepareTemplateData<T>(templateData: T, md: string): T & WithRetained {
     const out: Record<string, string> = {};
 
     if (!md) return templateData;
 
-    const matches = md.matchAll(this.re);
-    for (const match of matches) {
+    this.re.lastIndex = 0;
+    for (const match of md.matchAll(this.re)) {
       out[match[1]] = match[2];
     }
 
