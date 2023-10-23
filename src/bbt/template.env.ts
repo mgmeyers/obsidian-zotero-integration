@@ -277,6 +277,7 @@ export const template = new nunjucks.Environment(loader as any, {
   autoescape: false,
 });
 
+// The following code has been borrowed from the discussion at https://github.com/mozilla/nunjucks/issues/313
 template.addFilter('setAttribute', function(dictionary, key: any, value: any) {
   dictionary[key] = value;
   return dictionary;
