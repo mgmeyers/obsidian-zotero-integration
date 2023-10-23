@@ -238,18 +238,18 @@ Allows modify an object.
 
 It can be invaluable in complex scenarios where you need to change one annotation based on another. For instance, when some annotations ("yellow") represent sentences or paragraphs, and other annotations ("green") are highlighted terms within these paragraphs. By using this filter, you can transform occurrences of green annotations inside previous yellow ones into links.
 
-```
+```markdown
 {%- for entry in annotations -%}
-    {%- if entry["colorCategory"] === "Green" -%}
+    {%- if entry['colorCategory'] === "Green" -%}
         {%- if loop.index0 > 1 -%}
             {%- set conceptIndex = loop.index0 -%}
             {%- set findPrev = false -%}
                 {%- for i in range(1, loop.index0) -%}
                     {%- if findPrev === false -%}
                         {%- set prevAnnot = annotations[conceptIndex - i] -%}
-                        {%- if prevAnnot["colorCategory"] === "Yellow" -%}  
+                        {%- if prevAnnot['colorCategory'] === "Yellow" -%}  
                             {%- set concept = entry['annotatedText'] -%}
-                            {%- set text = prevAnnot['annotatedText'].replace(concept, "[[" + concept + "]]") -%}
+                            {%- set text = prevAnnot['annotatedText'].replace(concept, '[[' + concept + ']]') -%}
                             {%- set prevAnnot = prevAnnot|setAttribute('annotatedText', text) -%}
                             {%- set findPrev = true -%}
                         {%- endif -%}
