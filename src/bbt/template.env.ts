@@ -277,6 +277,10 @@ export const template = new nunjucks.Environment(loader as any, {
   autoescape: false,
 });
 
+template.addFilter('setAttribute', function(dictionary, key: any, value: any) {
+  dictionary[key] = value;
+  return dictionary;
+});
 template.addFilter('filterby', filterBy);
 template.addFilter('format', format);
 template.addExtension(PersistExtension.id, new PersistExtension());

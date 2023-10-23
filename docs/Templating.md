@@ -230,3 +230,38 @@ Reduce a list down to only the items where a date property occurs after the spec
 Reduce a list down to only the items where a date property occurs before the specified date parameter:
 
 `{% set previousAnnots = annotations | filterby("date", "datebefore", lastExportDate) %}`
+
+#### 'setAttribute("<attribute>", "<value>")'
+Allows modify an object.
+
+`{% set annot = annot|setAttribute('annotatedText', text) %}`
+
+It can be invaluable in complex scenarios where you need to change one annotation based on another. For instance, when some annotations ("yellow") represent sentences or paragraphs, and other annotations ("green") are highlighted terms within these paragraphs. By using this filter, you can transform occurrences of green annotations inside previous yellow ones into links.
+
+```
+{%- for entry in annotations -%}
+    {%- if entry["colorCategory"] === "Green" -%}
+        {%- if loop.index0 > 1 -%}
+            {%- set conceptIndex = loop.index0 -%}
+            {%- set findPrev = false -%}
+                {%- for i in range(1, loop.index0) -%}
+                    {%- if findPrev === false -%}
+                        {%- set prevAnnot = annotations[conceptIndex - i] -%}
+                        {%- if prevAnnot["colorCategory"] === "Yellow" -%}  
+                            {%- set concept = entry['annotatedText'] -%}
+                            {%- set text = prevAnnot['annotatedText'].replace(concept, "[[" + concept + "]]") -%}
+                            {%- set prevAnnot = prevAnnot|setAttribute('annotatedText', text) -%}
+                            {%- set findPrev = true -%}
+                        {%- endif -%}
+                    {%- endif -%}
+                {%- endfor -%}
+            {%- endif -%}
+    {%- endif -%}
+{%- endfor -%}
+```
+
+An example of highlighting a text fragment within the text and the same fragment in the exported note:
+![](Text%20Annotation%20Example.png)
+
+> other expressions circulated at the time, from the [[sociology of translation]], to the [[anthropology of science and technology,]] to the [[sociology of mediation,]] marking the plural and fluctuating character of the intellectual project(s).
+
