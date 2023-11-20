@@ -4,6 +4,10 @@ Insert and import citations, bibliographies, notes, and PDF annotations from Zot
 
 You can find the documentation for this plugin [here](https://github.com/mgmeyers/obsidian-zotero-integration/blob/main/docs/README.md). The documentation is currently incomplete. Please reach out if you'd like to help.
 
+## Help, how do I install the plugin?
+
+In Obsidian, open Settings, on the left under Options open Community Plugins, on Community Plugins select Browse and search for 'Zotero Integration'
+
 ## Help, the plugin doesn't load!
 
 Please insure your Obsidian installer version is at least `v0.13.24`. If not, try reinstalling obsidian.
