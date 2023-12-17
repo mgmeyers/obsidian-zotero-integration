@@ -46,10 +46,10 @@ async function processNote(citeKey: CiteKey, note: any) {
   if (note.dateAdded) {
     note.dateAdded = moment(note.dateAdded);
   }
-
   if (note.dateModified) {
     note.dateModified = moment(note.dateModified);
   }
+  note.desktopURI = getLocalURI('select', note.uri)
 }
 
 function processAttachment(attachment: any) {
