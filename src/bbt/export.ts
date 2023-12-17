@@ -663,22 +663,6 @@ export async function exportToMarkdown(
 
       if (isPDF && canExtract) {
         try {
-          console.log(
-            { ...attachment },
-            attachmentPath,
-            {
-              imageBaseName: imageBaseName,
-              imageDPI: settings.pdfExportImageDPI,
-              imageFormat: settings.pdfExportImageFormat,
-              imageOutputPath: imageOutputPath,
-              imageQuality: settings.pdfExportImageQuality,
-              attemptOCR: settings.pdfExportImageOCR,
-              ocrLang: settings.pdfExportImageOCRLang,
-              tesseractPath: settings.pdfExportImageTesseractPath,
-              tessDataDir: settings.pdfExportImageTessDataDir,
-            },
-            settings.exeOverridePath
-          );
           const res = await extractAnnotations(
             attachmentPath,
             {
