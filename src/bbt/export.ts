@@ -49,7 +49,7 @@ async function processNote(citeKey: CiteKey, note: any) {
   if (note.dateModified) {
     note.dateModified = moment(note.dateModified);
   }
-  note.desktopURI = getLocalURI('select', note.uri)
+  note.desktopURI = getLocalURI('select', note.uri);
 }
 
 function processAttachment(attachment: any) {
@@ -511,6 +511,33 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
   );
 }
 
+async function getAttachmentData(item: any, database: DatabaseWithPort) {
+  let mappedAttachments: Record<string, any> = {};
+
+  try {
+    const citekey = getCiteKeyFromAny(item);
+    if (citekey) {
+      const fullAttachmentData = await getAttachmentsFromCiteKey(
+        citekey,
+        database
+      );
+
+      mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
+        Record<string, any>
+      >((col, a) => {
+        if (a?.path) {
+          col[a.path] = a;
+        }
+        return col;
+      }, {});
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  return mappedAttachments;
+}
+
 export async function exportToMarkdown(
   params: ExportToMarkdownParams,
   explicitCiteKeys?: CiteKey[]
@@ -544,111 +571,31 @@ export async function exportToMarkdown(
   }
 
   const vaultRoot = getVaultRoot();
-
-  // Store the path of markdown files that will be created/updated
-  // on import to open them later
+  const toRender: Map<
+    string,
+    {
+      file: TFile;
+      fileContent: string;
+      lastImportDate: moment.Moment;
+      existingAnnotations: string;
+      templateData: Record<any, any>;
+    }
+  > = new Map();
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    const attachments = itemData[i].attachments as any[];
-    const hasPDF = attachments.some((a) => a.path?.endsWith('.pdf'));
+    const item = itemData[i];
+    const attachments = item.attachments as any[];
+    const attachmentData = await getAttachmentData(item, database);
 
-    // Handle the case of an item with no PDF attachments
-    if (!hasPDF) {
-      const pathTemplateData = await applyBasicTemplates(sourcePath, {
-        ...itemData[i],
-        annotations: [],
-      });
-
-      const markdownPath = normalizePath(
-        sanitizeFilePath(
-          removeStartingSlash(
-            await renderTemplate(
-              sourcePath,
-              exportFormat.outputPathTemplate,
-              pathTemplateData
-            )
-          )
-        )
-      );
-
-      const existingMarkdownFile =
-        app.vault.getAbstractFileByPath(markdownPath);
-      let existingMarkdown = '';
-      let lastImportDate = moment(0);
-
-      if (existingMarkdownFile) {
-        existingMarkdown = await app.vault.cachedRead(
-          existingMarkdownFile as TFile
-        );
-
-        lastImportDate = getLastExport(existingMarkdown);
-      }
-
-      const isFirstImport = lastImportDate.valueOf() === 0;
-
-      const templateData: Record<any, any> = await applyBasicTemplates(
-        markdownPath,
-        {
-          ...itemData[i],
-          annotations: [],
-
-          lastImportDate,
-          isFirstImport,
-          // legacy
-          lastExportDate: lastImportDate,
-        }
-      );
-
-      const rendered = await renderTemplates(
-        params,
-        PersistExtension.prepareTemplateData(templateData, existingMarkdown),
-        ''
-      );
-
-      if (!rendered) return [];
-
-      if (existingMarkdown) {
-        app.vault.modify(existingMarkdownFile as TFile, rendered);
-      } else {
-        await mkMDDir(markdownPath);
-        app.vault.create(markdownPath, rendered);
-      }
-
-      createdOrUpdatedMarkdownFiles.push(markdownPath);
-      continue;
-    }
-
-    let mappedAttachments: Record<string, any> = {};
-
-    try {
-      const citekey = getCiteKeyFromAny(itemData[i]);
-      if (citekey) {
-        const fullAttachmentData = await getAttachmentsFromCiteKey(
-          citekey,
-          database
-        );
-
-        mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
-          Record<string, any>
-        >((col, a) => {
-          if (a?.path) {
-            col[a.path] = a;
-          }
-          return col;
-        }, {});
-      }
-    } catch {
-      //
-    }
-
-    // Handle the case of an item WITH PDF attachments
     for (let j = 0, jLen = attachments.length; j < jLen; j++) {
-      const pdfInputPath = attachments[j].path;
-      if (!pdfInputPath?.endsWith('.pdf')) continue;
+      const attachment = attachments[j];
+      const attachmentPath = attachment.path;
+      const isPDF = attachmentPath?.endsWith('.pdf');
 
       const pathTemplateData = await applyBasicTemplates(sourcePath, {
-        ...attachments[j],
-        ...itemData[i],
+        annotations: [],
+        ...attachment,
+        ...item,
       });
 
       const imageRelativePath = exportFormat.imageOutputPathTemplate
@@ -691,51 +638,49 @@ export async function exportToMarkdown(
         )
       );
 
-      const existingMarkdownFile =
-        app.vault.getAbstractFileByPath(markdownPath);
-
-      let existingMarkdown = '';
-      let lastImportDate = moment(0);
-      let existingAnnotations = '';
-
-      if (existingMarkdownFile) {
-        existingMarkdown = await app.vault.cachedRead(
-          existingMarkdownFile as TFile
-        );
-
-        lastImportDate = getLastExport(existingMarkdown);
-        existingAnnotations = getExistingAnnotations(existingMarkdown);
-      }
-
-      const isFirstImport = lastImportDate.valueOf() === 0;
-
       let annots: any[] = [];
 
-      mappedAttachments[attachments[j].path]?.annotations?.forEach(
-        (annot: any) => {
+      if (isPDF) {
+        attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
           if (!annot.annotationPosition.rects?.length) return;
 
           annots.push(
             convertNativeAnnotation(
               annot,
-              attachments[j],
+              attachment,
               imageOutputPath,
               imageRelativePath,
               imageBaseName,
               true
             )
           );
-        }
-      );
+        });
+      }
 
-      if (settings.shouldConcat && annots.length) {
+      if (annots.length && settings.shouldConcat) {
         annots = concatAnnotations(annots);
       }
 
-      if (canExtract) {
+      if (isPDF && canExtract) {
         try {
+          console.log(
+            { ...attachment },
+            attachmentPath,
+            {
+              imageBaseName: imageBaseName,
+              imageDPI: settings.pdfExportImageDPI,
+              imageFormat: settings.pdfExportImageFormat,
+              imageOutputPath: imageOutputPath,
+              imageQuality: settings.pdfExportImageQuality,
+              attemptOCR: settings.pdfExportImageOCR,
+              ocrLang: settings.pdfExportImageOCRLang,
+              tesseractPath: settings.pdfExportImageTesseractPath,
+              tessDataDir: settings.pdfExportImageTessDataDir,
+            },
+            settings.exeOverridePath
+          );
           const res = await extractAnnotations(
-            pdfInputPath,
+            attachmentPath,
             {
               imageBaseName: imageBaseName,
               imageDPI: settings.pdfExportImageDPI,
@@ -752,9 +697,9 @@ export async function exportToMarkdown(
 
           let extracted = JSON.parse(res);
 
-          extracted.forEach((a: any) => {
-            processAnnotation(a, attachments[j], imageRelativePath);
-          });
+          for (const e of extracted) {
+            processAnnotation(e, attachment, imageRelativePath);
+          }
 
           if (settings.shouldConcat && extracted.length) {
             extracted = concatAnnotations(extracted);
@@ -762,44 +707,72 @@ export async function exportToMarkdown(
 
           annots.push(...extracted);
         } catch (e) {
-          return [];
+          //
         }
       }
 
       if (annots.length) {
-        attachments[j].annotations = annots;
+        attachment.annotations = annots;
       }
 
-      const templateData: Record<any, any> = await applyBasicTemplates(
-        markdownPath,
-        {
-          ...itemData[i],
-          annotations: annots ? annots : [],
+      if (!toRender.has(markdownPath)) {
+        const existingMarkdownFile = app.vault.getAbstractFileByPath(
+          markdownPath
+        ) as TFile;
+        const existingMarkdown = existingMarkdownFile
+          ? await app.vault.cachedRead(existingMarkdownFile as TFile)
+          : '';
+        const existingAnnotations = existingMarkdownFile
+          ? getExistingAnnotations(existingMarkdown)
+          : '';
+        const lastImportDate = existingMarkdownFile
+          ? getLastExport(existingMarkdown)
+          : moment(0);
+        const isFirstImport = lastImportDate.valueOf() === 0;
 
+        const templateData: Record<any, any> = await applyBasicTemplates(
+          markdownPath,
+          {
+            ...item,
+            annotations: annots,
+
+            lastImportDate,
+            isFirstImport,
+            // legacy
+            lastExportDate: lastImportDate,
+          }
+        );
+
+        toRender.set(markdownPath, {
+          file: existingMarkdownFile,
+          fileContent: existingMarkdown,
           lastImportDate,
-          isFirstImport,
-          // legacy
-          lastExportDate: lastImportDate,
-        }
-      );
-
-      const rendered = await renderTemplates(
-        params,
-        PersistExtension.prepareTemplateData(templateData, existingMarkdown),
-        existingAnnotations
-      );
-
-      if (!rendered) return [];
-
-      if (existingMarkdownFile) {
-        app.vault.modify(existingMarkdownFile as TFile, rendered);
-      } else {
-        await mkMDDir(markdownPath);
-        app.vault.create(markdownPath, rendered);
+          existingAnnotations,
+          templateData,
+        });
       }
-
-      createdOrUpdatedMarkdownFiles.push(markdownPath);
     }
+  }
+
+  for (const [markdownPath, data] of toRender.entries()) {
+    const { templateData, fileContent, existingAnnotations, file } = data;
+
+    const rendered = await renderTemplates(
+      params,
+      PersistExtension.prepareTemplateData(templateData, fileContent),
+      existingAnnotations
+    );
+
+    if (!rendered) continue;
+
+    if (file) {
+      await app.vault.modify(file, rendered);
+    } else {
+      await mkMDDir(markdownPath);
+      await app.vault.create(markdownPath, rendered);
+    }
+
+    createdOrUpdatedMarkdownFiles.push(markdownPath);
   }
 
   return createdOrUpdatedMarkdownFiles;
@@ -882,52 +855,30 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   const vaultRoot = getVaultRoot();
 
   for (let i = 0, len = itemData.length; i < len; i++) {
-    const attachments = itemData[i].attachments;
-
-    let mappedAttachments: Record<string, any> = {};
-
-    try {
-      const citekey = getCiteKeyFromAny(itemData[i]);
-      if (citekey) {
-        const fullAttachmentData = await getAttachmentsFromCiteKey(
-          citekey,
-          database
-        );
-
-        mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
-          Record<string, any>
-        >((col, a) => {
-          if (a?.path) {
-            col[a.path] = a;
-          }
-          return col;
-        }, {});
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    const item = itemData[i];
+    const attachments = item.attachments;
+    const attachmentData = await getAttachmentData(item, database);
 
     for (let j = 0, jLen = attachments.length; j < jLen; j++) {
-      const pdfInputPath = attachments[j].path;
-      if (!pdfInputPath?.endsWith('.pdf')) continue;
+      const attachment = attachments[j];
+      const attachmentPath = attachment.path;
+      if (!attachmentPath?.endsWith('.pdf')) continue;
 
       let annots: any[] = [];
 
-      mappedAttachments[attachments[j].path]?.annotations?.forEach(
-        (annot: any) => {
-          if (!annot.annotationPosition.rects?.length) return;
+      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
+        if (!annot.annotationPosition.rects?.length) return;
 
-          annots.push(
-            convertNativeAnnotation(
-              annot,
-              attachments[j],
-              path.join(vaultRoot, 'output_path'),
-              'base_name',
-              'output_path'
-            )
-          );
-        }
-      );
+        annots.push(
+          convertNativeAnnotation(
+            annot,
+            attachments[j],
+            path.join(vaultRoot, 'output_path'),
+            'base_name',
+            'output_path'
+          )
+        );
+      });
 
       if (settings.shouldConcat && annots.length) {
         annots = concatAnnotations(annots);
@@ -936,7 +887,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       if (canExtract) {
         try {
           const res = await extractAnnotations(
-            pdfInputPath,
+            attachmentPath,
             {
               noWrite: true,
               imageBaseName: 'base_name',
@@ -954,9 +905,9 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
           let extracted = JSON.parse(res);
 
-          extracted.forEach((a: any) => {
-            processAnnotation(a, attachments[j], 'output_path');
-          });
+          for (const e of extracted) {
+            processAnnotation(e, attachments[j], 'output_path');
+          }
 
           if (settings.shouldConcat && extracted.length) {
             extracted = concatAnnotations(extracted);
@@ -969,7 +920,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       }
 
       if (annots.length) {
-        attachments[j].annotations = annots;
+        attachment.annotations = annots;
       }
     }
   }
