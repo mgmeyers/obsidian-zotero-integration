@@ -582,10 +582,74 @@ export async function exportToMarkdown(
     }
   > = new Map();
 
+  const queueRender = async (markdownPath: string, item: any, annots: any[]) => {
+    if (!toRender.has(markdownPath)) {
+      const existingMarkdownFile = app.vault.getAbstractFileByPath(
+        markdownPath
+      ) as TFile;
+      const existingMarkdown = existingMarkdownFile
+        ? await app.vault.cachedRead(existingMarkdownFile as TFile)
+        : '';
+      const existingAnnotations = existingMarkdownFile
+        ? getExistingAnnotations(existingMarkdown)
+        : '';
+      const lastImportDate = existingMarkdownFile
+        ? getLastExport(existingMarkdown)
+        : moment(0);
+      const isFirstImport = lastImportDate.valueOf() === 0;
+
+      const templateData: Record<any, any> = await applyBasicTemplates(
+        markdownPath,
+        {
+          ...item,
+          annotations: annots,
+
+          lastImportDate,
+          isFirstImport,
+          // legacy
+          lastExportDate: lastImportDate,
+        }
+      );
+
+      toRender.set(markdownPath, {
+        file: existingMarkdownFile,
+        fileContent: existingMarkdown,
+        lastImportDate,
+        existingAnnotations,
+        templateData,
+      });
+    }
+  }
+
+  const getMarkdownPath = async (pathTemplateData: any) => {
+    return normalizePath(
+      sanitizeFilePath(
+        removeStartingSlash(
+          await renderTemplate(
+            sourcePath,
+            exportFormat.outputPathTemplate,
+            pathTemplateData
+          )
+        )
+      )
+    );
+  }
+
   for (let i = 0, len = itemData.length; i < len; i++) {
     const item = itemData[i];
     const attachments = item.attachments as any[];
     const attachmentData = await getAttachmentData(item, database);
+
+    if (!attachments.length) {
+      const pathTemplateData = await applyBasicTemplates(sourcePath, {
+        annotations: [],
+        ...item,
+      });
+      const markdownPath = await getMarkdownPath(pathTemplateData);
+
+      await queueRender(markdownPath, item, []);
+      continue;
+    }
 
     for (let j = 0, jLen = attachments.length; j < jLen; j++) {
       const attachment = attachments[j];
@@ -626,17 +690,7 @@ export async function exportToMarkdown(
           )
         : 'image';
 
-      const markdownPath = normalizePath(
-        sanitizeFilePath(
-          removeStartingSlash(
-            await renderTemplate(
-              sourcePath,
-              exportFormat.outputPathTemplate,
-              pathTemplateData
-            )
-          )
-        )
-      );
+      const markdownPath = await getMarkdownPath(pathTemplateData);
 
       let annots: any[] = [];
 
@@ -699,42 +753,7 @@ export async function exportToMarkdown(
         attachment.annotations = annots;
       }
 
-      if (!toRender.has(markdownPath)) {
-        const existingMarkdownFile = app.vault.getAbstractFileByPath(
-          markdownPath
-        ) as TFile;
-        const existingMarkdown = existingMarkdownFile
-          ? await app.vault.cachedRead(existingMarkdownFile as TFile)
-          : '';
-        const existingAnnotations = existingMarkdownFile
-          ? getExistingAnnotations(existingMarkdown)
-          : '';
-        const lastImportDate = existingMarkdownFile
-          ? getLastExport(existingMarkdown)
-          : moment(0);
-        const isFirstImport = lastImportDate.valueOf() === 0;
-
-        const templateData: Record<any, any> = await applyBasicTemplates(
-          markdownPath,
-          {
-            ...item,
-            annotations: annots,
-
-            lastImportDate,
-            isFirstImport,
-            // legacy
-            lastExportDate: lastImportDate,
-          }
-        );
-
-        toRender.set(markdownPath, {
-          file: existingMarkdownFile,
-          fileContent: existingMarkdown,
-          lastImportDate,
-          existingAnnotations,
-          templateData,
-        });
-      }
+      await queueRender(markdownPath, item, annots);
     }
   }
 
