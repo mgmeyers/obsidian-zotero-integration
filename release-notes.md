@@ -1,1 +1,1 @@
-162f8ee Remove debug logging
+cd3dfe0 Fix #320
