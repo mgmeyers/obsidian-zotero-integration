@@ -538,6 +538,22 @@ async function getAttachmentData(item: any, database: DatabaseWithPort) {
   return mappedAttachments;
 }
 
+async function getTemplateData(markdownPath: string, item: any, lastImportDate: moment.Moment) {
+  const firstPDF = item.attachments.find(
+    (a: any) => a.path?.endsWith('.pdf') && a.annotations?.length
+  );
+
+  item.annotations = firstPDF?.annotations ?? [];
+  item.lastImportDate = lastImportDate;
+  item.lastExportDate = lastImportDate;
+  item.isFirstImport = lastImportDate.valueOf() === 0;
+
+  return await applyBasicTemplates(
+    markdownPath,
+    item
+  );
+}
+
 export async function exportToMarkdown(
   params: ExportToMarkdownParams,
   explicitCiteKeys?: CiteKey[]
@@ -574,15 +590,15 @@ export async function exportToMarkdown(
   const toRender: Map<
     string,
     {
+      item: any;
       file: TFile;
       fileContent: string;
       lastImportDate: moment.Moment;
       existingAnnotations: string;
-      templateData: Record<any, any>;
     }
   > = new Map();
 
-  const queueRender = async (markdownPath: string, item: any, annots: any[]) => {
+  const queueRender = async (markdownPath: string, item: any) => {
     if (!toRender.has(markdownPath)) {
       const existingMarkdownFile = app.vault.getAbstractFileByPath(
         markdownPath
@@ -596,30 +612,16 @@ export async function exportToMarkdown(
       const lastImportDate = existingMarkdownFile
         ? getLastExport(existingMarkdown)
         : moment(0);
-      const isFirstImport = lastImportDate.valueOf() === 0;
-
-      const templateData: Record<any, any> = await applyBasicTemplates(
-        markdownPath,
-        {
-          ...item,
-          annotations: annots,
-
-          lastImportDate,
-          isFirstImport,
-          // legacy
-          lastExportDate: lastImportDate,
-        }
-      );
 
       toRender.set(markdownPath, {
+        item,
         file: existingMarkdownFile,
         fileContent: existingMarkdown,
         lastImportDate,
         existingAnnotations,
-        templateData,
       });
     }
-  }
+  };
 
   const getMarkdownPath = async (pathTemplateData: any) => {
     return normalizePath(
@@ -633,7 +635,7 @@ export async function exportToMarkdown(
         )
       )
     );
-  }
+  };
 
   for (let i = 0, len = itemData.length; i < len; i++) {
     const item = itemData[i];
@@ -647,7 +649,7 @@ export async function exportToMarkdown(
       });
       const markdownPath = await getMarkdownPath(pathTemplateData);
 
-      await queueRender(markdownPath, item, []);
+      await queueRender(markdownPath, item);
       continue;
     }
 
@@ -753,29 +755,39 @@ export async function exportToMarkdown(
         attachment.annotations = annots;
       }
 
-      await queueRender(markdownPath, item, annots);
+      await queueRender(markdownPath, item);
     }
   }
 
   for (const [markdownPath, data] of toRender.entries()) {
-    const { templateData, fileContent, existingAnnotations, file } = data;
+    try {
+      const { existingAnnotations, file, fileContent, item, lastImportDate } =
+        data;
 
-    const rendered = await renderTemplates(
-      params,
-      PersistExtension.prepareTemplateData(templateData, fileContent),
-      existingAnnotations
-    );
+      const templateData = await getTemplateData(markdownPath, item, lastImportDate);
+      const rendered = await renderTemplates(
+        params,
+        PersistExtension.prepareTemplateData(templateData, fileContent),
+        existingAnnotations
+      );
 
-    if (!rendered) continue;
+      if (!rendered) continue;
 
-    if (file) {
-      await app.vault.modify(file, rendered);
-    } else {
-      await mkMDDir(markdownPath);
-      await app.vault.create(markdownPath, rendered);
+      if (file) {
+        await app.vault.modify(file, rendered);
+      } else {
+        await mkMDDir(markdownPath);
+        await app.vault.create(markdownPath, rendered);
+      }
+
+      createdOrUpdatedMarkdownFiles.push(markdownPath);
+    } catch (e) {
+      new Notice(
+        `Import failed for ${markdownPath}, check developer console for details`,
+        7000
+      );
+      console.error(e);
     }
-
-    createdOrUpdatedMarkdownFiles.push(markdownPath);
   }
 
   return createdOrUpdatedMarkdownFiles;
@@ -930,16 +942,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
   await Promise.all(
     itemData.map(async (data: any) => {
-      const firstPDF = data.attachments.find((a: any) =>
-        a.path?.endsWith('.pdf')
-      );
-
-      data.annotations = firstPDF?.annotations ? firstPDF.annotations : [];
-      data.lastImportDate = moment(0);
-      data.isFirstImport = true;
-      data.lastExportDate = moment(0);
-
-      await applyBasicTemplates('', data);
+      await getTemplateData('', data, moment(0));
     })
   );
 
