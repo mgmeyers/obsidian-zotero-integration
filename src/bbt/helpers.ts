@@ -23,14 +23,11 @@ export async function mkMDDir(mdPath: string) {
   await app.vault.createFolder(dir);
 }
 
-const toSpaceRegEx = /\s*[*?]+\s*/g;
-const toDashRegEx = /\s*[:"<>|]+\s*/g;
-
 export function replaceIllegalChars(str: string) {
   return str
-    .replace(toSpaceRegEx, ' ')
+    .replace(/\s*[*?]+\s*/g, ' ')
     .trim()
-    .replace(toDashRegEx, ' - ')
+    .replace(/\s*[:"<>|]+\s*/g, ' - ')
     .trim();
 }
 

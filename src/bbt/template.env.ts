@@ -182,18 +182,16 @@ export class PersistExtension implements Extension {
     );
   }
 
-  static re = /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/gi;
   static hasPersist(str: string) {
-    this.re.lastIndex = 0;
-    return this.re.test(str);
+    return /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/gi.test(str);
   }
   static prepareTemplateData<T>(templateData: T, md: string): T & WithRetained {
     const out: Record<string, string> = {};
 
     if (!md) return templateData;
 
-    this.re.lastIndex = 0;
-    for (const match of md.matchAll(this.re)) {
+    const matches = md.matchAll(/%% begin (.+?) %%([\w\W]*?)%% end \1 %%/gi);
+    for (const match of matches) {
       out[match[1]] = match[2];
     }
 
@@ -208,21 +206,19 @@ export class ObsidianMarkdownLoader extends Loader {
   sourceFile: string;
 
   async = true;
-  wikiLinkRe = /^\[\[([^\]]+)\]\]$/;
-  markdownLinkRe = /^\[[^\]]*\]\(([^)]+)\)$/;
 
   setSourceFile(path: string) {
     this.sourceFile = path;
   }
 
   getLinkPath(link: string) {
-    let match = link.trim().match(this.wikiLinkRe);
+    let match = link.trim().match(/^\[\[([^\]]+)\]\]$/);
 
     if (match) {
       return match[1];
     }
 
-    match = link.trim().match(this.markdownLinkRe);
+    match = link.trim().match(/^\[[^\]]*\]\(([^)]+)\)$/);
 
     if (match) {
       return match[1];
