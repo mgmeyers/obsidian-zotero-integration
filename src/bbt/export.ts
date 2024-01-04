@@ -538,7 +538,11 @@ async function getAttachmentData(item: any, database: DatabaseWithPort) {
   return mappedAttachments;
 }
 
-async function getTemplateData(markdownPath: string, item: any, lastImportDate: moment.Moment) {
+async function getTemplateData(
+  markdownPath: string,
+  item: any,
+  lastImportDate: moment.Moment
+) {
   const firstPDF = item.attachments.find(
     (a: any) => a.path?.endsWith('.pdf') && a.annotations?.length
   );
@@ -548,10 +552,7 @@ async function getTemplateData(markdownPath: string, item: any, lastImportDate: 
   item.lastExportDate = lastImportDate;
   item.isFirstImport = lastImportDate.valueOf() === 0;
 
-  return await applyBasicTemplates(
-    markdownPath,
-    item
-  );
+  return await applyBasicTemplates(markdownPath, item);
 }
 
 export async function exportToMarkdown(
@@ -764,7 +765,11 @@ export async function exportToMarkdown(
       const { existingAnnotations, file, fileContent, item, lastImportDate } =
         data;
 
-      const templateData = await getTemplateData(markdownPath, item, lastImportDate);
+      const templateData = await getTemplateData(
+        markdownPath,
+        item,
+        lastImportDate
+      );
       const rendered = await renderTemplates(
         params,
         PersistExtension.prepareTemplateData(templateData, fileContent),

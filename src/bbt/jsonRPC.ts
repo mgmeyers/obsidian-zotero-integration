@@ -354,7 +354,9 @@ export async function getItemJSONFromCiteKeys(
       throw new Error(parsed.error.message);
     }
 
-    return JSON.parse(parsed.result[2]).items;
+    return Array.isArray(parsed.result)
+      ? JSON.parse(parsed.result[2]).items
+      : JSON.parse(parsed.result).items;
   } catch (e) {
     console.error(e);
     new Notice(`Error retrieving item data: ${e.message}`, 10000);
@@ -495,7 +497,9 @@ export async function getIssueDateFromCiteKey(
       throw new Error(parsed.error.message);
     }
 
-    const items = JSON.parse(parsed.result[2]);
+    const items = Array.isArray(parsed.result)
+      ? JSON.parse(parsed.result[2])
+      : JSON.parse(parsed.result);
     const dates = items
       .map((i: any) => {
         const { issued } = i;
