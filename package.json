@@ -1,6 +1,6 @@
 {
   "name": "obsidian-sample-plugin",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
   "main": "main.js",
   "scripts": {
