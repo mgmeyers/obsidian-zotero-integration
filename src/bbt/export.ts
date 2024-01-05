@@ -56,8 +56,13 @@ async function processNote(
     note.dateModified = moment(note.dateModified);
   }
   note.desktopURI = getLocalURI('select', note.uri);
-
-  await getRelations(note, citeKey.library, importDate, database, cslStyle);
+  note.relations = await getRelations(
+    note,
+    citeKey.library,
+    importDate,
+    database,
+    cslStyle
+  );
 }
 
 function processAttachment(attachment: any) {
@@ -234,17 +239,15 @@ async function getRelations(
   }
   if (!item.relations?.length) return [];
 
-  const libId = libraryID;
   const relatedItems = await getItemJSONFromRelations(
-    libId,
+    libraryID,
     item.relations,
     database
   );
 
-  for (let i = 0, len = relatedItems.length; i < len; i++) {
-    const item = relatedItems[i];
-    if (getCiteKeyFromAny(item)) {
-      await processItem(item, importDate, database, cslStyle, true);
+  for (const related of relatedItems) {
+    if (getCiteKeyFromAny(related)) {
+      await processItem(related, importDate, database, cslStyle, true);
     }
   }
 
