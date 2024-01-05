@@ -37,7 +37,13 @@ import {
   wrapAnnotationTemplate,
 } from './template.helpers';
 
-async function processNote(citeKey: CiteKey, note: any) {
+async function processNote(
+  citeKey: CiteKey,
+  note: any,
+  importDate: moment.Moment,
+  database: DatabaseWithPort,
+  cslStyle?: string
+) {
   if (note.note) {
     note.note = htmlToMarkdown(
       await processZoteroAnnotationNotes(citeKey.key, note.note, {})
@@ -50,6 +56,8 @@ async function processNote(citeKey: CiteKey, note: any) {
     note.dateModified = moment(note.dateModified);
   }
   note.desktopURI = getLocalURI('select', note.uri);
+
+  await getRelations(note, citeKey.library, importDate, database, cslStyle);
 }
 
 function processAttachment(attachment: any) {
@@ -212,13 +220,21 @@ function concatAnnotations(annots: Array<Record<string, any>>) {
 
 async function getRelations(
   item: any,
+  libraryID: any,
   importDate: moment.Moment,
   database: DatabaseWithPort,
   cslStyle?: string
 ) {
+  if (item.relations && !Array.isArray(item.relations)) {
+    const relations: string[] = [];
+    for (const val of Object.values(item.relations)) {
+      if (Array.isArray(val)) relations.push(...val);
+    }
+    item.relations = relations;
+  }
   if (!item.relations?.length) return [];
 
-  const libId = item.libraryID;
+  const libId = libraryID;
   const relatedItems = await getItemJSONFromRelations(
     libId,
     item.relations,
@@ -291,7 +307,7 @@ async function processItem(
 
   if (item.notes) {
     for (const note of item.notes) {
-      await processNote(citekey, note);
+      await processNote(citekey, note, importDate, database, cslStyle);
     }
   }
 
@@ -302,7 +318,13 @@ async function processItem(
   }
 
   if (!skipRelations) {
-    item.relations = await getRelations(item, importDate, database, cslStyle);
+    item.relations = await getRelations(
+      item,
+      item.libraryID,
+      importDate,
+      database,
+      cslStyle
+    );
   }
 }
 
