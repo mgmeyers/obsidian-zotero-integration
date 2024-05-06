@@ -111,7 +111,7 @@ export function getColorCategory(hex: string) {
   if (h < 190) {
     return 'Cyan';
   }
-  if (h < 263) {
+  if (h < 220) {
     return 'Blue';
   }
   if (h < 280) {
