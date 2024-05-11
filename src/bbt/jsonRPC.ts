@@ -135,7 +135,7 @@ export async function getAttachmentsFromCiteKey(
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'item.attachments',
-        params: [citeKey.key],
+        params: [citeKey.key, citeKey.library],
       }),
       headers: defaultHeaders,
     });

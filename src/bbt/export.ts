@@ -608,8 +608,8 @@ export async function exportToMarkdown(
   // Further down below, when the Markdown file path has been sanitized, we associate the path to the key.
   const createdOrUpdatedMarkdownFiles: string[] = [];
 
-  for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], importDate, database, exportFormat.cslStyle);
+  for (const item of itemData) {
+    await processItem(item, importDate, database, exportFormat.cslStyle);
   }
 
   const vaultRoot = getVaultRoot();
@@ -844,15 +844,15 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
 
   const output: string[] = [];
 
-  for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], importDate, database, format.cslStyle);
+  for (const item of itemData) {
+    await processItem(item, importDate, database, format.cslStyle);
 
-    const attachments = (itemData[i].attachments as any[]) || [];
+    const attachments = (item.attachments as any[]) || [];
     const firstPDF = attachments.find((a) => !!a.path?.endsWith('.pdf'));
 
     const templateData = {
       attachment: firstPDF || attachments.length ? attachments[0] : null,
-      ...itemData[i],
+      ...item,
     };
 
     output.push(await renderTemplate('', format.template, templateData));
@@ -892,20 +892,15 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
   const importDate = moment();
   const style = getAStyle(settings);
-
-  for (let i = 0, len = itemData.length; i < len; i++) {
-    await processItem(itemData[i], importDate, database, style);
-  }
-
   const vaultRoot = getVaultRoot();
 
-  for (let i = 0, len = itemData.length; i < len; i++) {
-    const item = itemData[i];
+  for (const item of itemData) {
+    await processItem(item, importDate, database, style);
+
     const attachments = item.attachments;
     const attachmentData = await getAttachmentData(item, database);
 
-    for (let j = 0, jLen = attachments.length; j < jLen; j++) {
-      const attachment = attachments[j];
+    for (const attachment of attachments) {
       const attachmentPath = attachment.path;
       if (!attachmentPath?.endsWith('.pdf')) continue;
 
@@ -917,7 +912,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
         annots.push(
           convertNativeAnnotation(
             annot,
-            attachments[j],
+            attachment,
             path.join(vaultRoot, 'output_path'),
             'base_name',
             'output_path'
@@ -951,7 +946,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
           let extracted = JSON.parse(res);
 
           for (const e of extracted) {
-            processAnnotation(e, attachments[j], 'output_path');
+            processAnnotation(e, attachment, 'output_path');
           }
 
           if (settings.shouldConcat && extracted.length) {
