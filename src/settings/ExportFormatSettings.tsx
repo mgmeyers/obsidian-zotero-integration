@@ -297,7 +297,7 @@ export function ExportFormatSettings({
       )}
 
       <div className="zt-format__form">
-        <div className="zt-format__label">Bilbiography Style</div>
+        <div className="zt-format__label">Bibliography Style</div>
         <div className="zt-format__input-wrapper">
           <AsyncSelect
             noOptionsMessage={NoOptionMessage}
