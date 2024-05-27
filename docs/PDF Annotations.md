@@ -5,7 +5,7 @@ Obsidian Zotero Integration uses an [external tool](https://github.com/mgmeyers/
 Currently, the extraction tool supports:
 - Windows (x64)
 - Linux (x64)
-- Mac (Intel & M1)
+- Mac (Intel & Apple Silicon)
 
 Please [file an issue](https://github.com/mgmeyers/obsidian-zotero-integration/issues) if annotation extraction doesn't work on your platform, or if you encounter any issues with it.
 
