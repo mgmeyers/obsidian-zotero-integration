@@ -102,9 +102,11 @@ function processAnnotation(
     );
   }
 
-  annotation.desktopURI = getLocalURI('open-pdf', attachment.uri, {
-    page: annotation.pageLabel,
-  });
+  if (attachment.path?.endsWith('.pdf')) {
+    annotation.desktopURI = getLocalURI('open-pdf', attachment.uri, {
+      page: annotation.pageLabel,
+    });
+  }
 }
 
 function convertNativeAnnotation(
@@ -115,25 +117,34 @@ function convertNativeAnnotation(
   imageBaseName: string,
   copy: boolean = false
 ) {
-  const rect = annotation.annotationPosition.rects[0];
-
   const annot: Record<string, any> = {
     date: moment(annotation.dateModified),
     attachment,
-    page: annotation.annotationPosition.pageIndex + 1,
-    pageLabel: annotation.annotationPageLabel,
     id: annotation.key,
     type: annotation.annotationType,
-    x: rect[0],
-    y: rect[1],
     color: annotation.annotationColor,
     colorCategory: getColorCategory(annotation.annotationColor),
-    desktopURI: getLocalURI('open-pdf', attachment.uri, {
-      page: annotation.annotationPageLabel,
-      annotation: annotation.key,
-    }),
     source: 'zotero',
   };
+
+  if (attachment.path?.endsWith('.pdf')) {
+    annot.pageLabel = annotation.annotationPageLabel;
+    annot.desktopURI = getLocalURI('open-pdf', attachment.uri, {
+      page: annotation.annotationPageLabel,
+      annotation: annotation.key,
+    });
+  }
+
+  if (annotation.annotationPosition) {
+    if (annotation.annotationPosition.pageIndex) {
+      annot.page = annotation.annotationPosition.pageIndex + 1
+    }
+
+    if (annotation.annotationPosition.rects) {
+      annot.x = annotation.annotationPosition.rects[0][0];
+      annot.y = annotation.annotationPosition.rects[0][1];
+    }
+  }
 
   if (annotation.annotationText) {
     annot.annotatedText = annotation.annotationText;
@@ -568,11 +579,11 @@ async function getTemplateData(
   item: any,
   lastImportDate: moment.Moment
 ) {
-  const firstPDF = item.attachments.find(
-    (a: any) => a.path?.endsWith('.pdf') && a.annotations?.length
+  const firstAnnots = item.attachments.find(
+    (a: any) => a.annotations?.length
   );
 
-  item.annotations = firstPDF?.annotations ?? [];
+  item.annotations = firstAnnots?.annotations ?? [];
   item.lastImportDate = lastImportDate;
   item.lastExportDate = lastImportDate;
   item.isFirstImport = lastImportDate.valueOf() === 0;
@@ -630,7 +641,7 @@ export async function exportToMarkdown(
         markdownPath
       ) as TFile;
       const existingMarkdown = existingMarkdownFile
-        ? await app.vault.cachedRead(existingMarkdownFile as TFile)
+        ? await app.vault.read(existingMarkdownFile as TFile)
         : '';
       const existingAnnotations = existingMarkdownFile
         ? getExistingAnnotations(existingMarkdown)
@@ -722,22 +733,18 @@ export async function exportToMarkdown(
 
       let annots: any[] = [];
 
-      if (isPDF) {
-        attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
-          if (!annot.annotationPosition.rects?.length) return;
-
-          annots.push(
-            convertNativeAnnotation(
-              annot,
-              attachment,
-              imageOutputPath,
-              imageRelativePath,
-              imageBaseName,
-              true
-            )
-          );
-        });
-      }
+      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
+        annots.push(
+          convertNativeAnnotation(
+            annot,
+            attachment,
+            imageOutputPath,
+            imageRelativePath,
+            imageBaseName,
+            true
+          )
+        );
+      });
 
       if (annots.length && settings.shouldConcat) {
         annots = concatAnnotations(annots);
@@ -848,10 +855,12 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
     await processItem(item, importDate, database, format.cslStyle);
 
     const attachments = (item.attachments as any[]) || [];
-    const firstPDF = attachments.find((a) => !!a.path?.endsWith('.pdf'));
+    const firstAnnots = item.attachments.find(
+      (a: any) => a.annotations?.length
+    );
 
     const templateData = {
-      attachment: firstPDF || attachments.length ? attachments[0] : null,
+      attachment: firstAnnots || attachments.length ? attachments[0] : null,
       ...item,
     };
 
@@ -902,13 +911,9 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
     for (const attachment of attachments) {
       const attachmentPath = attachment.path;
-      if (!attachmentPath?.endsWith('.pdf')) continue;
-
       let annots: any[] = [];
 
       attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
-        if (!annot.annotationPosition.rects?.length) return;
-
         annots.push(
           convertNativeAnnotation(
             annot,
@@ -924,7 +929,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
         annots = concatAnnotations(annots);
       }
 
-      if (canExtract) {
+      if (attachmentPath?.endsWith('.pdf') && canExtract) {
         try {
           const res = await extractAnnotations(
             attachmentPath,
