@@ -33,6 +33,24 @@ const pdfZoteroLinkTemplate = `
 {%- endif -%}
 `;
 
+const attachmentLinkTemplate = `
+{%- if attachments and attachments.length > 0 -%}
+{%- set file = attachments | first -%}
+{%- if file and file.path -%}
+	[{{file.title}}](file://{{file.path | replace(" ", "%20")}})
+{%- endif -%}
+{%- endif -%}
+`;
+
+const attachmentZoteroLinkTemplate = `
+{%- if attachments and attachments.length > 0 -%}
+{%- set file = attachments | first -%}
+{%- if file and file.path -%}
+	[{{file.title}}]({{file.desktopURI}})
+{%- endif -%}
+{%- endif -%}
+`;
+
 const annotationsTemplate = `
 {%- if annotations and annotations.length > 0 -%}
 {%- set annots = annotations | filterby("date", "dateafter", lastExportDate) -%}
@@ -87,8 +105,17 @@ export async function applyBasicTemplates(
   const pdfZoteroLink = (
     await renderTemplate(sourceFile, pdfZoteroLinkTemplate, itemData)
   ).trim();
-
   if (pdfZoteroLink) itemData.pdfZoteroLink = pdfZoteroLink;
+
+  const attachmentLink = (
+    await renderTemplate(sourceFile, attachmentLinkTemplate, itemData)
+  ).trim();
+  if (attachmentLink) itemData.firstAttachmentLink = attachmentLink;
+
+  const attachmentZoteroLink = (
+    await renderTemplate(sourceFile, attachmentZoteroLinkTemplate, itemData)
+  ).trim();
+  if (attachmentZoteroLink) itemData.firstAttachmentZoteroLink = attachmentZoteroLink;
 
   if (itemData.notes?.length) {
     const notes = itemData.notes
