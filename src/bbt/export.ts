@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
 import path from 'path';
 
@@ -181,6 +181,7 @@ async function convertNativeAnnotation(
     annot.imageExtension = parsed.ext.slice(1);
 
     const imagePath = path.join(imageOutputPath, annot.imageBaseName);
+    let file: TFile = null;
 
     if (copy) {
       if (!existsSync(imageOutputPath)) {
@@ -197,7 +198,23 @@ async function convertNativeAnnotation(
           }
         }
 
-        copyFileSync(input, imagePath);
+        const data = readFileSync(input);
+        const arrayBuffer = new ArrayBuffer(data.length);
+        const view = new Uint8Array(arrayBuffer);
+        data.copy(view);
+        
+        const existingFile = app.vault.getAbstractFileByPath(
+          annot.imageRelativePath
+        );
+        if (existingFile instanceof TFile) {
+          await app.vault.modifyBinary(existingFile, arrayBuffer);
+          file = existingFile;
+        } else {
+          file = await app.vault.createBinary(
+            annot.imageRelativePath,
+            arrayBuffer
+          );
+        }
       } catch (e) {
         new Notice(
           'Error: unable to copy annotation image from Zotero into your vault',
@@ -205,13 +222,20 @@ async function convertNativeAnnotation(
         );
         console.error(e);
       }
+    } else {
+      const existingFile = app.vault.getAbstractFileByPath(
+        annot.imageRelativePath
+      );
+      if (existingFile instanceof TFile) {
+        file = existingFile;
+      }
     }
 
     annot.imagePath = imagePath;
-    const file = app.vault.getAbstractFileByPath(annot.imageRelativePath);
-    if (file && file instanceof TFile) {
-      // if(true) {
-      annot.ocrText = await OCR(file as TFile);
+    if (file) {
+      annot.ocrText = await OCR(file);
+    } else {
+      annot.ocrText = 'ocrText is not available in Data Explorer';
     }
   }
 
