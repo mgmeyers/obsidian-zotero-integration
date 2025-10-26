@@ -37,6 +37,21 @@ import {
   wrapAnnotationTemplate,
 } from './template.helpers';
 
+export type TextExtractorApi = {
+  extractText: (file: TFile) => Promise<string>
+  canFileBeExtracted: (filePath: string) => boolean
+  isInCache: (file: TFile) => Promise<boolean>
+}
+
+export function getTextExtractor(): TextExtractorApi | undefined {
+  return (app as any).plugins?.plugins?.['text-extractor']?.api
+}
+
+async function OCR(file: TFile): Promise<string> {
+  const text = await getTextExtractor()?.extractText(file)
+  return text
+}
+
 async function processNote(
   citeKey: CiteKey,
   note: any,
@@ -109,7 +124,7 @@ function processAnnotation(
   }
 }
 
-function convertNativeAnnotation(
+async function convertNativeAnnotation(
   annotation: any,
   attachment: any,
   imageOutputPath: string,
@@ -193,6 +208,11 @@ function convertNativeAnnotation(
     }
 
     annot.imagePath = imagePath;
+    const file = app.vault.getAbstractFileByPath(annot.imageRelativePath);
+    if (file && file instanceof TFile) {
+      // if(true) {
+      annot.ocrText = await OCR(file as TFile);
+    }
   }
 
   if (annotation.tags?.length) {
@@ -733,18 +753,20 @@ export async function exportToMarkdown(
 
       let annots: any[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
-        annots.push(
-          convertNativeAnnotation(
-            annot,
-            attachment,
-            imageOutputPath,
-            imageRelativePath,
-            imageBaseName,
-            true
-          )
-        );
-      });
+      if (attachmentData[attachmentPath]?.annotations) {
+        for (const annot of attachmentData[attachmentPath].annotations) {
+          annots.push(
+            await convertNativeAnnotation(
+              annot,
+              attachment,
+              imageOutputPath,
+              imageRelativePath,
+              imageBaseName,
+              true
+            ),
+          );
+        }
+      }
 
       if (annots.length && settings.shouldConcat) {
         annots = concatAnnotations(annots);
@@ -913,17 +935,20 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       const attachmentPath = attachment.path;
       let annots: any[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
-        annots.push(
-          convertNativeAnnotation(
-            annot,
-            attachment,
-            path.join(vaultRoot, 'output_path'),
-            'base_name',
-            'output_path'
-          )
-        );
-      });
+      if (attachmentData[attachmentPath]?.annotations) {
+        for (const annot of attachmentData[attachmentPath].annotations) {
+          annots.push(
+            await convertNativeAnnotation(
+              annot,
+              attachment,
+              path.join(vaultRoot, 'output_path'),
+              'base_name',
+              'output_path',
+              false
+            ),
+          );
+        }
+      }
 
       if (settings.shouldConcat && annots.length) {
         annots = concatAnnotations(annots);
