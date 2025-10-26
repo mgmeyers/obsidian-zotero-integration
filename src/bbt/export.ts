@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
 import path from 'path';
 
@@ -36,6 +36,21 @@ import {
   removeStartingSlash,
   wrapAnnotationTemplate,
 } from './template.helpers';
+
+export type TextExtractorApi = {
+  extractText: (file: TFile) => Promise<string>
+  canFileBeExtracted: (filePath: string) => boolean
+  isInCache: (file: TFile) => Promise<boolean>
+}
+
+export function getTextExtractor(): TextExtractorApi | undefined {
+  return (app as any).plugins?.plugins?.['text-extractor']?.api
+}
+
+async function OCR(file: TFile): Promise<string> {
+  const text = await getTextExtractor()?.extractText(file)
+  return text
+}
 
 async function processNote(
   citeKey: CiteKey,
@@ -109,7 +124,7 @@ function processAnnotation(
   }
 }
 
-function convertNativeAnnotation(
+async function convertNativeAnnotation(
   annotation: any,
   attachment: any,
   imageOutputPath: string,
@@ -166,6 +181,7 @@ function convertNativeAnnotation(
     annot.imageExtension = parsed.ext.slice(1);
 
     const imagePath = path.join(imageOutputPath, annot.imageBaseName);
+    let file: TFile = null;
 
     if (copy) {
       if (!existsSync(imageOutputPath)) {
@@ -182,7 +198,23 @@ function convertNativeAnnotation(
           }
         }
 
-        copyFileSync(input, imagePath);
+        const data = readFileSync(input);
+        const arrayBuffer = new ArrayBuffer(data.length);
+        const view = new Uint8Array(arrayBuffer);
+        data.copy(view);
+        
+        const existingFile = app.vault.getAbstractFileByPath(
+          annot.imageRelativePath
+        );
+        if (existingFile instanceof TFile) {
+          await app.vault.modifyBinary(existingFile, arrayBuffer);
+          file = existingFile;
+        } else {
+          file = await app.vault.createBinary(
+            annot.imageRelativePath,
+            arrayBuffer
+          );
+        }
       } catch (e) {
         new Notice(
           'Error: unable to copy annotation image from Zotero into your vault',
@@ -190,9 +222,21 @@ function convertNativeAnnotation(
         );
         console.error(e);
       }
+    } else {
+      const existingFile = app.vault.getAbstractFileByPath(
+        annot.imageRelativePath
+      );
+      if (existingFile instanceof TFile) {
+        file = existingFile;
+      }
     }
 
     annot.imagePath = imagePath;
+    if (file) {
+      annot.ocrText = await OCR(file);
+    } else {
+      annot.ocrText = 'ocrText is not available in Data Explorer';
+    }
   }
 
   if (annotation.tags?.length) {
@@ -733,18 +777,20 @@ export async function exportToMarkdown(
 
       let annots: any[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
-        annots.push(
-          convertNativeAnnotation(
-            annot,
-            attachment,
-            imageOutputPath,
-            imageRelativePath,
-            imageBaseName,
-            true
-          )
-        );
-      });
+      if (attachmentData[attachmentPath]?.annotations) {
+        for (const annot of attachmentData[attachmentPath].annotations) {
+          annots.push(
+            await convertNativeAnnotation(
+              annot,
+              attachment,
+              imageOutputPath,
+              imageRelativePath,
+              imageBaseName,
+              true
+            ),
+          );
+        }
+      }
 
       if (annots.length && settings.shouldConcat) {
         annots = concatAnnotations(annots);
@@ -913,17 +959,20 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       const attachmentPath = attachment.path;
       let annots: any[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
-        annots.push(
-          convertNativeAnnotation(
-            annot,
-            attachment,
-            path.join(vaultRoot, 'output_path'),
-            'base_name',
-            'output_path'
-          )
-        );
-      });
+      if (attachmentData[attachmentPath]?.annotations) {
+        for (const annot of attachmentData[attachmentPath].annotations) {
+          annots.push(
+            await convertNativeAnnotation(
+              annot,
+              attachment,
+              path.join(vaultRoot, 'output_path'),
+              'base_name',
+              'output_path',
+              false
+            ),
+          );
+        }
+      }
 
       if (settings.shouldConcat && annots.length) {
         annots = concatAnnotations(annots);
