@@ -236,3 +236,41 @@
     box-shadow: 0 1em 0 0;
   }
 }
+
+/* Confirmation Modal Styles */
+.confirmation-modal {
+  padding: 1rem;
+  text-align: center;
+}
+
+.confirmation-modal-title {
+  margin: 0 0 1rem 0;
+  color: var(--text-normal);
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.confirmation-modal-message {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.confirmation-modal-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.confirmation-modal-buttons button {
+  min-width: 80px;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-s);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmation-modal-buttons button:hover {
+  transform: translateY(-1px);
+}

@@ -2,6 +2,8 @@ import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
 import path from 'path';
 
+import { ConfirmationModal } from './ConfirmationModal';
+
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
   DatabaseWithPort,
@@ -811,13 +813,25 @@ export async function exportToMarkdown(
       if (!rendered) continue;
 
       if (file) {
-        await app.vault.modify(file, rendered);
+        // Show confirmation modal before overwriting existing file
+        const modal = new ConfirmationModal(
+          app,
+          'Literature Note Already Exists',
+          `The literature note "${markdownPath}" has been created before. Are you sure you want to overwrite it?`
+        );
+        modal.open();
+        
+        const shouldOverwrite = await modal.waitForResult();
+        
+        if (shouldOverwrite) {
+          await app.vault.modify(file, rendered);
+          createdOrUpdatedMarkdownFiles.push(markdownPath);
+        }
       } else {
         await mkMDDir(markdownPath);
         await app.vault.create(markdownPath, rendered);
+        createdOrUpdatedMarkdownFiles.push(markdownPath);
       }
-
-      createdOrUpdatedMarkdownFiles.push(markdownPath);
     } catch (e) {
       new Notice(
         `Import failed for ${markdownPath}, check developer console for details`,
