@@ -140,7 +140,7 @@ function convertNativeAnnotation(
       annot.page = annotation.annotationPosition.pageIndex + 1
     }
 
-    if (annotation.annotationPosition.rects) {
+    if (annotation.annotationPosition.rects && annotation.annotationPosition.rects.length > 0) {
       annot.x = annotation.annotationPosition.rects[0][0];
       annot.y = annotation.annotationPosition.rects[0][1];
     }
