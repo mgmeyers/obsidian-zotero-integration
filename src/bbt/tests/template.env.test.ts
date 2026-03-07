@@ -176,6 +176,10 @@ describe('class PersistExtension', () => {
         hello: 'world',
         'two words': 'hello',
       },
+      existentPersistKeys: {
+        hello: true,
+        'two words': true,
+      },
     };
 
     const templateData = {};
@@ -279,7 +283,6 @@ hello
 %% begin hello %%
 
 hello
-
 one
 %% end hello %%
     `.trim();

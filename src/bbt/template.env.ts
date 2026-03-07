@@ -186,18 +186,21 @@ export class PersistExtension implements Extension {
     return /%% begin (.+?) %%([\w\W]*?)%% end \1 %%/gi.test(str);
   }
   static prepareTemplateData<T>(templateData: T, md: string): T & WithRetained {
-    const out: Record<string, string> = {};
+    const _retained: Record<string, string> = {};
+    const existentPersistKeys: Record<string, boolean> = {};
 
     if (!md) return templateData;
 
     const matches = md.matchAll(/%% begin (.+?) %%([\w\W]*?)%% end \1 %%/gi);
     for (const match of matches) {
-      out[match[1]] = match[2];
+      _retained[match[1]] = match[2];
+      existentPersistKeys[match[1]] = true;
     }
 
     return {
       ...templateData,
-      _retained: out,
+      existentPersistKeys: existentPersistKeys,
+      _retained: _retained,
     };
   }
 }
