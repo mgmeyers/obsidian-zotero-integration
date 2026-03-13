@@ -453,7 +453,8 @@ export async function getItemJSONFromRelations(
 
 export async function getIssueDateFromCiteKey(
   citeKey: CiteKey,
-  database: DatabaseWithPort
+  database: DatabaseWithPort,
+  dateAsString: boolean
 ) {
   let res: string;
 
@@ -509,12 +510,16 @@ export async function getIssueDateFromCiteKey(
 
         if (!dateParts.length) return null;
 
-        const date = moment(
-          `${dateParts[0]}-${dateParts[1] ? padNumber(dateParts[1]) : '01'}-${
-            dateParts[2] ? padNumber(dateParts[2]) : '01'
-          }`,
-          'YYYY-MM-DD'
-        );
+        const date = dateAsString
+          ? `${dateParts[0]}${
+              dateParts[1] ? `-${padNumber(dateParts[1])}` : ''
+            }${dateParts[2] ? `-${padNumber(dateParts[2])}` : ''}`
+          : moment(
+              `${dateParts[0]}-${
+                dateParts[1] ? padNumber(dateParts[1]) : '01'
+              }-${dateParts[2] ? padNumber(dateParts[2]) : '01'}`,
+              'YYYY-MM-DD'
+            );
 
         return date;
       })

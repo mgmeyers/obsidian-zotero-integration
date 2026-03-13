@@ -42,7 +42,8 @@ async function processNote(
   note: any,
   importDate: moment.Moment,
   database: DatabaseWithPort,
-  cslStyle?: string
+  cslStyle?: string,
+  dateAsString?: boolean
 ) {
   if (note.note) {
     note.note = htmlToMarkdown(
@@ -61,7 +62,8 @@ async function processNote(
     citeKey.library,
     importDate,
     database,
-    cslStyle
+    cslStyle,
+    dateAsString
   );
 }
 
@@ -137,7 +139,7 @@ function convertNativeAnnotation(
 
   if (annotation.annotationPosition) {
     if (annotation.annotationPosition.pageIndex) {
-      annot.page = annotation.annotationPosition.pageIndex + 1
+      annot.page = annotation.annotationPosition.pageIndex + 1;
     }
 
     if (annotation.annotationPosition.rects) {
@@ -239,7 +241,8 @@ async function getRelations(
   libraryID: any,
   importDate: moment.Moment,
   database: DatabaseWithPort,
-  cslStyle?: string
+  cslStyle?: string,
+  dateAsString?: boolean
 ) {
   if (item.relations && !Array.isArray(item.relations)) {
     const relations: string[] = [];
@@ -258,7 +261,14 @@ async function getRelations(
 
   for (const related of relatedItems) {
     if (getCiteKeyFromAny(related)) {
-      await processItem(related, importDate, database, cslStyle, true);
+      await processItem(
+        related,
+        importDate,
+        database,
+        cslStyle,
+        true,
+        dateAsString
+      );
     }
   }
 
@@ -270,7 +280,8 @@ async function processItem(
   importDate: moment.Moment,
   database: DatabaseWithPort,
   cslStyle?: string,
-  skipRelations?: boolean
+  skipRelations?: boolean,
+  dateAsString?: boolean
 ) {
   const citekey = getCiteKeyFromAny(item);
   item.importDate = importDate;
@@ -301,7 +312,11 @@ async function processItem(
     }
 
     try {
-      item.date = await getIssueDateFromCiteKey(citekey, database);
+      item.date = await getIssueDateFromCiteKey(
+        citekey,
+        database,
+        dateAsString
+      );
     } catch {
       // We don't particularly care about this
     }
@@ -321,7 +336,14 @@ async function processItem(
 
   if (item.notes) {
     for (const note of item.notes) {
-      await processNote(citekey, note, importDate, database, cslStyle);
+      await processNote(
+        citekey,
+        note,
+        importDate,
+        database,
+        cslStyle,
+        dateAsString
+      );
     }
   }
 
@@ -579,9 +601,7 @@ async function getTemplateData(
   item: any,
   lastImportDate: moment.Moment
 ) {
-  const firstAnnots = item.attachments.find(
-    (a: any) => a.annotations?.length
-  );
+  const firstAnnots = item.attachments.find((a: any) => a.annotations?.length);
 
   item.annotations = firstAnnots?.annotations ?? [];
   item.lastImportDate = lastImportDate;
@@ -620,7 +640,14 @@ export async function exportToMarkdown(
   const createdOrUpdatedMarkdownFiles: string[] = [];
 
   for (const item of itemData) {
-    await processItem(item, importDate, database, exportFormat.cslStyle);
+    await processItem(
+      item,
+      importDate,
+      database,
+      exportFormat.cslStyle,
+      undefined,
+      exportFormat.dateAsString
+    );
   }
 
   const vaultRoot = getVaultRoot();

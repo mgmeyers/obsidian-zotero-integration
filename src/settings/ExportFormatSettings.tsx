@@ -4,6 +4,7 @@ import AsyncSelect from 'react-select/async';
 
 import { ExportFormat } from '../types';
 import { Icon } from './Icon';
+import { SettingItem } from './SettingItem';
 import { cslListRaw } from './cslList';
 import {
   NoFileOptionMessage,
@@ -78,6 +79,16 @@ export function ExportFormatSettings({
       updateFormat(index, {
         ...format,
         templatePath: e?.value,
+      });
+    },
+    [updateFormat, index, format]
+  );
+
+  const onChangeDateAsString = React.useCallback(
+    (e: SingleValue<{ value: boolean; label: string }>) => {
+      updateFormat(index, {
+        ...format,
+        dateAsString: e?.value,
       });
     },
     [updateFormat, index, format]
@@ -320,6 +331,34 @@ export function ExportFormatSettings({
           >
             Zotero: Citation Styles
           </a>
+        </div>
+      </div>
+
+      <div className="zt-format__form">
+        <div className="zt-format__label">
+          Import "date" field as ISO 8601 string
+        </div>
+        <div className="zt-format__input-wrapper">
+          <SettingItem
+            description={`Imports the date field as an ISO 8601 string instead of a UNIX timestamp. Allows for reduced accuracy of dates, e.g. "2021-04".`}
+          >
+            <div
+              onClick={() =>
+                onChangeDateAsString({
+                  value: !format.dateAsString,
+                  label: (!format.dateAsString).toString(),
+                })
+              }
+              className={`checkbox-container${
+                format.dateAsString ? ' is-enabled' : ''
+              }`}
+            />
+          </SettingItem>
+        </div>
+        <div className="zt-format__input-note">
+          Note, if you turn this on: Don't use{' '}
+          <pre>{`{{date | format(...)}}`}</pre> in your template or it will
+          generate an error message into your output.
         </div>
       </div>
     </div>

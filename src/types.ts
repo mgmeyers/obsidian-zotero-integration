@@ -52,6 +52,7 @@ export interface ExportFormat {
 
   templatePath?: string;
   cslStyle?: string;
+  dateAsString: boolean;
 
   // Deprecated
   headerTemplatePath?: string;

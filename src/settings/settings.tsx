@@ -96,6 +96,7 @@ function SettingsComponent({
         outputPathTemplate: '{{citekey}}.md',
         imageOutputPathTemplate: '{{citekey}}/',
         imageBaseNameTemplate: 'image',
+        dateAsString: false,
       })
     );
   }, [addExportFormat, citeFormatState]);
