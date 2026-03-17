@@ -10,19 +10,29 @@ import {
 } from 'obsidian';
 import path from 'path';
 import { getVaultRoot } from 'src/helpers';
-import { DatabaseWithPort } from 'src/types';
+import { DatabaseWithPort, ZoteroConnectorSettings } from 'src/types';
 
-import { getCiteKeys } from './cayw';
+import { CiteKey, getCiteKeys } from './cayw';
 import { getLocalURI, mkMDDir, sanitizeFilePath } from './helpers';
 import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from './jsonRPC';
 import { removeStartingSlash } from './template.helpers';
 
-export async function processZoteroAnnotationNotes(
-  key: string,
+
+export function extractNoteImageKeys(noteHtml: string): string[] {
+  const parsed = new DOMParser().parseFromString(noteHtml, 'text/html');
+  const imgs = parsed.querySelectorAll('img[data-attachment-key]');
+  return Array.from(imgs, (img: any) => img.dataset.attachmentKey).filter(Boolean);
+}
+
+export async function processZoteroNotes(
   noteStr: string,
   attachments: Record<string, any>,
-  destination?: string
+  settings: ZoteroConnectorSettings,
+  destination?: string,
+  isExportFormat: boolean = false
 ) {
+
+
   const parsed = new DOMParser().parseFromString(noteStr, 'text/html');
   const annots = parsed.querySelectorAll('[data-annotation]');
   const cites = parsed.querySelectorAll('[data-citation]');
@@ -128,6 +138,44 @@ export async function processZoteroAnnotationNotes(
     }
   });
 
+  if (settings.noteImageSettings.importEmbeddedImage) {
+    const images = parsed.querySelectorAll('img[data-attachment-key]');
+    for (const img of Array.from(images)) {
+      try {
+        const imgKey = (img as HTMLElement).dataset.attachmentKey;
+        if (!imgKey) continue;
+        const imageSrcPath = attachments.noteImages?.[imgKey];
+
+        if (imageSrcPath && existsSync(imageSrcPath)) {
+          if (settings.noteImageSettings.embeddedImageMode === 'copy') {
+            const parsedPath = path.parse(imageSrcPath);
+            const ext = parsedPath.ext || '.png';
+            const destFileName = `${imgKey}${ext}`
+            const destFolder = isExportFormat ? destination : path.join(getVaultRoot(), destination);
+            const destFullPath = path.join(destFolder, destFileName);
+            const vaultRelativePath = normalizePath(path.join(destination, destFileName));
+
+            if (!existsSync(destFolder)) {
+              mkdirSync(destFolder, { recursive: true });
+            }
+
+            copyFileSync(imageSrcPath, destFullPath);
+            (img as HTMLImageElement).src = vaultRelativePath;
+          }
+          else
+            (img as HTMLImageElement).src = imageSrcPath;
+
+
+          img.removeAttribute('data-attachment-key');
+          img.insertAdjacentElement('afterend', createEl('br'));
+        } else {
+          console.warn(`Could not find note image ${imgKey} at ${imageSrcPath}`);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
   return parsed.body.innerHTML;
 }
 
@@ -150,16 +198,16 @@ export async function getNotesMarkdownByCiteKey(
 
   const attachment = await getAttachmentsFromCiteKey(citeKey, database);
 
-    if (attachment) {
-      const images: Record<string, string> = {};
+  if (attachment) {
+    const images: Record<string, string> = {};
 
-      attachment.forEach((a: any) => {
-        a.annotations?.forEach((annot: any) => {
-          if (annot.annotationType === 'image') {
-            images[annot.key] = annot.annotationImagePath;
-          }
-        });
+    attachment.forEach((a: any) => {
+      a.annotations?.forEach((annot: any) => {
+        if (annot.annotationType === 'image') {
+          images[annot.key] = annot.annotationImagePath;
+        }
       });
+    });
 
     attachments[citeKey.key] = images;
   }
@@ -179,10 +227,10 @@ export async function getNotesMarkdownByCiteKey(
 
 
 
-    const processed: string[] = [];
+  const processed: string[] = [];
   for (const noteHtml of notes) {
-      processed.push(
-        htmlToMarkdown(
+    processed.push(
+      htmlToMarkdown(
         await processZoteroNotes(
           noteHtml,
           attachments,

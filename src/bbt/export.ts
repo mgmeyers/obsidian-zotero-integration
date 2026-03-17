@@ -1,5 +1,5 @@
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
-import { Notice, TFile, htmlToMarkdown, moment, normalizePath } from 'obsidian';
+import { Notice, TFile, moment, normalizePath } from 'obsidian';
 import path from 'path';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { CiteKey, getCiteKeyFromAny, getCiteKeys } from './cayw';
-import { processZoteroAnnotationNotes } from './exportNotes';
+import { getNotesMarkdownByCiteKey } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
 import {
   getColorCategory,
@@ -44,11 +44,6 @@ async function processNote(
   database: DatabaseWithPort,
   cslStyle?: string
 ) {
-  if (note.note) {
-    note.note = htmlToMarkdown(
-      await processZoteroAnnotationNotes(citeKey.key, note.note, {})
-    );
-  }
   if (note.dateAdded) {
     note.dateAdded = moment(note.dateAdded);
   }
@@ -445,10 +440,10 @@ export async function renderTemplates(
   try {
     header = headerTemplate
       ? await renderTemplate(
-          params.exportFormat.headerTemplatePath,
-          headerTemplate,
-          templateData
-        )
+        params.exportFormat.headerTemplatePath,
+        headerTemplate,
+        templateData
+      )
       : '';
   } catch (e) {
     if (shouldThrow) {
@@ -470,10 +465,10 @@ export async function renderTemplates(
   try {
     annotations = annotationTemplate
       ? await renderTemplate(
-          params.exportFormat.annotationTemplatePath,
-          annotationTemplate,
-          templateData
-        )
+        params.exportFormat.annotationTemplatePath,
+        annotationTemplate,
+        templateData
+      )
       : '';
   } catch (e) {
     if (shouldThrow) {
@@ -495,10 +490,10 @@ export async function renderTemplates(
   try {
     footer = footerTemplate
       ? await renderTemplate(
-          params.exportFormat.footerTemplatePath,
-          footerTemplate,
-          templateData
-        )
+        params.exportFormat.footerTemplatePath,
+        footerTemplate,
+        templateData
+      )
       : '';
   } catch (e) {
     if (shouldThrow) {
@@ -703,31 +698,46 @@ export async function exportToMarkdown(
 
       const imageRelativePath = exportFormat.imageOutputPathTemplate
         ? normalizePath(
-            sanitizeFilePath(
-              removeStartingSlash(
-                await renderTemplate(
-                  sourcePath,
-                  exportFormat.imageOutputPathTemplate,
-                  pathTemplateData
-                )
+          sanitizeFilePath(
+            removeStartingSlash(
+              await renderTemplate(
+                sourcePath,
+                exportFormat.imageOutputPathTemplate,
+                pathTemplateData
               )
             )
           )
+        )
         : '';
 
       const imageOutputPath = path.resolve(vaultRoot, imageRelativePath);
 
       const imageBaseName = exportFormat.imageBaseNameTemplate
         ? sanitizeFilePath(
-            removeStartingSlash(
-              await renderTemplate(
-                sourcePath,
-                exportFormat.imageBaseNameTemplate,
-                pathTemplateData
-              )
+          removeStartingSlash(
+            await renderTemplate(
+              sourcePath,
+              exportFormat.imageBaseNameTemplate,
+              pathTemplateData
             )
           )
+        )
         : 'image';
+
+      if (item.notes) {
+        const notesMarkdown = await getNotesMarkdownByCiteKey(
+          item.citationKey,
+          item.notes.map(note => note.note),
+          settings,
+          database,
+          imageOutputPath,
+          true
+        )
+        item.notes.map((note, i) => {
+          note.note = notesMarkdown[i];
+        })
+
+      }
 
       const markdownPath = await getMarkdownPath(pathTemplateData);
 
