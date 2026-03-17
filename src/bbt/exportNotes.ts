@@ -131,32 +131,24 @@ export async function processZoteroAnnotationNotes(
   return parsed.body.innerHTML;
 }
 
-export async function noteExportPrompt(
+export async function getNotesMarkdownByCiteKey(
+  citeKey: CiteKey,
+  notes: string[],
+  settings: ZoteroConnectorSettings,
   database: DatabaseWithPort,
-  destination?: string
+  destination?: string,
+  isExportFormat: boolean = false
 ) {
-  const citeKeys = await getCiteKeys(database);
 
-  if (!citeKeys.length) return;
-
-  const notes = await getNotesFromCiteKeys(citeKeys, database);
 
   if (!notes) {
     new Notice('No notes found for selected items', 7000);
     return;
   }
 
-  const keys = Object.keys(notes);
-
-  if (!keys.length) {
-    new Notice('No notes found for selected items', 7000);
-    return;
-  }
-
   const attachments: Record<string, any> = {};
 
-  for (const key of citeKeys) {
-    const attachment = await getAttachmentsFromCiteKey(key, database);
+  const attachment = await getAttachmentsFromCiteKey(citeKey, database);
 
     if (attachment) {
       const images: Record<string, string> = {};
@@ -169,32 +161,71 @@ export async function noteExportPrompt(
         });
       });
 
-      attachments[key.key] = images;
+    attachments[citeKey.key] = images;
+  }
+
+  const zoteroStorage = settings.noteImageSettings.zoteroStoragePath;
+  if (zoteroStorage) {
+    attachments.noteImages = {};
+    for (const noteHtml of notes) {
+      const imageKeys = extractNoteImageKeys(noteHtml);
+      for (const key of imageKeys) {
+        const fullPath = path.join(zoteroStorage, key, 'image.png');
+        attachments.noteImages[key] = fullPath;
+      }
     }
   }
 
-  const notesMarkdown: Record<string, string> = {};
 
-  for (const key of keys) {
+
+
     const processed: string[] = [];
-
-    for (const note of notes[key]) {
+  for (const noteHtml of notes) {
       processed.push(
         htmlToMarkdown(
-          await processZoteroAnnotationNotes(
-            key,
-            note,
-            attachments[key],
-            destination
-          )
+        await processZoteroNotes(
+          noteHtml,
+          attachments,
+          settings,
+          destination,
+          isExportFormat
         )
-      );
-    }
-
-    notesMarkdown[key] = processed.join('\n\n');
+      )
+    );
   }
 
-  return notesMarkdown;
+
+  return processed;
+}
+
+export async function noteExportPrompt(
+  settings: ZoteroConnectorSettings,
+  database: DatabaseWithPort,
+  destination?: string
+) {
+
+  const notesMarkdown: Record<string, string[]> = {};
+  const citeKeys = await getCiteKeys(database);
+
+  if (!citeKeys.length) return;
+
+  const notes = await getNotesFromCiteKeys(citeKeys, database);
+
+  if (!notes) {
+    new Notice('No notes found for selected items', 7000);
+    return;
+  }
+
+  for (const citeKey of citeKeys) {
+    notesMarkdown[citeKey.key] = await getNotesMarkdownByCiteKey(citeKey, notes[citeKey.key], settings, database, destination)
+
+  }
+
+  if (!notesMarkdown) return;
+
+  return Object.fromEntries(
+    Object.entries(notesMarkdown).map(([key, notes]) => [key, notes.join('\n\n')])
+  );
 }
 
 async function getAvailablePathForAttachments(
