@@ -52,6 +52,12 @@ export enum SortingOptions {
 
 export type EmbeddedImageMode = 'copy' | 'link';
 
+export interface FormatNoteImageOverride {
+  enabled: boolean;
+  embeddedImageMode: EmbeddedImageMode;
+}
+
+
 export interface ExportFormat {
   name: string;
   outputPathTemplate: string;
@@ -60,6 +66,7 @@ export interface ExportFormat {
 
   templatePath?: string;
   cslStyle?: string;
+  noteImageSettings?: FormatNoteImageOverride;
 
   // Deprecated
   headerTemplatePath?: string;
@@ -71,7 +78,6 @@ export interface ExportToMarkdownParams {
   settings: ZoteroConnectorSettings;
   database: DatabaseWithPort;
   exportFormat: ExportFormat;
-  noteImageSettings: Partial<NoteImageSettings>;
 }
 
 export interface RenderCiteTemplateParams {

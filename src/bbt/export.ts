@@ -724,15 +724,27 @@ export async function exportToMarkdown(
         )
         : 'image';
 
-      if (item.notes) {
+      if (item.notes && !item._notesProcessed) {
+        item._notesProcessed = true;
+        const effectiveSettings = exportFormat.noteImageSettings?.enabled
+          ? {
+            ...settings,
+            noteImageSettings: {
+              ...settings.noteImageSettings,
+              embeddedImageMode: exportFormat.noteImageSettings.embeddedImageMode,
+            },
+          }
+          : settings;
+
         const notesMarkdown = await getNotesMarkdownByCiteKey(
           item.citationKey,
           item.notes.map(note => note.note),
-          settings,
+          effectiveSettings,
           database,
           imageOutputPath,
           true
         )
+
         item.notes.map((note, i) => {
           note.note = notesMarkdown[i];
         })
