@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import {
   Editor,
   Notice,
@@ -218,8 +218,13 @@ export async function getNotesMarkdownByCiteKey(
     for (const noteHtml of notes) {
       const imageKeys = extractNoteImageKeys(noteHtml);
       for (const key of imageKeys) {
-        const fullPath = path.join(zoteroStorage, key, 'image.png');
-        attachments.noteImages[key] = fullPath;
+        const keyFolder = path.join(zoteroStorage, key);
+        const imageFile = existsSync(keyFolder)
+          ? readdirSync(keyFolder).find(f => /\.(png|jpg|jpeg|gif|webp)$/.test(f))
+          : undefined;
+        attachments.noteImages[key] = imageFile
+          ? path.join(keyFolder, imageFile)
+          : path.join(keyFolder, 'image.png'); // fallback if folder doesn't exist yet
       }
     }
   }
