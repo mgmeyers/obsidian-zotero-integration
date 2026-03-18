@@ -2,6 +2,7 @@ import { App, Notice, PluginSettingTab, debounce } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import which from 'which';
+import { DEFAULT_ZOTERO_STORAGE_PATH, NoteImageSettings, EmbeddedImageMode } from '../types';
 
 import ZoteroConnector from '../main';
 import {
@@ -50,6 +51,10 @@ function SettingsComponent({
   const [ocrState, setOCRState] = React.useState(settings.pdfExportImageOCR);
 
   const [concat, setConcat] = React.useState(!!settings.shouldConcat);
+
+  const [noteImageSettings, setNoteImageSettings] = React.useState(
+  settings.noteImageSettings
+);
 
   const updateCite = React.useCallback(
     debounce(
@@ -106,6 +111,15 @@ function SettingsComponent({
     },
     [removeExportFormat]
   );
+
+  const updateNoteImageSetting = React.useCallback(
+  <K extends keyof NoteImageSettings>(key: K, value: NoteImageSettings[K]) => {
+    const updated = { ...noteImageSettings, [key]: value };
+    setNoteImageSettings(updated);
+    updateSetting('noteImageSettings', updated);
+  },
+  [noteImageSettings, updateSetting]
+);
 
   const tessPathRef = React.useRef<HTMLInputElement>(null);
   const tessDataPathRef = React.useRef<HTMLInputElement>(null);
@@ -173,21 +187,69 @@ function SettingsComponent({
         />
       </SettingItem>
       <SettingItem
-        name="Open the created or updated note(s) after import"
-        description="The created or updated markdown files resulting from the import will be automatically opened."
+  name="Import embedded note images"
+  description="When importing Zotero notes, also import images that are embedded directly in notes (e.g. screenshots/external images pasted into a Zotero note), in addition to PDF annotation images."
+>
+  <div
+    onClick={() =>
+      updateNoteImageSetting('importEmbeddedImage', !noteImageSettings.importEmbeddedImage)
+    }
+    className={`checkbox-container${noteImageSettings.importEmbeddedImage ? ' is-enabled' : ''}`}
+  />
+</SettingItem>
+
+{noteImageSettings.importEmbeddedImage && (
+  <div style={{ borderLeft: '2px solid var(--background-modifier-border)', marginLeft: '1em', paddingLeft: '1em' }}>
+    <SettingItem
+      name="Zotero storage location"
+      description={
+        <div>
+          <input
+            onChange={(e) =>
+              updateNoteImageSetting(
+                'zoteroStoragePath',
+                (e.target as HTMLInputElement).value || DEFAULT_ZOTERO_STORAGE_PATH
+              )
+            }
+            type="text"
+            spellCheck={false}
+            placeholder={`Default: ${DEFAULT_ZOTERO_STORAGE_PATH}`}
+            defaultValue={
+              noteImageSettings.zoteroStoragePath !== DEFAULT_ZOTERO_STORAGE_PATH
+                ? noteImageSettings.zoteroStoragePath
+                : ''
+            }
+            style={{ width: '100%', marginTop: '0.5em', marginBottom: '0.3em' }}
+          />
+          <div>Path to your Zotero storage folder, where attached files are kept. Only change this if you have a non-standard Zotero installation.</div>
+        </div>
+      }
+  />
+
+    <SettingItem
+      name="Import mode"
+      description={
+        noteImageSettings.embeddedImageMode === 'copy'
+          ? 'Copy into vault: images are copied into a subfolder (/images) under the chosen location from Note Import Location option. Images are self-contained and accessible without Zotero.'
+          : 'Link from Zotero storage (fragile): images are linked directly from Zotero\'s local storage folder. No files are copied.'
+      }
+    >
+      <select
+        className="dropdown"
+        value={noteImageSettings.embeddedImageMode}
+        onChange={(e) =>
+          updateNoteImageSetting(
+            'embeddedImageMode',
+            (e.target as HTMLSelectElement).value as EmbeddedImageMode
+          )
+        }
       >
-        <div
-          onClick={() => {
-            setOpenNoteAfterImport((state) => {
-              updateSetting('openNoteAfterImport', !state);
-              return !state;
-            });
-          }}
-          className={`checkbox-container${
-            openNoteAfterImportState ? ' is-enabled' : ''
-          }`}
-        />
-      </SettingItem>
+        <option value="copy">Copy into vault</option>
+        <option value="link">Link from Zotero storage</option>
+      </select>
+    </SettingItem>
+  </div>
+)}
       <SettingItem
         name="Which notes to open after import"
         description="Open either the first note imported, the last note imported, or all notes in new tabs."
@@ -254,6 +316,7 @@ function SettingsComponent({
             index={i}
             updateFormat={updateExport}
             removeFormat={removeExport}
+            globalNoteImageSettings={noteImageSettings}
           />
         );
       })}
