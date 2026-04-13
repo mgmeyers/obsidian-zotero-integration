@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import {
   Editor,
   Notice,
@@ -10,19 +10,29 @@ import {
 } from 'obsidian';
 import path from 'path';
 import { getVaultRoot } from 'src/helpers';
-import { DatabaseWithPort } from 'src/types';
+import { DatabaseWithPort, ZoteroConnectorSettings } from 'src/types';
 
-import { getCiteKeys } from './cayw';
+import { CiteKey, getCiteKeys } from './cayw';
 import { getLocalURI, mkMDDir, sanitizeFilePath } from './helpers';
 import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from './jsonRPC';
 import { removeStartingSlash } from './template.helpers';
 
-export async function processZoteroAnnotationNotes(
-  key: string,
+
+export function extractNoteImageKeys(noteHtml: string): string[] {
+  const parsed = new DOMParser().parseFromString(noteHtml, 'text/html');
+  const imgs = parsed.querySelectorAll('img[data-attachment-key]');
+  return Array.from(imgs, (img: any) => img.dataset.attachmentKey).filter(Boolean);
+}
+
+export async function processZoteroNotes(
   noteStr: string,
   attachments: Record<string, any>,
-  destination?: string
+  settings: ZoteroConnectorSettings,
+  destination?: string,
+  isExportFormat: boolean = false
 ) {
+
+
   const parsed = new DOMParser().parseFromString(noteStr, 'text/html');
   const annots = parsed.querySelectorAll('[data-annotation]');
   const cites = parsed.querySelectorAll('[data-citation]');
@@ -128,13 +138,126 @@ export async function processZoteroAnnotationNotes(
     }
   });
 
+  if (settings.noteImageSettings.importEmbeddedImage) {
+    const images = parsed.querySelectorAll('img[data-attachment-key]');
+    for (const img of Array.from(images)) {
+      try {
+        const imgKey = (img as HTMLElement).dataset.attachmentKey;
+        if (!imgKey) continue;
+        const imageSrcPath = attachments.noteImages?.[imgKey];
+
+        if (imageSrcPath && existsSync(imageSrcPath)) {
+          if (settings.noteImageSettings.embeddedImageMode === 'copy') {
+            const parsedPath = path.parse(imageSrcPath);
+            const ext = parsedPath.ext || '.png';
+            const destFileName = `${imgKey}${ext}`
+            const destFolder = isExportFormat ? destination : path.join(getVaultRoot(), destination);
+            const destFullPath = path.join(destFolder, destFileName);
+            const vaultRelativePath = normalizePath(path.join(destination, destFileName));
+
+            if (!existsSync(destFolder)) {
+              mkdirSync(destFolder, { recursive: true });
+            }
+
+            copyFileSync(imageSrcPath, destFullPath);
+            (img as HTMLImageElement).src = vaultRelativePath;
+          }
+          else
+            (img as HTMLImageElement).src = imageSrcPath;
+
+
+          img.removeAttribute('data-attachment-key');
+          img.insertAdjacentElement('afterend', createEl('br'));
+        } else {
+          console.warn(`Could not find note image ${imgKey} at ${imageSrcPath}`);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
   return parsed.body.innerHTML;
 }
 
+export async function getNotesMarkdownByCiteKey(
+  citeKey: CiteKey,
+  notes: string[],
+  settings: ZoteroConnectorSettings,
+  database: DatabaseWithPort,
+  destination?: string,
+  isExportFormat: boolean = false
+) {
+
+
+  if (!notes) {
+    new Notice('No notes found for selected items', 7000);
+    return;
+  }
+
+  const attachments: Record<string, any> = {};
+
+  const attachment = await getAttachmentsFromCiteKey(citeKey, database);
+
+  if (attachment) {
+    const images: Record<string, string> = {};
+
+    attachment.forEach((a: any) => {
+      a.annotations?.forEach((annot: any) => {
+        if (annot.annotationType === 'image') {
+          images[annot.key] = annot.annotationImagePath;
+        }
+      });
+    });
+
+    attachments[citeKey.key] = images;
+  }
+
+  const zoteroStorage = settings.noteImageSettings.zoteroStoragePath;
+  if (zoteroStorage) {
+    attachments.noteImages = {};
+    for (const noteHtml of notes) {
+      const imageKeys = extractNoteImageKeys(noteHtml);
+      for (const key of imageKeys) {
+        const keyFolder = path.join(zoteroStorage, key);
+        const imageFile = existsSync(keyFolder)
+          ? readdirSync(keyFolder).find(f => /\.(png|jpg|jpeg|gif|webp)$/.test(f))
+          : undefined;
+        attachments.noteImages[key] = imageFile
+          ? path.join(keyFolder, imageFile)
+          : path.join(keyFolder, 'image.png'); // fallback if folder doesn't exist yet
+      }
+    }
+  }
+
+
+
+
+  const processed: string[] = [];
+  for (const noteHtml of notes) {
+    processed.push(
+      htmlToMarkdown(
+        await processZoteroNotes(
+          noteHtml,
+          attachments,
+          settings,
+          destination,
+          isExportFormat
+        )
+      )
+    );
+  }
+
+
+  return processed;
+}
+
 export async function noteExportPrompt(
+  settings: ZoteroConnectorSettings,
   database: DatabaseWithPort,
   destination?: string
 ) {
+
+  const notesMarkdown: Record<string, string[]> = {};
   const citeKeys = await getCiteKeys(database);
 
   if (!citeKeys.length) return;
@@ -146,55 +269,16 @@ export async function noteExportPrompt(
     return;
   }
 
-  const keys = Object.keys(notes);
+  for (const citeKey of citeKeys) {
+    notesMarkdown[citeKey.key] = await getNotesMarkdownByCiteKey(citeKey, notes[citeKey.key], settings, database, destination)
 
-  if (!keys.length) {
-    new Notice('No notes found for selected items', 7000);
-    return;
   }
 
-  const attachments: Record<string, any> = {};
+  if (!notesMarkdown) return;
 
-  for (const key of citeKeys) {
-    const attachment = await getAttachmentsFromCiteKey(key, database);
-
-    if (attachment) {
-      const images: Record<string, string> = {};
-
-      attachment.forEach((a: any) => {
-        a.annotations?.forEach((annot: any) => {
-          if (annot.annotationType === 'image') {
-            images[annot.key] = annot.annotationImagePath;
-          }
-        });
-      });
-
-      attachments[key.key] = images;
-    }
-  }
-
-  const notesMarkdown: Record<string, string> = {};
-
-  for (const key of keys) {
-    const processed: string[] = [];
-
-    for (const note of notes[key]) {
-      processed.push(
-        htmlToMarkdown(
-          await processZoteroAnnotationNotes(
-            key,
-            note,
-            attachments[key],
-            destination
-          )
-        )
-      );
-    }
-
-    notesMarkdown[key] = processed.join('\n\n');
-  }
-
-  return notesMarkdown;
+  return Object.fromEntries(
+    Object.entries(notesMarkdown).map(([key, notes]) => [key, notes.join('\n\n')])
+  );
 }
 
 async function getAvailablePathForAttachments(

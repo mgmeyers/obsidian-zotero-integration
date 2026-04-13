@@ -1,8 +1,10 @@
 import React from 'react';
 import { SingleValue } from 'react-select';
 import AsyncSelect from 'react-select/async';
+import { SettingItem
 
-import { ExportFormat } from '../types';
+ } from './SettingItem';
+import { EmbeddedImageMode, ExportFormat, NoteImageSettings } from '../types';
 import { Icon } from './Icon';
 import { cslListRaw } from './cslList';
 import {
@@ -19,6 +21,7 @@ interface FormatSettingsProps {
   index: number;
   removeFormat: (index: number) => void;
   updateFormat: (index: number, format: ExportFormat) => void;
+  globalNoteImageSettings: NoteImageSettings;
 }
 
 export function ExportFormatSettings({
@@ -26,6 +29,7 @@ export function ExportFormatSettings({
   index,
   updateFormat,
   removeFormat,
+  globalNoteImageSettings,
 }: FormatSettingsProps) {
   const loadFileOptions = React.useMemo(() => {
     const fileSearch = buildFileSearch();
@@ -159,7 +163,52 @@ export function ExportFormatSettings({
           attachment.
         </div>
       </div>
-
+     <div className="zt-format__form">
+     <div className="zt-format__label" style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>Override embedded image mode
+        <span
+          onClick={() => {
+            updateFormat(index, {
+              ...format,
+              noteImageSettings: format.noteImageSettings?.enabled
+                ? undefined
+                : { enabled: true, embeddedImageMode: globalNoteImageSettings.embeddedImageMode },
+            });
+          }}
+          className={`checkbox-container${format.noteImageSettings?.enabled ? ' is-enabled' : ''}`}
+        />
+     </div>
+     <div className="zt-format__input-note" style={{paddingTop: '0px'}}>
+      Note: If <pre>Copy into vault</pre> mode is selected, images will be copied into <pre>Image Output Path</pre> folder. 
+     </div>
+  </div>
+{format.noteImageSettings?.enabled && (
+  <div className="zt-format__form">
+    <div className="zt-format__label">Import mode</div>
+    <div className="zt-format__input-wrapper">
+      <select
+        className="dropdown"
+        value={format.noteImageSettings.embeddedImageMode}
+        onChange={(e) =>
+          updateFormat(index, {
+            ...format,
+            noteImageSettings: {
+              ...format.noteImageSettings,
+              embeddedImageMode: (e.target as HTMLSelectElement).value as EmbeddedImageMode,
+            },
+          })
+        }
+      >
+        <option value="copy">Copy into vault</option>
+        <option value="link">Link from Zotero storage</option>
+      </select>
+    </div>
+    <div className="zt-format__input-note">
+      {format.noteImageSettings.embeddedImageMode === 'copy'
+        ? 'Images will be copied into this format\'s image output path.'
+        : 'Images will be linked directly from Zotero\'s local storage. No files are copied.'}
+    </div>
+  </div>
+)}
       <div className="zt-format__form">
         <div className="zt-format__label">Template File</div>
         <div className="zt-format__input-wrapper">

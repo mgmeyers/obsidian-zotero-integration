@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js';
 import { EditableFileView, Events, Plugin, TFile } from 'obsidian';
 import { shellPath } from 'shell-path';
-
+import path from 'path';
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { LoadingModal } from './bbt/LoadingModal';
 import { getCAYW } from './bbt/cayw';
@@ -23,6 +23,7 @@ import {
   CiteKeyExport,
   ExportFormat,
   ZoteroConnectorSettings,
+  DEFAULT_ZOTERO_STORAGE_PATH,
 } from './types';
 
 const commandPrefix = 'obsidian-zotero-desktop-connector:';
@@ -30,7 +31,7 @@ const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   database: 'Zotero',
-  noteImportFolder: '',
+  noteImportFolder: '/',
   pdfExportImageDPI: 120,
   pdfExportImageFormat: 'jpg',
   pdfExportImageQuality: 90,
@@ -39,6 +40,11 @@ const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   citeSuggestTemplate: '[[{{citekey}}]]',
   openNoteAfterImport: false,
   whichNotesToOpenAfterImport: 'first-imported-note',
+  noteImageSettings: {
+    importEmbeddedImage: true,
+    embeddedImageMode: 'copy',
+    zoteroStoragePath: DEFAULT_ZOTERO_STORAGE_PATH,
+  },
 };
 
 async function fixPath() {
@@ -92,6 +98,7 @@ export default class ZoteroConnector extends Plugin {
           port: this.settings.port,
         };
         noteExportPrompt(
+          this.settings,
           database,
           this.app.workspace.getActiveFile()?.parent.path
         ).then((notes) => {
@@ -110,7 +117,7 @@ export default class ZoteroConnector extends Plugin {
           database: this.settings.database,
           port: this.settings.port,
         };
-        noteExportPrompt(database, this.settings.noteImportFolder)
+        noteExportPrompt(this.settings, database, path.join(this.settings.noteImportFolder, 'images'))
           .then((notes) => {
             if (notes) {
               return filesFromNotes(this.settings.noteImportFolder, notes);
@@ -251,7 +258,7 @@ export default class ZoteroConnector extends Plugin {
         case 'last-imported-note': {
           pathOfNotesToOpen.push(
             createdOrUpdatedMarkdownFilesPaths[
-              createdOrUpdatedMarkdownFilesPaths.length - 1
+            createdOrUpdatedMarkdownFilesPaths.length - 1
             ]
           );
           break;

@@ -1,3 +1,8 @@
+import { homedir } from "os";
+import { join } from "path";
+
+export const DEFAULT_ZOTERO_STORAGE_PATH = join(homedir(), "Zotero/storage/");
+
 export type Format =
   | 'latex'
   | 'biblatex'
@@ -44,6 +49,15 @@ export enum SortingOptions {
   Location = 'location',
 }
 
+
+export type EmbeddedImageMode = 'copy' | 'link';
+
+export interface FormatNoteImageOverride {
+  enabled: boolean;
+  embeddedImageMode: EmbeddedImageMode;
+}
+
+
 export interface ExportFormat {
   name: string;
   outputPathTemplate: string;
@@ -52,6 +66,7 @@ export interface ExportFormat {
 
   templatePath?: string;
   cslStyle?: string;
+  noteImageSettings?: FormatNoteImageOverride;
 
   // Deprecated
   headerTemplatePath?: string;
@@ -70,6 +85,11 @@ export interface RenderCiteTemplateParams {
   format: CitationFormat;
 }
 
+export interface NoteImageSettings {
+  importEmbeddedImage: boolean;
+  embeddedImageMode: EmbeddedImageMode;
+  zoteroStoragePath: string;
+}
 export interface ZoteroConnectorSettings {
   citeFormats: CitationFormat[];
   citeSuggestTemplate?: string;
@@ -91,6 +111,7 @@ export interface ZoteroConnectorSettings {
   settingsVersion?: number;
   shouldConcat?: boolean;
   whichNotesToOpenAfterImport: NotesToOpenAfterImport;
+  noteImageSettings: NoteImageSettings;
 }
 
 export interface CiteKeyExport {
