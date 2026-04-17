@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js';
-import { EditableFileView, Events, Plugin, TFile } from 'obsidian';
+import { EditableFileView, Events, Notice, Plugin, TFile } from 'obsidian';
 import { shellPath } from 'shell-path';
 
 import { DataExplorerView, viewType } from './DataExplorerView';
@@ -240,6 +240,13 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async openNotes(createdOrUpdatedMarkdownFilesPaths: string[]) {
+    if (createdOrUpdatedMarkdownFilesPaths.length) {
+      const names = createdOrUpdatedMarkdownFilesPaths
+        .map((p) => p.split('/').pop())
+        .join(', ');
+      new Notice(`Imported: ${names}`, 7000);
+    }
+
     const pathOfNotesToOpen: string[] = [];
     if (this.settings.openNoteAfterImport) {
       // Depending on the choice, retreive the paths of the first, the last or all imported notes
