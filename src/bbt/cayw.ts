@@ -142,6 +142,12 @@ export async function getCiteKeys(
       .filter((e: any) => !!e);
 
     if (!citeKeys.length) {
+      if (json.length) {
+        new Notice(
+          'No citation key found for the selected item(s). Please generate one via Better BibTeX and try again.',
+          10000
+        );
+      }
       return [];
     }
 
