@@ -109,7 +109,7 @@ function processAnnotation(
   }
 }
 
-function convertNativeAnnotation(
+export function convertNativeAnnotation(
   annotation: any,
   attachment: any,
   imageOutputPath: string,
@@ -127,12 +127,13 @@ function convertNativeAnnotation(
     source: 'zotero',
   };
 
-  if (attachment.path?.endsWith('.pdf')) {
+  if (attachment.uri) {
     annot.pageLabel = annotation.annotationPageLabel;
-    annot.desktopURI = getLocalURI('open-pdf', attachment.uri, {
-      page: annotation.annotationPageLabel,
-      annotation: annotation.key,
-    });
+    const params: Record<string, string> = { annotation: annotation.key };
+    if (annotation.annotationPageLabel) {
+      params.page = annotation.annotationPageLabel;
+    }
+    annot.desktopURI = getLocalURI('open-pdf', attachment.uri, params);
   }
 
   if (annotation.annotationPosition) {
