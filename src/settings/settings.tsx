@@ -515,6 +515,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 
   addExportFormat = (format: ExportFormat) => {
     this.plugin.addExportCommand(format);
+    this.plugin.addExportAllCommand(format);
     this.plugin.settings.exportFormats.unshift(format);
     this.debouncedSave();
 
@@ -523,7 +524,9 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 
   updateExportFormat = (index: number, format: ExportFormat) => {
     this.plugin.removeExportCommand(this.plugin.settings.exportFormats[index]);
+    this.plugin.removeExportAllCommand(this.plugin.settings.exportFormats[index]);
     this.plugin.addExportCommand(format);
+    this.plugin.addExportAllCommand(format);
     this.plugin.settings.exportFormats[index] = format;
     this.debouncedSave();
 
@@ -532,6 +535,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
 
   removeExportFormat = (index: number) => {
     this.plugin.removeExportCommand(this.plugin.settings.exportFormats[index]);
+    this.plugin.removeExportAllCommand(this.plugin.settings.exportFormats[index]);
     this.plugin.settings.exportFormats.splice(index, 1);
     this.debouncedSave();
 
