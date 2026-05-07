@@ -1,11 +1,12 @@
 import Fuse from 'fuse.js';
-import { EditableFileView, Events, Plugin, TFile } from 'obsidian';
+import { EditableFileView, Events, Notice, Plugin, TFile } from 'obsidian';
 import { shellPath } from 'shell-path';
 
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { LoadingModal } from './bbt/LoadingModal';
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
+import { getAllCiteKeys } from './bbt/jsonRPC';
 import {
   filesFromNotes,
   insertNotesIntoCurrentDoc,
@@ -28,6 +29,7 @@ import {
 const commandPrefix = 'obsidian-zotero-desktop-connector:';
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
+const exportAllCommandIDPrefix = 'zdc-exp-all-';
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   database: 'Zotero',
   noteImportFolder: '',
@@ -81,6 +83,7 @@ export default class ZoteroConnector extends Plugin {
 
     this.settings.exportFormats.forEach((f) => {
       this.addExportCommand(f);
+      this.addExportAllCommand(f);
     });
 
     this.addCommand({
@@ -149,6 +152,7 @@ export default class ZoteroConnector extends Plugin {
 
     this.settings.exportFormats.forEach((f) => {
       this.removeExportCommand(f);
+      this.removeExportAllCommand(f);
     });
 
     this.app.workspace.detachLeavesOfType(viewType);
@@ -212,6 +216,40 @@ export default class ZoteroConnector extends Plugin {
   removeExportCommand(format: ExportFormat) {
     (this.app as any).commands.removeCommand(
       `${commandPrefix}${exportCommandIDPrefix}${format.name}`
+    );
+  }
+
+  addExportAllCommand(format: ExportFormat) {
+    this.addCommand({
+      id: `${exportAllCommandIDPrefix}${format.name}`,
+      name: `${format.name}: Import all`,
+      callback: async () => {
+        const database = {
+          database: this.settings.database,
+          port: this.settings.port,
+        };
+        const { citekeys } = await getAllCiteKeys(database);
+        if (!citekeys.length) {
+          new Notice('Zotero: no items found. Is Zotero running?');
+          return;
+        }
+        const allCiteKeys = citekeys.map((k) => ({
+          key: k.citekey,
+          library: k.libraryID,
+        }));
+        this.openNotes(
+          await exportToMarkdown(
+            { settings: this.settings, database, exportFormat: format },
+            allCiteKeys
+          )
+        );
+      },
+    });
+  }
+
+  removeExportAllCommand(format: ExportFormat) {
+    (this.app as any).commands.removeCommand(
+      `${commandPrefix}${exportAllCommandIDPrefix}${format.name}`
     );
   }
 
